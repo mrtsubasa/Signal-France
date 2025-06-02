@@ -362,16 +362,25 @@ function getRoleBadge($role) {
                         Actions rapides
                     </h3>
                     <div class="space-y-3">
-                        <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors flex items-center">
-                            <i class="fas fa-key mr-3 text-gray-400"></i>
-                            Changer le mot de passe
-                        </button>
-                        <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors flex items-center">
-                            <i class="fas fa-download mr-3 text-gray-400"></i>
+                    <button onclick="openChangePasswordModal()" 
+        class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all font-medium shadow-lg">
+    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+    </svg>
+    Changer le mot de passe
+</button>
+                        
+                        <button onClick="fetchUserAccount()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all font-medium shadow-lg">
+                            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
                             Exporter mes données
                         </button>
-                        <button class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors flex items-center">
-                            <i class="fas fa-trash mr-3 text-red-400"></i>
+                        
+                        <button onClick="deleteAccount()" class="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-lg">
+                            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
                             Supprimer mon compte
                         </button>
                     </div>
@@ -643,7 +652,146 @@ function getRoleBadge($role) {
                 </button>
             </div>
         </div>
+</div>
     </div>
+<!-- Modal de changement de mot de passe -->
+<div id="changePasswordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 backdrop-blur-sm">
+    <div class="flex items-center justify-center min-h-screen px-4 py-8">
+        <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl transform transition-all duration-300 scale-95 hover:scale-100">
+            <!-- Header moderne -->
+            <div class="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-t-3xl p-8">
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-indigo-700/20 rounded-t-3xl"></div>
+                <div class="relative flex items-center justify-between text-white">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold">Sécurité</h3>
+                            <p class="text-white/80 text-sm">Modifier votre mot de passe</p>
+                        </div>
+                    </div>
+                    <button onclick="closeChangePasswordModal()" class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center hover:bg-white/30 transition-all duration-200 backdrop-blur-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Contenu du modal -->
+            <div class="p-8">
+                <form id="changePasswordForm" class="space-y-6">
+                    <!-- Mot de passe actuel -->
+                    <div class="space-y-3">
+                        <label for="currentPassword" class="block text-sm font-semibold text-gray-800">
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Mot de passe actuel</span>
+                            </span>
+                        </label>
+                        <div class="relative group">
+                            <input type="password" id="currentPassword" name="current_password" required
+                                   class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-800 placeholder-gray-400"
+                                   placeholder="••••••••••••">
+                            <button type="button" onclick="togglePasswordVisibility('currentPassword')" 
+                                    class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Nouveau mot de passe -->
+                    <div class="space-y-3">
+                        <label for="newPassword" class="block text-sm font-semibold text-gray-800">
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <span>Nouveau mot de passe</span>
+                            </span>
+                        </label>
+                        <div class="relative group">
+                            <input type="password" id="newPassword" name="new_password" required
+                                   class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-800 placeholder-gray-400"
+                                   placeholder="••••••••••••">
+                            <button type="button" onclick="togglePasswordVisibility('newPassword')" 
+                                    class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <!-- Indicateur de force amélioré -->
+                        <div id="passwordStrength" class="hidden">
+                            <div class="flex space-x-1 mt-3">
+                                <div class="h-2 flex-1 rounded-full bg-gray-200 overflow-hidden">
+                                    <div id="strengthBar" class="h-full rounded-full transition-all duration-500 ease-out"></div>
+                                </div>
+                            </div>
+                            <p id="strengthText" class="text-xs mt-2 font-medium"></p>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation du nouveau mot de passe -->
+                    <div class="space-y-3">
+                        <label for="confirmPassword" class="block text-sm font-semibold text-gray-800">
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Confirmer le nouveau mot de passe</span>
+                            </span>
+                        </label>
+                        <div class="relative group">
+                            <input type="password" id="confirmPassword" name="confirm_password" required
+                                   class="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-800 placeholder-gray-400"
+                                   placeholder="••••••••••••">
+                            <button type="button" onclick="togglePasswordVisibility('confirmPassword')" 
+                                    class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors duration-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="passwordMatch" class="text-xs font-medium hidden"></div>
+                    </div>
+
+                    <!-- Boutons d'action modernes -->
+                    <div class="flex space-x-4 pt-6">
+                        <button type="button" onclick="closeChangePasswordModal()"
+                                class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-2xl hover:bg-gray-200 transition-all duration-200 font-semibold border-2 border-transparent hover:border-gray-300">
+                            <span class="flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                <span>Annuler</span>
+                            </span>
+                        </button>
+                        <button type="submit"
+                                class="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white rounded-2xl hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            <span class="flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Confirmer</span>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 
 
@@ -661,6 +809,9 @@ function closeEditProfileModal() {
     document.getElementById('avatarFile').value = '';
 }
 
+
+
+
 // Fonction pour prévisualiser l'avatar
 function previewAvatar(input) {
     if (input.files && input.files[0]) {
@@ -673,6 +824,76 @@ function previewAvatar(input) {
     }
 }
 
+function deleteAccount() {
+    if (confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
+        // Créer un formulaire pour la soumission
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'profile_ajax.php';
+        
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'delete_account';
+        
+        form.appendChild(actionInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// fonction pour recuper les donnees du compte 
+function fetchUserAccount() {
+    if (confirm("Souhaitez-vous récupérer vos données de compte ?")) {
+        const formData = new FormData();
+        formData.append('action', 'fetch_user_account');
+
+        fetch('profile_ajax.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+           if (data.success) {
+               // Formatage amélioré des données
+               const userData = data.user;
+               const formattedData = `=== DONNÉES DE COMPTE SIGNALE FRANCE ===\n\n` +
+                   `📧 Email: ${userData.email || 'Non renseigné'}\n` +
+                   `👤 Nom d'utilisateur: ${userData.username || 'Non renseigné'}\n` +
+                   `📅 Date de création: ${userData.created_at ? new Date(userData.created_at).toLocaleDateString('fr-FR') : 'Non renseignée'}\n` +
+                   `🔐 Dernière connexion: ${userData.last_login ? new Date(userData.last_login).toLocaleDateString('fr-FR') : 'Non renseignée'}\n` +
+                   `📊 Statut: ${userData.status || 'Actif'}\n` +
+                   `🎭 Rôle: ${userData.role || 'Utilisateur'}\n\n` +
+                   `=== INFORMATIONS TECHNIQUES ===\n` +
+                   `🆔 ID utilisateur: ${userData.id || 'Non disponible'}\n` +
+                   `📱 Avatar: ${userData.avatar ? 'Configuré' : 'Non configuré'}\n\n` +
+                   `=== DONNÉES BRUTES (JSON) ===\n` +
+                   JSON.stringify(userData, null, 2) +
+                   `\n\n=== FIN DU FICHIER ===\n` +
+                   `Fichier généré le: ${new Date().toLocaleString('fr-FR')}`;
+
+               const blob = new Blob([formattedData], {type: 'text/plain; charset=utf-8'});
+               const url = URL.createObjectURL(blob);
+               const link = document.createElement('a');
+               link.href = url;
+               link.download = `donnees_compte_${userData.username || 'utilisateur'}_${new Date().toISOString().split('T')[0]}.txt`;
+               link.click();
+               URL.revokeObjectURL(url);
+               
+               // Message de confirmation
+               alert('✅ Vos données de compte ont été téléchargées avec succès !');
+           } else {
+               alert('❌ Erreur: ' + data.message);
+           }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('❌ Erreur de communication avec le serveur');
+        });
+    }
+}
+
+// Fonction pour prévisualiser la nouvelle bannière
 function previewBanner(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
@@ -700,7 +921,185 @@ function previewBanner(input) {
     }
 }
 
+// Fonctions pour le modal de changement de mot de passe
+function openChangePasswordModal() {
+    document.getElementById('changePasswordModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
 
+function closeChangePasswordModal() {
+    document.getElementById('changePasswordModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    // Réinitialiser le formulaire
+    document.getElementById('changePasswordForm').reset();
+    document.getElementById('passwordStrength').classList.add('hidden');
+    document.getElementById('passwordMatch').classList.add('hidden');
+}
+
+// Fonction pour basculer la visibilité du mot de passe
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    const button = input.nextElementSibling;
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        button.innerHTML = `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+            </svg>
+        `;
+    } else {
+        input.type = 'password';
+        button.innerHTML = `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+        `;
+    }
+}
+
+// Vérification de la force du mot de passe
+function checkPasswordStrength(password) {
+    const strengthIndicator = document.getElementById('passwordStrength');
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthText = document.getElementById('strengthText');
+    
+    if (password.length === 0) {
+        strengthIndicator.classList.add('hidden');
+        return;
+    }
+    
+    strengthIndicator.classList.remove('hidden');
+    
+    let score = 0;
+    let feedback = [];
+    
+    // Critères de force
+    if (password.length >= 8) score++;
+    else feedback.push('Au moins 8 caractères');
+    
+    if (/[a-z]/.test(password)) score++;
+    else feedback.push('Une minuscule');
+    
+    if (/[A-Z]/.test(password)) score++;
+    else feedback.push('Une majuscule');
+    
+    if (/\d/.test(password)) score++;
+    else feedback.push('Un chiffre');
+    
+    if (/[^\w\s]/.test(password)) score++;
+    else feedback.push('Un caractère spécial');
+    
+    // Mise à jour visuelle
+    const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'];
+    const texts = ['Très faible', 'Faible', 'Moyen', 'Fort', 'Très fort'];
+    const textColors = ['text-red-600', 'text-orange-600', 'text-yellow-600', 'text-blue-600', 'text-green-600'];
+    
+    strengthBar.className = `h-full rounded-full transition-all duration-300 ${colors[score - 1] || 'bg-gray-300'}`;
+    strengthBar.style.width = `${(score / 5) * 100}%`;
+    
+    strengthText.className = `text-xs mt-1 ${textColors[score - 1] || 'text-gray-500'}`;
+    strengthText.textContent = score > 0 ? texts[score - 1] : 'Entrez un mot de passe';
+    
+    if (feedback.length > 0 && score < 5) {
+        strengthText.textContent += ` - Manque: ${feedback.join(', ')}`;
+    }
+}
+
+// Vérification de la correspondance des mots de passe
+function checkPasswordMatch() {
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const matchIndicator = document.getElementById('passwordMatch');
+    
+    if (confirmPassword.length === 0) {
+        matchIndicator.classList.add('hidden');
+        return;
+    }
+    
+    matchIndicator.classList.remove('hidden');
+    
+    if (newPassword === confirmPassword) {
+        matchIndicator.textContent = '✓ Les mots de passe correspondent';
+        matchIndicator.className = 'text-xs text-green-600';
+    } else {
+        matchIndicator.textContent = '✗ Les mots de passe ne correspondent pas';
+        matchIndicator.className = 'text-xs text-red-600';
+    }
+}
+
+// Gestionnaire de soumission du formulaire de changement de mot de passe
+async function changePassword() {
+    const form = document.getElementById('changePasswordForm');
+    const formData = new FormData(form);
+    formData.append('action', 'update_password');
+    
+    try {
+        const response = await fetch('profile_ajax.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Mot de passe changé avec succès !');
+            closeChangePasswordModal();
+        } else {
+            alert('Erreur: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur de communication avec le serveur');
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Vérification de la force du mot de passe en temps réel
+    document.getElementById('newPassword').addEventListener('input', function() {
+        checkPasswordStrength(this.value);
+        checkPasswordMatch();
+    });
+    
+    // Vérification de la correspondance en temps réel
+    document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
+    
+    // Gestionnaire de soumission du formulaire
+    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        
+        if (newPassword !== confirmPassword) {
+            alert('Les mots de passe ne correspondent pas');
+            return;
+        }
+        
+        if (newPassword.length < 8) {
+            alert('Le mot de passe doit contenir au moins 8 caractères');
+            return;
+        }
+        
+        changePassword();
+    });
+    
+    // Fermer le modal en cliquant à l'extérieur
+    document.getElementById('changePasswordModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeChangePasswordModal();
+        }
+    });
+    
+    // Fermer avec la touche Échap
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !document.getElementById('changePasswordModal').classList.contains('hidden')) {
+            closeChangePasswordModal();
+        }
+    });
+});
 // Gestionnaire de soumission unifié
 document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
     e.preventDefault();

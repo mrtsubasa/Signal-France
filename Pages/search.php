@@ -1,7 +1,9 @@
 <?php
 session_start();
 require_once '../Inc/Constants/db.php';
-
+$currentPath = $_SERVER['REQUEST_URI'];
+$isInSubfolder = (strpos($currentPath, '/Src/') !== false || strpos($currentPath, '/Pages/') !== false);
+$basePath = $isInSubfolder ? '../' : './';
 // Variables d'initialisation
 $searchResults = [];
 $searchPerformed = false;
@@ -376,162 +378,148 @@ function getPriorityIcon($priority) {
                 </div>
             <?php endif; ?>
 
-            <!-- Résultats de recherche -->
-            <?php if ($searchPerformed): ?>
-                <!-- Statistiques de recherche -->
-                <div class="search-stats text-white rounded-2xl p-6 mb-8 animate-fade-in">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                        <div>
-                            <h2 class="text-2xl font-bold mb-2 text-black">
-                                <i class="fas fa-chart-bar mr-2"></i>Résultats de recherche
-                            </h2>
-                            <p class="text-lg opacity-90 text-black">
-                                <?php if (!empty($searchQuery)): ?>
-                                    pour "<span class="font-semibold"><?php echo htmlspecialchars($searchQuery); ?></span>"
-                                <?php endif; ?>
-                            </p>
-                        </div>
-                        <div class="mt-4 md:mt-0">
-                            <div class="bg-white/20 rounded-lg px-6 py-3">
-                                <span class="text-3xl font-bold text-black"><?php echo $totalResults; ?></span>
-                                <span class="text-lg ml-2 text-black">résultat<?php echo $totalResults > 1 ? 's' : ''; ?> trouvé<?php echo $totalResults > 1 ? 's' : ''; ?></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                     <?php foreach ($searchResults as $index => $signalement): ?>
+                            
+                            <div class="group relative bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 border-gray-100 hover:border-[#000091] animate-fade-in transform hover:-translate-y-1" style="animation-delay: <?php echo $index * 0.1; ?>s">
+                                <!-- Effet de bordure animée -->
+                                <div class="absolute inset-0 bg-gradient-to-r from-[#000091] via-[#6a6af4] to-[#e1000f] rounded-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 -z-10"></div>
+                                
+                                <div class="flex flex-col lg:flex-row gap-6">
+                                    <!-- Informations principales à gauche -->
+                                    <div class="flex-1 space-y-5">
+                                        <!-- Badge ID en haut -->
+                                        <div class="flex items-start justify-between mb-4">
+                                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-[#000091] to-[#6a6af4] text-white shadow-lg">
+                                                <i class="fas fa-hashtag mr-2"></i><?php echo $signalement['id']; ?>
+                                            </span>
+                                        </div>
 
-                <?php if (empty($searchResults)): ?>
-                    <!-- Aucun résultat -->
-                    <div class="text-center py-16 animate-fade-in">
-                        <div class="max-w-md mx-auto">
-                            <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-search text-gray-400 text-3xl"></i>
-                            </div>
-                            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Aucun signalement trouvé</h3>
-                            <p class="text-gray-600 mb-6">Essayez de modifier vos critères de recherche ou vos filtres pour obtenir plus de résultats.</p>
-                            <button onclick="window.location.reload()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                <i class="fas fa-redo mr-2"></i>Nouvelle recherche
-                            </button>
-                        </div>
-                    </div>
-                <?php else: ?>
-                    <!-- Liste des résultats -->
-                    <div class="space-y-6">
-                        <?php foreach ($searchResults as $index => $signalement): ?>
-                            <div class="result-card card-hover rounded-2xl p-6 animate-fade-in" style="animation-delay: <?php echo $index * 0.1; ?>s">
-                                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                                    <!-- Contenu principal -->
-                                    <div class="flex-1">
-                                        <!-- En-tête avec titre et badges -->
-                                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
-                                            <div class="flex-1">
-                                                <h3 class="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors cursor-pointer" onclick="showSignalementDetails(<?php echo $signalement['id']; ?>)">
-                                                    <?php 
-                                                    $titre = htmlspecialchars($signalement['titre']);
-                                                    if ($searchType === 'titre' && !empty($searchQuery)) {
-                                                        $titre = str_ireplace($searchQuery, '<mark class="bg-yellow-200 px-1 rounded">' . htmlspecialchars($searchQuery) . '</mark>', $titre);
-                                                    }
-                                                    echo $titre;
-                                                    ?>
-                                                </h3>
-                                                <div class="flex flex-wrap gap-2 mb-3">
-                                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                                        #<?php echo $signalement['id']; ?>
-                                                    </span>
+                                        <!-- Titre principal -->
+                                        <h3 class="text-2xl font-bold text-gray-900 mb-4 hover:bg-gradient-to-r hover:from-[#000091] hover:to-[#e1000f] hover:bg-clip-text hover:text-transparent transition-all duration-300 cursor-pointer leading-tight" onclick="showSignalementDetails(<?php echo $signalement['id']; ?>)">
+                                            <?php 
+                                            $titre = htmlspecialchars($signalement['titre']);
+                                            if ($searchType === 'titre' && !empty($searchQuery)) {
+                                                $titre = str_ireplace($searchQuery, '<mark class="bg-yellow-200 px-2 py-1 rounded-lg font-semibold">' . htmlspecialchars($searchQuery) . '</mark>', $titre);
+                                            }
+                                            echo $titre;
+                                            ?>
+                                        </h3>
+
+                                        <!-- Grille d'informations compacte -->
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <!-- Localisation -->
+                                            <?php if (!empty($signalement['localisation'])): ?>
+                                                <div class="flex items-center p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl border border-red-100 hover:shadow-md transition-shadow">
+                                                    <div class="w-8 h-8 bg-gradient-to-r from-[#e1000f] to-red-600 rounded-xl flex items-center justify-center mr-3 shadow-sm">
+                                                        <i class="fas fa-map-marker-alt text-white text-sm"></i>
+                                                    </div>
+                                                    <span class="text-gray-700 font-medium text-sm truncate"><?php echo htmlspecialchars($signalement['localisation']); ?></span>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Informations détaillées -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                            <div class="space-y-2">
-                                                <?php if (!empty($signalement['localisation'])): ?>
-                                                    <div class="flex items-center text-sm text-gray-600">
-                                                        <i class="fas fa-map-marker-alt w-4 text-red-500 mr-2"></i>
-                                                        <span><?php echo htmlspecialchars($signalement['localisation']); ?></span>
-                                                    </div>
-                                                <?php endif; ?>
-                                                <?php if (!empty($signalement['lieu'])): ?>
-                                                    <div class="flex items-center text-sm text-gray-600">
-                                                        <i class="fas fa-location-dot w-4 text-blue-500 mr-2"></i>
-                                                        <span><?php echo htmlspecialchars($signalement['lieu']); ?></span>
-                                                    </div>
-                                                <?php endif; ?>
-                                                <?php if (!empty($signalement['plateforme'])): ?>
-                                                    <div class="flex items-center text-sm text-gray-600">
-                                                        <i class="fas fa-globe w-4 text-green-500 mr-2"></i>
-                                                        <span><?php echo htmlspecialchars($signalement['plateforme']); ?></span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="space-y-2">
-                                                <div class="flex items-center text-sm text-gray-600">
-                                                    <i class="fas fa-user w-4 text-purple-500 mr-2"></i>
-                                                    <span><?php echo htmlspecialchars($signalement['auteur_complet']); ?></span>
-                                                </div>
-                                                <div class="flex items-center text-sm text-gray-600">
-                                                    <i class="fas fa-calendar w-4 text-orange-500 mr-2"></i>
-                                                    <span><?php echo date('d/m/Y à H:i', strtotime($signalement['date_signalement'])); ?></span>
-                                                </div>
-                                                <?php if (!empty($signalement['type_incident'])): ?>
-                                                    <div class="flex items-center text-sm text-gray-600">
-                                                        <i class="fas fa-tag w-4 text-indigo-500 mr-2"></i>
-                                                        <span><?php echo htmlspecialchars($signalement['type_incident']); ?></span>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Description -->
-                                        <div class="mb-4">
-                                            <p class="text-gray-700 line-clamp-3 leading-relaxed">
-                                                <?php echo htmlspecialchars(substr($signalement['description'], 0, 300)) . (strlen($signalement['description']) > 300 ? '...' : ''); ?>
-                                            </p>
-                                        </div>
-                                        
-                                        <!-- Indicateurs de contenu -->
-                                        <div class="flex flex-wrap gap-2">
-                                            <?php if (!empty($signalement['preuves'])): ?>
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-200">
-                                                    <i class="fas fa-paperclip mr-1"></i>Preuves attachées
-                                                </span>
                                             <?php endif; ?>
-                                            <?php if (!empty($signalement['images'])): ?>
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-50 text-green-700 border border-green-200">
-                                                    <i class="fas fa-images mr-1"></i>Images
-                                                </span>
-                                            <?php endif; ?>
-                                            <?php if (!empty($signalement['email_contact'])): ?>
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-200">
-                                                    <i class="fas fa-envelope mr-1"></i>Contact disponible
-                                                </span>
+                                            
+                                            <!-- Auteur -->
+                                            <div class="flex items-center p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 hover:shadow-md transition-shadow">
+                                                <div class="w-8 h-8 bg-gradient-to-r from-[#6a6af4] to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-sm">
+                                                    <i class="fas fa-user text-white text-sm"></i>
+                                                </div>
+                                                <span class="text-gray-700 font-medium text-sm truncate"><?php echo htmlspecialchars($signalement['auteur_complet']); ?></span>
+                                            </div>
+                                            
+                                            <!-- Date -->
+                                            <div class="flex items-center p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-100 hover:shadow-md transition-shadow">
+                                                <div class="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mr-3 shadow-sm">
+                                                    <i class="fas fa-calendar text-white text-sm"></i>
+                                                </div>
+                                                <span class="text-gray-700 font-medium text-sm"><?php echo date('d/m/Y', strtotime($signalement['date_signalement'])); ?></span>
+                                            </div>
+                                            
+                                            <!-- Type d'incident -->
+                                            <?php if (!empty($signalement['type_incident'])): ?>
+                                                <div class="flex items-center p-3 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border border-slate-100 hover:shadow-md transition-shadow">
+                                                    <div class="w-8 h-8 bg-gradient-to-r from-slate-600 to-gray-600 rounded-xl flex items-center justify-center mr-3 shadow-sm">
+                                                        <i class="fas fa-tag text-white text-sm"></i>
+                                                    </div>
+                                                    <span class="text-gray-700 font-medium text-sm truncate"><?php echo htmlspecialchars($signalement['type_incident']); ?></span>
+                                                </div>
                                             <?php endif; ?>
                                         </div>
+                                        
+                                        <!-- Bouton d'action principal -->
+                                        <?php if (isset($_SESSION['user_id'])): ?>
+                                            <button onclick="showSignalementDetails(<?php echo $signalement['id']; ?>)" 
+                                                    class="group relative w-full lg:w-auto px-8 py-4 bg-gradient-to-r from-[#000091] to-[#6a6af4] text-white rounded-2xl hover:from-[#6a6af4] hover:to-[#000091] transition-all duration-500 flex items-center justify-center shadow-xl hover:shadow-2xl transform hover:-translate-y-1 overflow-hidden font-semibold">
+                                                <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                                <i class="fas fa-eye mr-3 text-lg"></i>
+                                                <span>View details</span>
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
                                     
-                                    <!-- Actions -->
-                                   
-                                    <div class="flex flex-col gap-3 lg:ml-6">
-                                    <?php if (isset($_SESSION['user_id'])): ?>
-                                        <button onclick="showSignalementDetails(<?php echo $signalement['id']; ?>)" 
-                                                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 flex items-center justify-center shadow-lg">
-                                            <i class="fas fa-eye mr-2"></i>Voir détails
-                                        </button>
-                                        <?php endif;?>
-                                      
-                                        <?php if (isset($_SESSION['role']) && ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'moderator')): ?>
-                                            <a href="admin.php?edit=<?php echo $signalement['id']; ?>" 
-                                               class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 flex items-center justify-center shadow-lg">
-                                                <i class="fas fa-edit mr-2"></i>Modifier
-                                            </a>
+                                    <!-- Photo rectangulaire moderne à droite -->
+                                    <div class="lg:w-80 lg:flex-shrink-0">
+                                        <div class="relative group">
+                                            <!-- Conteneur avec bordure tricolore moderne -->
+                                            <div class="relative bg-gradient-to-br from-blue-500 via-blue-600 to-blue-800 p-1 rounded-3xl shadow-2xl group-hover:shadow-3xl transition-all duration-500">
+                                                <!-- Image avec coins arrondis -->
+                                                <div class="bg-white p-2 rounded-[22px] shadow-inner">
+                                                    <?php if (!empty($signalement['photo'])): ?>
+                                                        <img src="<?php echo htmlspecialchars($signalement['photo']); ?>" alt="Photo du signalement" class="w-full h-64 object-cover rounded-2xl group-hover:scale-105 transition-transform duration-500">
+                                                    <?php else: ?>
+                                                        <img src="<?php echo $basePath; ?>Assets/Images/IMG_5652.jpg" alt="Photo par défaut" class="w-full h-64 object-cover rounded-2xl group-hover:scale-105 transition-transform duration-500">
+                                                    <?php endif; ?>
+                                                </div>
+                                                
+                                                <!-- Badge photo moderne -->
+                                                <div class="absolute bottom-4 right-4 w-12 h-12 bg-white rounded-full shadow-xl flex items-center justify-center border-2 border-[#000091] group-hover:scale-110 transition-transform duration-300">
+                                                    <i class="fas fa-camera text-[#000091] text-lg"></i>
+                                                </div>
+                                                
+                                                <!-- Effet de brillance subtil -->
+                                                <div class="absolute top-4 left-6 w-8 h-8 bg-white/40 rounded-full blur-md opacity-70"></div>
+                                                
+                                               
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section description moderne -->
+                                <div class="mt-6 bg-gradient-to-r from-gray-50 via-slate-50 to-gray-50 rounded-3xl p-6 border border-gray-100 shadow-inner">
+                                    <div class="flex items-center mb-4">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-[#000091] to-[#6a6af4] rounded-2xl flex items-center justify-center mr-3 shadow-lg">
+                                            <i class="fas fa-file-text text-white"></i>
+                                        </div>
+                                        <h4 class="text-xl font-bold text-gray-800">Description</h4>
+                                    </div>
+                                    <p class="text-gray-700 leading-relaxed text-lg font-medium">
+                                        <?php echo htmlspecialchars(substr($signalement['description'], 0, 200)) . (strlen($signalement['description']) > 200 ? '...' : ''); ?>
+                                    </p>
+                                    
+                                    <!-- Badges d'informations supplémentaires -->
+                                    <div class="flex flex-wrap gap-3 mt-4">
+                                        <?php if (!empty($signalement['preuves'])): ?>
+                                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-[#000091] to-[#6a6af4] text-white shadow-lg">
+                                                <i class="fas fa-paperclip mr-2"></i>Preuves
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if (!empty($signalement['images'])): ?>
+                                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg">
+                                                <i class="fas fa-images mr-2"></i>Images
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if (!empty($signalement['email_contact'])): ?>
+                                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-lg">
+                                                <i class="fas fa-envelope mr-2"></i>Contact
+                                            </span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
+                                       
+                                    
                         <?php endforeach; ?>
                     </div>
-                <?php endif; ?>
-            <?php endif; ?>
+         
         </div>
     </div>
 
@@ -614,16 +602,7 @@ function getPriorityIcon($priority) {
                 <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                         <h2 class="text-2xl font-bold text-gray-900 mb-2 md:mb-0">${escapeHtml(signalement.titre)}</h2>
-                        <div class="flex gap-2">
-                            <span class="status-badge ${statusClass}">
-                                <i class="${statusIcon}"></i>
-                                ${signalement.statut.replace('_', ' ')}
-                            </span>
-                            <span class="priority-badge ${priorityClass}">
-                                <i class="${priorityIcon}"></i>
-                                ${signalement.priorite}
-                            </span>
-                        </div>
+                     <img src="${signalement.photo ? signalement.photo : '../Assets/Images/IMG_5652.jpg'}" alt="Photo du signalement" class="w-16 h-16 rounded-lg object-cover">
                     </div>
                     <p class="text-gray-600">Signalement #${signalement.id}</p>
                 </div>

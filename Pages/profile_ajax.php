@@ -1,7 +1,13 @@
 <?php
+// Démarrer la mise en mémoire tampon de sortie
+ob_start();
+// Désactiver l'affichage des erreurs en production
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 session_start();
 require_once '../Inc/Constants/db.php';
-
+// Nettoyer toute sortie précédente
+ob_clean();
 header('Content-Type: application/json');
 
 // Vérifier que l'utilisateur est connecté
@@ -162,7 +168,82 @@ if ($_POST['action'] === 'update_profile') {
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
-} else {
-    echo json_encode(['success' => false, 'message' => 'Action non reconnue']);
+} elseif ($_POST['action'] === 'delete_account') {
+    try {
+        $db = connect_db();
+        
+        // Commencer une transaction
+        $db->beginTransaction();
+        
+        // Vérifier que l'utilisateur existe
+        $checkStmt = $db->prepare('SELECT id FROM users WHERE id = ?');
+        $checkStmt->execute([$_SESSION['user_id']]);
+        
+        if (!$checkStmt->fetch()) {
+            throw new Exception('Utilisateur non trouvé');
+        }
+        
+        // Supprimer l'utilisateur
+        $stmt = $db->prepare('DELETE FROM users WHERE id = ?');
+        $result = $stmt->execute([$_SESSION['user_id']]);
+        
+        if ($result && $stmt->rowCount() > 0) {
+            // Valider la transaction
+            $db->commit();
+            
+            // Détruire la session
+            session_destroy();
+            // Rediriger vers la page d'accueil
+            header('Location: ../index.php');
+        } else {
+            $db->rollback();
+            throw new Exception('Aucune ligne supprimée');
+        }
+    } catch (Exception $e) {
+        if (isset($db)) {
+            $db->rollback();
+        }
+        throw new Exception('Erreur lors de la suppression : ' . $e->getMessage());
+    }
+} elseif ($_POST['action'] === 'fetch_user_account') { 
+    try {
+        $db = connect_db();
+
+        // Récupérer les informations de l'utilisateur
+        $stmt = $db->prepare('SELECT * FROM users WHERE id =?');
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            echo json_encode(['success' => true,'user' => $user]);
+        } else {
+            echo json_encode(['success' => false,'message' => 'Utilisateur non trouvé']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false,'message' => $e->getMessage()]);
+    }
+} elseif ($_POST['action'] === 'update_password') {
+    try {
+        $db = connect_db();
+        $stmt = $db->prepare('SELECT password FROM users WHERE id =?');
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && password_verify($_POST['current_password'], $user['password'])) {
+            $newPassword = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
+            $updateStmt = $db->prepare('UPDATE users SET password =? WHERE id =?');
+            $updateStmt->execute([$newPassword, $_SESSION['user_id']]);
+
+            echo json_encode(['success' => true,'message' => 'Mot de passe mis à jour avec succès']);
+        } else {
+            echo json_encode(['success' => false,'message' => 'Mot de passe actuel incorrect']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false,'message' => $e->getMessage()]);
+    }
 }
+
+// Vider et arrêter la mise en mémoire tampon
+ob_end_flush();
+exit;
 ?>
