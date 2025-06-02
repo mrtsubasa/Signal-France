@@ -35,6 +35,9 @@ try {
             $github = $dataUser['github']?? '';
             $linkedin = $dataUser['linkedin']?? '';
             $website = $dataUser['website']?? '';
+            $active = $dataUser['is_active'] ?? 1;
+            $verified = $dataUser['is_verified']??0;
+            $blacklisted = $dataUser['is_blacklisted']??0;
         }
     } else if (isset($_COOKIE['user_token']) && !empty($_COOKIE['user_token'])) {
         $cookieToken = $_COOKIE['user_token'];
@@ -53,7 +56,7 @@ try {
                 $_SESSION['user_username'] = $dataUser['username'];
                 $_SESSION['user_role'] = $dataUser['role'];
                 $_SESSION['user_avatar'] = $dataUser['avatar'];
-                
+                $_SESSION['user_active'] = $dataUser['is_active'];
                 $user = $dataUser;
                 $id = $dataUser['id'];
                 $username = $dataUser['username'];
@@ -72,6 +75,9 @@ try {
                 $github = $dataUser['github']?? '';
                 $linkedin = $dataUser['linkedin']?? '';
                 $website = $dataUser['website']?? '';
+                $active = $dataUser['is_active']?? 1;
+                $verified = $dataUser['is_verified']??0;
+                $blacklisted = $dataUser['is_blacklisted']??0;
                 $token = $cookieToken;
             } else {
                 setcookie('user_token', '', time() - 3600, '/');
@@ -141,6 +147,12 @@ function getRoleBadge($role) {
                                     </div>
                                 <?php endif; ?>
                             </div>
+                             <!-- Icon Verif-->
+                             <?php if ($verified):?>
+    <div class="absolute bottom-0 right-0 w-6 h-6 bg-gradient-to-br from-blue-800 to-blue-950 rounded-full shadow-lg border-2 border-white flex items-center justify-center">
+        <i class="fas fa-check-circle text-white text-xs"></i>
+    </div>
+<?php endif;?>
                         </div>
                         
                         <!-- Informations utilisateur -->
@@ -150,6 +162,22 @@ function getRoleBadge($role) {
                                     <h1 class="text-3xl font-bold text-gray-900 flex items-center">
                                         <?= htmlspecialchars($username) ?>
                                         <span class="ml-3"><?= getRoleBadge($role) ?></span>
+                                         <!-- Icon Active-->
+                                         <?php if ($active):?>
+                                            <span class="ml-3">
+                                                <div class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors">
+                                                     <i class="fas fa-circle text-xs mr-1"></i>
+                                                        <span class="ml-2 text-sm text-green-600 font-medium">Actif</span>
+                                                 </div>
+                                            </span>
+                                        <?php endif;?>
+                                         <!-- Blacklist -->
+                                         <?php if ($blacklisted):?>
+                                            <span class="ml-3 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200 align-middle">
+                                                <i class="fas fa-ban mr-1.5 text-red-600"></i>
+                                                Blacklisté
+                                            </span>
+                                        <?php endif;?>
                                     </h1>
                                     <p class="text-lg text-gray-600 mt-1">
                                         <i class="fas fa-envelope mr-2"></i><?= htmlspecialchars($email) ?>
@@ -354,197 +382,266 @@ function getRoleBadge($role) {
 </div>
 
 <!-- Modal unifié d'édition de profil et avatar -->
-<div id="editProfileModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Modifier le profil</h3>
-                <button onclick="closeEditProfileModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
+<div id="editProfileModal" class="hidden fixed inset-0 bg-black bg-opacity-60 overflow-y-auto h-full w-full z-50 backdrop-blur-sm">
+    <div class="relative top-4 mx-auto p-0 w-11/12 md:w-3/4 lg:w-2/3 max-w-4xl max-h-[95vh] overflow-hidden">
+        <!-- Header du modal avec gradient -->
+        <div class="bg-gradient-to-r from-france-blue to-blue-700 text-white p-6 rounded-t-xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user-edit text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold">Modifier le profil</h3>
+                        <p class="text-blue-100 text-sm">Personnalisez vos informations</p>
+                    </div>
+                </div>
+                <button onclick="closeEditProfileModal()" class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-all">
+                    <i class="fas fa-times text-white"></i>
                 </button>
             </div>
-            
-            <!-- Section Avatar -->
-            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h4 class="text-md font-medium text-gray-800 mb-3">Photo de profil</h4>
-                <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
-                    <!-- Avatar actuel -->
-                    <div class="text-center">
-                        <div class="mx-auto w-24 h-24 relative">
-                            <div id="currentAvatarPreview" class="w-full h-full rounded-full overflow-hidden border-4 border-gray-200">
-                                <?php if ($avatar && file_exists('../Assets/Images/avatars/' . $avatar)): ?>
-                                    <img src="../Assets/Images/avatars/<?= htmlspecialchars($avatar) ?>" 
-                                         alt="Avatar actuel" 
-                                         class="w-full h-full object-cover">
-                                <?php else: ?>
-                                    <div class="w-full h-full bg-france-blue flex items-center justify-center">
-                                        <i class="fas fa-user text-white text-xl"></i>
+        </div>
+
+        <!-- Contenu du modal -->
+        <div class="bg-white rounded-b-xl shadow-2xl overflow-y-auto max-h-[calc(95vh-120px)]">
+            <div class="p-6">
+                <!-- Section Avatar avec design amélioré -->
+                <div class="mb-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-camera text-white text-sm"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-800">Photo de profil</h4>
+                    </div>
+                    <div class="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
+                        <!-- Avatar actuel avec effet hover -->
+                        <div class="text-center group">
+                            <div class="mx-auto w-28 h-28 relative">
+                                <div id="currentAvatarPreview" class="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg group-hover:shadow-xl transition-shadow">
+                                    <?php if ($avatar && file_exists('../Assets/Images/avatars/' . $avatar)): ?>
+                                        <img src="../Assets/Images/avatars/<?= htmlspecialchars($avatar) ?>" 
+                                             alt="Avatar actuel" 
+                                             class="w-full h-full object-cover">
+                                    <?php else: ?>
+                                        <div class="w-full h-full bg-gradient-to-br from-france-blue to-blue-700 flex items-center justify-center">
+                                            <i class="fas fa-user text-white text-2xl"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                                    <i class="fas fa-camera text-white text-xs"></i>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2 font-medium">Avatar actuel</p>
+                        </div>
+                        
+                        <!-- Zone de upload stylisée -->
+                        <div class="flex-1">
+                            <label for="avatarFile" class="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-300 rounded-xl cursor-pointer bg-gradient-to-br from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition-all duration-300">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <i class="fas fa-cloud-upload-alt text-white text-lg"></i>
                                     </div>
-                                <?php endif; ?>
-                            </div>
+                                    <p class="text-sm text-gray-700 text-center font-medium">
+                                        <span class="text-blue-600">Choisir un nouvel avatar</span><br>
+                                        <span class="text-xs text-gray-500">PNG, JPG ou JPEG (MAX. 10MB)</span>
+                                    </p>
+                                </div>
+                                <input id="avatarFile" type="file" class="hidden" accept="image/*" onchange="previewAvatar(this)">
+                            </label>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Avatar actuel</p>
-                    </div>
-                    
-                    <!-- Sélection de fichier -->
-                    <div class="flex-1">
-                        <label for="avatarFile" class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                            <div class="flex flex-col items-center justify-center">
-                                <i class="fas fa-cloud-upload-alt text-gray-400 text-lg mb-1"></i>
-                                <p class="text-xs text-gray-500 text-center">
-                                    <span class="font-semibold">Choisir un nouvel avatar</span><br>
-                                    PNG, JPG ou JPEG (MAX. 2MB)
-                                </p>
+                        
+                        <!-- Aperçu du nouvel avatar -->
+                        <div id="newAvatarPreview" class="hidden text-center">
+                            <div class="mx-auto w-28 h-28 relative">
+                                <div class="w-full h-full rounded-full overflow-hidden border-4 border-green-200 shadow-lg">
+                                    <img id="newAvatarImg" src="" alt="Nouvel avatar" class="w-full h-full object-cover">
+                                </div>
+                                <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
+                                    <i class="fas fa-check text-white text-xs"></i>
+                                </div>
                             </div>
-                            <input id="avatarFile" type="file" class="hidden" accept="image/*" onchange="previewAvatar(this)">
-                        </label>
-                    </div>
-                    
-                    <!-- Aperçu du nouvel avatar -->
-                    <div id="newAvatarPreview" class="hidden text-center">
-                        <div class="mx-auto w-24 h-24 relative">
-                            <div class="w-full h-full rounded-full overflow-hidden border-4 border-green-200">
-                                <img id="newAvatarImg" src="" alt="Nouvel avatar" class="w-full h-full object-cover">
-                            </div>
+                            <p class="text-sm text-green-600 mt-2 font-medium">Nouvel avatar</p>
                         </div>
-                        <p class="text-xs text-green-600 mt-1">Nouvel avatar</p>
                     </div>
                 </div>
+
+                <!-- Section Bannière avec design amélioré -->
+                <div class="mb-8 p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-image text-white text-sm"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-800">Bannière</h4>
+                    </div>
+                    <div class="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
+                        <!-- Bannière actuelle -->
+                        <div class="text-center group">
+                            <div class="mx-auto w-32 h-20 relative">
+                                <div id="currentBannerPreview" class="w-full h-full rounded-lg overflow-hidden border-4 border-white shadow-lg group-hover:shadow-xl transition-shadow">
+                                    <?php if ($banner && file_exists('../Assets/Images/banners/'. $banner)):?>
+                                        <img src="../Assets/Images/banners/<?= htmlspecialchars($banner)?>" 
+                                             alt="Bannière actuelle" 
+                                             class="w-full h-full object-cover">
+                                    <?php else:?>
+                                        <div class="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                                            <i class="fas fa-image text-white text-xl"></i>
+                                        </div>
+                                    <?php endif;?>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2 font-medium">Bannière actuelle</p>
+                        </div>
+
+                        <!-- Zone de upload bannière -->
+                        <div class="flex-1">
+                            <label for="bannerFile" class="group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-purple-300 rounded-xl cursor-pointer bg-gradient-to-br from-purple-50 to-white hover:from-purple-100 hover:to-purple-50 transition-all duration-300">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <i class="fas fa-cloud-upload-alt text-white text-lg"></i>
+                                    </div>
+                                    <p class="text-sm text-gray-700 text-center font-medium">
+                                        <span class="text-purple-600">Choisir une nouvelle bannière</span><br>
+                                        <span class="text-xs text-gray-500">PNG, JPG ou JPEG (MAX. 2MB)</span>
+                                    </p>
+                                </div>
+                                <input id="bannerFile" type="file" class="hidden" accept="image/*" onchange="previewBanner(this)">
+                            </label>
+                        </div>
+
+                        <!-- Aperçu nouvelle bannière -->
+                        <div id="newBannerPreview" class="hidden text-center">
+                            <div class="mx-auto w-32 h-20 relative">
+                                <div class="w-full h-full rounded-lg overflow-hidden border-4 border-green-200 shadow-lg">
+                                    <img id="newBannerImg" src="" alt="Nouvelle bannière" class="w-full h-full object-cover">
+                                </div>
+                            </div>
+                            <p class="text-sm text-green-600 mt-2 font-medium">Nouvelle bannière</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire avec sections organisées -->
+                <form id="editProfileForm" class="space-y-6">
+                    <!-- Informations de base -->
+                    <div class="bg-gray-50 p-6 rounded-xl">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-800">Informations de base</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nom d'utilisateur</label>
+                                <input type="text" id="editUsername" value="<?= htmlspecialchars($username) ?>"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-france-blue focus:border-transparent transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                                <input type="email" id="editEmail" value="<?= htmlspecialchars($email) ?>"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-france-blue focus:border-transparent transition-all">
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Biographie</label>
+                            <textarea id="editBio" rows="4" 
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-france-blue focus:border-transparent transition-all resize-none"
+                                      placeholder="Parlez-nous de vous..."><?= htmlspecialchars($bio) ?></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Informations de contact -->
+                    <div class="bg-green-50 p-6 rounded-xl">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-phone text-white text-sm"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-800">Informations de contact</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Téléphone</label>
+                                <input type="tel" id="editPhone" value="<?= htmlspecialchars($phone) ?>"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Organisation</label>
+                                <input type="text" id="editOrganization" value="<?= htmlspecialchars($organization) ?>"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Adresse</label>
+                                <input type="text" id="editAddress" value="<?= htmlspecialchars($address) ?>"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Ville</label>
+                                <input type="text" id="editCity" value="<?= htmlspecialchars($city) ?>"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations professionnelles -->
+                    <div class="bg-yellow-50 p-6 rounded-xl">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-briefcase text-white text-sm"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-800">Informations professionnelles</h4>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Accréditation</label>
+                            <input type="text" id="editAccreditation" value="<?= htmlspecialchars($accreditation) ?>"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
+                                   placeholder="Numéro d'accréditation, certification...">
+                        </div>
+                    </div>
+
+                    <!-- Réseaux sociaux -->
+                    <div class="bg-indigo-50 p-6 rounded-xl">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-share-alt text-white text-sm"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-800">Réseaux sociaux</h4>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Site web</label>
+                                <input type="url" id="editWebsite" value="<?= htmlspecialchars($website)?>"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                       placeholder="https://votre-site.com">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">GitHub</label>
+                                <input type="url" id="editGithub" value="<?= htmlspecialchars($github)?>"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                       placeholder="https://github.com/username">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">LinkedIn</label>
+                                <input type="url" id="editLinkedIn" value="<?= htmlspecialchars($linkedin)?>"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                       placeholder="https://linkedin.com/in/username">
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
 
-              <!-- Section Banniere -->
-            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h4 class="text-md font-medium text-gray-800 mb-3">Bannière</h4>
-                <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
-                    <!-- Bannière actuelle -->
-                    <div class="text-center">
-                        <div class="mx-auto w-24 h-24 relative">
-                            <div id="currentBannerPreview" class="w-full h-full rounded-full overflow-hidden border-4 border-gray-200"></div>
-                                <?php if ($banner && file_exists('../Assets/Images/banners/'. $banner)):?>
-                                    <img src="../Assets/Images/banners/<?= htmlspecialchars($banner)?>"
-                                         alt="Bannière actuelle"
-                                         class="w-full h-full object-cover">
-                                <?php else:?>
-                                    <div class="w-full h-full bg-france-blue flex items-center justify-center">
-                                        <i class="fas fa-image text-white text-xl"></i>
-                                    </div>
-                                <?php endif;?>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">Bannière actuelle</p>
-                    </div>
-
-                    <!-- Sélection de fichier -->
-                    <div class="flex-1">
-                        <label for="bannerFile" class="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                            <div class="flex flex-col items-center justify-center">
-                                <i class="fas fa-cloud-upload-alt text-gray-400 text-lg mb-1"></i>
-                                <p class="text-xs text-gray-500 text-center">
-                                    <span class="font-semibold">Choisir une nouvelle bannière</span><br>
-                                    PNG, JPG ou JPEG (MAX. 2MB)
-                                </p>
-                            </div>
-                            <input id="bannerFile" type="file" class="hidden" accept="image/*" onchange="previewBanner(this)">
-                        </label>
-                    </div>
-
-                    <!-- Aperçu de la nouvelle bannière -->
-                    <div id="newBannerPreview" class="hidden text-center">
-                        <div class="mx-auto w-24 h-24 relative">
-                            <div class="w-full h-full rounded-full overflow-hidden border-4 border-green-200">
-                                <img id="newBannerImg" src="" alt="Nouvelle bannière" class="w-full h-full object-cover">
-                            </div>
-                        </div>
-                        <p class="text-xs text-green-600 mt-1">Nouvelle bannière</p>
-                    </div>
-                </div>
-            <!-- Formulaire de profil -->
-            <form id="editProfileForm" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
-                        <input type="text" id="editUsername" value="<?= htmlspecialchars($username) ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input type="email" id="editEmail" value="<?= htmlspecialchars($email) ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue">
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Biographie</label>
-                    <textarea id="editBio" rows="3" 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue"
-                              placeholder="Parlez-nous de vous..."><?= htmlspecialchars($bio) ?></textarea>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                        <input type="tel" id="editPhone" value="<?= htmlspecialchars($phone) ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Organisation</label>
-                        <input type="text" id="editOrganization" value="<?= htmlspecialchars($organization) ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue">
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-                        <input type="text" id="editAddress" value="<?= htmlspecialchars($address) ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-                        <input type="text" id="editCity" value="<?= htmlspecialchars($city) ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue">
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Accréditation</label>
-                    <input type="text" id="editAccreditation" value="<?= htmlspecialchars($accreditation) ?>"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue"
-                           placeholder="Numéro d'accréditation, certification...">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Site web</label>
-                    <input type="url" id="editWebsite" value="<?= htmlspecialchars($website)?>"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue"
-                           placeholder="Site Web">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">GitHub</label>
-                    <input type="url" id="editGithub" value="<?= htmlspecialchars($github)?>"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue"
-                           placeholder="Github">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
-                    <input type="url" id="editLinkedIn" value="<?= htmlspecialchars($linkedin)?>"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-france-blue"
-                           placeholder="Linkedin">
-                </div>
-                
-                <div class="flex justify-end space-x-3 pt-4 border-t">
-                    <button type="button" onclick="closeEditProfileModal()"
-                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
-                        Annuler
-                    </button>
-                    <button type="submit"
-                            class="px-4 py-2 bg-france-blue text-white rounded-md hover:bg-blue-700 transition-colors">
-                        Sauvegarder tout
-                    </button>
-                </div>
-            </form>
+            <!-- Footer avec boutons -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-4">
+                <button type="button" onclick="closeEditProfileModal()"
+                        class="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium">
+                    <i class="fas fa-times mr-2"></i>Annuler
+                </button>
+                <button type="submit" form="editProfileForm"
+                        class="px-6 py-3 bg-gradient-to-r from-france-blue to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium shadow-lg">
+                    <i class="fas fa-save mr-2"></i>Sauvegarder tout
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -580,13 +677,12 @@ function previewBanner(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
         
-        // Vérifier la taille du fichier (2MB max)
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Le fichier est trop volumineux. Taille maximale : 2MB');
+        // Vérifier la taille du fichier (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('La taille du fichier ne doit pas dépasser 10MB.');
             input.value = '';
             return;
         }
-        
         // Vérifier le type de fichier
         if (!file.type.match('image.*')) {
             alert('Veuillez sélectionner un fichier image valide.');

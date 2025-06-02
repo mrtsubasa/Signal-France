@@ -62,7 +62,7 @@ $basePath = $isInSubfolder ? '../' : './';
         <div class="border-t border-gray-300 pt-8">
             <div class="flex flex-col lg:flex-row items-center justify-between">
                 <div class="flex items-center mb-6 lg:mb-0">
-                    <img src="<?php echo $basePath; ?>Assets/Images/alerte_france.png" 
+                    <img src="<?php echo $basePath; ?>Assets/Images/SignaleFrance.png" 
                          alt="République Française" 
                          class="h-16 w-16 mr-4 rounded-lg shadow-sm">
                     <div>

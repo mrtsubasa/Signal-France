@@ -62,8 +62,10 @@ if ($_POST['action'] === 'update_profile') {
                 throw new Exception('Type de fichier non autorisé pour la bannière. Utilisez JPG, JPEG ou PNG.');
             }
             
-            if ($file['size'] > 2 * 1024 * 1024) { // 2MB max
-                throw new Exception('Le fichier bannière est trop volumineux (2MB maximum)');
+        
+            // 10mb max
+            if ($file['size'] > 10 * 1024 * 1024) {
+                throw new Exception('Le fichier est trop volumineux (10MB maximum)');
             }
             
             // Générer un nom de fichier unique

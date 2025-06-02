@@ -183,6 +183,9 @@ try {
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Créé le</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Blacklist</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verifier</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
@@ -1065,21 +1068,90 @@ function loadContacts() {
         });
 }
 
-// Marquer un message comme répondu
 function markAsReplied(contactId) {
-    if (confirm('Êtes-vous sûr de vouloir marquer ce message comme répondu?')) {
-        fetch(`admin_ajax.php?action=mark_contact_as_replied&contact_id=${contactId}`)
-           .then(response => response.json())
-           .then(data => {
-                if (data.status ==='success') {
-                    showNotification('Message marqué comme répondu', 'success');
-                    loadContacts();
-                }
-           })
-          .catch(error => {
-                showNotification('Erreur lors de la mise à jour du statut', 'error');
-          })
+    // Validation de l'ID avant de continuer
+    if (!contactId || contactId <= 0) {
+        showNotification('ID de contact invalide', 'error');
+        return;
     }
+    
+    const formData = new FormData();
+        formData.append('action', 'mark_contact_as_replied');
+        formData.append('id', contactId);
+        
+        fetch('admin_ajax.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            // Only throw error for actual HTTP errors (500, etc.)
+            if (!response.ok && response.status >= 500) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+        if (data.status === 'success') {
+            showNotification(
+                `✅ Succès: Message #${data.contact_id || contactId} marqué comme répondu avec succès`, 
+                'success',
+                {
+                    duration: 4000,
+                    showProgress: true,
+                    icon: '✅',
+                    sound: true
+                }
+            );
+            loadContacts();
+        } else if (data.status === 'info') {
+            showNotification(
+                `ℹ️ Information: ${data.message}`, 
+                'info',
+                {
+                    duration: 5000,
+                    showProgress: true,
+                    icon: 'ℹ️',
+                    actionButton: {
+                        text: 'Actualiser',
+                        action: 'loadContacts'  // ✅ CORRIGÉ: Nom de fonction en string
+                    }
+                }
+            );
+            loadContacts();
+        } else {
+            showNotification(
+                `❌ Erreur: ${data.error || 'Erreur lors du traitement'}`, 
+                'error',
+                {
+                    duration: 6000,
+                    showProgress: true,
+                    icon: '❌',
+                    actionButton: {
+                        text: 'Réessayer',
+                        action: `markAsReplied(${contactId})`  // ✅ CORRIGÉ: Appel de fonction en string
+                    }
+                }
+            );
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showNotification(
+            `🔌 Erreur de connexion: ${error.message || 'Problème de réseau ou serveur indisponible'}`, 
+            'error',
+            {
+                duration: 8000,
+                showProgress: true,
+                icon: '🔌',
+                actionButton: {
+                    text: 'Réessayer',
+                    action: `markAsReplied(${contactId})`  // ✅ CORRIGÉ: Appel de fonction en string
+                },
+                details: 'Vérifiez votre connexion internet et réessayez'
+            }
+        );
+    })
+     
 }
 // Fonction utilitaire pour les classes de statut
 function getStatusClass(statut) {
@@ -1171,6 +1243,9 @@ function loadUsers() {
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.created_at}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.is_blacklisted ? "Oui" : "Non"}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.is_active === 1 ? "Actif" : "Non Actif"}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.is_verified ? "Oui" : "Non"}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button onclick="editUser(${user.id})" class="text-france-blue hover:text-blue-900 mr-3">
                                     <i class="fas fa-edit"></i>
@@ -1275,8 +1350,22 @@ function openEditUserModal(user) {
                             <option value="rgpd" ${user.role === 'rgpd' ? 'selected' : ''}>RGPD</option>
                         </select>
                     </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Annuler</button>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Blacklist</label>
+                        <select id="editBlacklist" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="0" ${user.blacklist === 0?'selected' : ''}>Non</option>
+                            <option value="1" ${user.blacklist === 1?'selected' : ''}>Oui</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Vérification</label>
+                        <select id="editVerified" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="0" ${user.verified === 0 ? 'selected' : ''}>Non vérifié</option>
+                            <option value="1" ${user.verified === 1 ? 'selected' : ''}>Vérifié</option>
+                        </select>
+                    </div>
+                     <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeEditUserModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Annuler</button>
                         <button type="submit" class="px-4 py-2 bg-france-blue text-white rounded-md hover:bg-blue-700">Sauvegarder</button>
                     </div>
                 </form>
@@ -1289,15 +1378,72 @@ function openEditUserModal(user) {
     // Gérer la soumission du formulaire
     document.getElementById('editUserForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        updateUserRole();
+        updateUser()
     });
     
     // Fermer le modal en cliquant à l'extérieur
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
-            closeEditModal();
+            closeEditUserModal();
         }
     });
+}
+// Mettre à jour le statut de vérification d'un utilisateur
+function updateUserVerified() {
+    const userId = document.getElementById('editUserId').value;
+    const newVerified = document.getElementById('editVerified').value;
+
+    const verifStatus = newVerified === "1" ? 'verified' : 'unverified'
+
+    fetch('admin_ajax.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `action=update_user_verified&user_id=${userId}&verif_status=${verifStatus}`
+    })
+   .then(response => response.json())
+  .then(data => {
+        if (data.status ==='success') {
+            showNotification('Statut de vérification mis à jour avec succès!','success');
+            closeEditUserModal();
+            loadUsers(); // Recharger la liste
+        } else {
+            showNotification('Erreur:'+ data.error, 'error');
+        }
+    })
+  .catch(error => {
+        showNotification('Erreur de connexion', 'error');
+  })
+}
+// mettre a jour si le membre est blacklist ou non #
+function updateUserBlacklist() {
+    const userId = document.getElementById('editUserId').value;
+    const newBlacklist = document.getElementById('editBlacklist').value;
+    
+    // Convertir 0/1 en blacklisted/unblacklisted
+    const blacklistStatus = newBlacklist === '1' ? 'blacklisted' : 'unblacklisted';
+
+    fetch('admin_ajax.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `action=update_user_blacklist&user_id=${userId}&blacklist_status=${blacklistStatus}`
+    })
+   .then(response => response.json())
+  .then(data => {
+        if (data.status ==='success') {
+            showNotification('Blacklist mise à jour avec succès!','success');
+            closeEditUserModal(); // Corriger aussi ici
+            loadUsers(); // Recharger la liste
+        } else {
+            showNotification('Erreur:'+ data.error, 'error');
+        }
+    })
+  .catch(error => {
+        showNotification('Erreur de connexion', 'error');
+  })
 }
 
 // Mettre à jour le rôle d'un utilisateur
@@ -1327,9 +1473,58 @@ function updateUserRole() {
     });
 }
 
+function updateUserInfo() {
+    const userId = document.getElementById('editUserId').value;
+    const newUsername = document.getElementById('editUsername').value;
+    const newEmail = document.getElementById('editEmail').value;
+
+    fetch('admin_ajax.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `action=update_user_info&user_id=${userId}&username=${newUsername}&email=${newEmail}`
+    })
+   .then(response => response.json())
+   .then(data => {
+        if (data.status ==='success') {
+            showNotification('Informations utilisateur mises à jour avec succès!','success');
+            closeEditModal();
+            loadUsers(); // Recharger la liste
+        } else {
+            showNotification('Erreur:'+ data.error, 'error');
+        }
+    })
+  .catch(error => {
+        showNotification('Erreur de connexion', 'error');
+    });
+}
+
+
+// mettre a jour l utilisateur 
+function updateUser() {
+    
+    if (document.getElementById('editRole').value !== document.getElementById('editRole').dataset.oldValue) {
+        updateUserRole();
+    }
+    // Utiliser la fonction existante pour mettre à jour le rôle
+    // update la blacklist si un changement est present 
+    if (document.getElementById('editBlacklist').value !== document.getElementById('editBlacklist').dataset.oldValue) {
+        updateUserBlacklist();
+    } // Utiliser la fonction existante pour mettre à jour la blacklist
+
+    // Utiliser la fonction existante pour mettre à jour le statut de vérification
+    if (document.getElementById('editVerified').value!== document.getElementById('editVerified').dataset.oldValue) {
+        updateUserVerified();
+    }
+    
+    if (document.getElementById('editUsername').value!== document.getElementById('editUsername').dataset.oldValue || document.getElementById('editEmail').value!== document.getElementById('editEmail').dataset.oldValue) {
+        updateUserInfo();
+    }
+}
 // Fermer le modal
 // Supprimer la deuxième fonction closeModal() (ligne 795) et garder seulement celle-ci :
-function closeEditModal() {
+function closeEditUserModal() {
     const modal = document.querySelector('#editUserModal');
     if (modal) {
         modal.remove();
@@ -1688,15 +1883,147 @@ function closeModal() {
 }
 
 // Fonction pour afficher une notification
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.classList.add('notification', type);
-    notification.textContent = message;
-    document.body.appendChild(notification);
+function showNotification(message, type = 'info', options = {}) {
+    const config = {
+        duration: 4000,
+        showProgress: false,
+        icon: null,
+        sound: false,
+        actionButton: null,
+        details: null,
+        pulse: false,
+        ...options
+    };
 
-    setTimeout(() => {
-        notification.remove();
-    })
+    // Créer le conteneur s'il n'existe pas
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        document.body.appendChild(container);
+    }
+
+    // Créer la notification
+    const notification = document.createElement('div');
+    const notificationId = 'notification-' + Date.now() + Math.random().toString(36).substr(2, 9);
+    notification.id = notificationId;
+    notification.className = `notification ${type} ${config.pulse ? 'pulse' : ''}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            ${config.icon ? `<div class="notification-icon">${config.icon}</div>` : ''}
+            <div class="notification-body">
+                <div class="notification-title">${message}</div>
+                ${config.details ? `<div class="notification-details">${config.details}</div>` : ''}
+                ${config.actionButton ? `
+                    <button class="notification-action" onclick="${config.actionButton.action}; closeNotification('${notificationId}')">
+                        ${config.actionButton.text}
+                    </button>
+                ` : ''}
+            </div>
+            <button class="notification-close" onclick="closeNotification('${notificationId}')" aria-label="Fermer">
+                ×
+            </button>
+        </div>
+        ${config.showProgress ? `
+            <div class="notification-progress">
+                <div class="notification-progress-bar" id="progress-${notificationId}"></div>
+            </div>
+        ` : ''}
+    `;
+
+    container.appendChild(notification);
+
+    // Animation d'entrée
+    requestAnimationFrame(() => {
+        notification.classList.add('show');
+    });
+
+    // Démarrer la barre de progression
+    if (config.showProgress) {
+        setTimeout(() => {
+            const progressBar = document.getElementById(`progress-${notificationId}`);
+            if (progressBar) {
+                progressBar.style.transitionDuration = config.duration + 'ms';
+                progressBar.style.transform = 'translateX(0)';
+            }
+        }, 100);
+    }
+
+    // Son
+    if (config.sound) {
+        playNotificationSound(type);
+    }
+
+    // Fermeture automatique
+    const timeoutId = setTimeout(() => {
+        closeNotification(notificationId);
+    }, config.duration);
+
+    // Pause au survol
+    notification.addEventListener('mouseenter', () => {
+        clearTimeout(timeoutId);
+        if (config.showProgress) {
+            const progressBar = document.getElementById(`progress-${notificationId}`);
+            if (progressBar) {
+                progressBar.style.animationPlayState = 'paused';
+            }
+        }
+    });
+
+    notification.addEventListener('mouseleave', () => {
+        setTimeout(() => closeNotification(notificationId), 1000);
+    });
+
+    return notificationId;
+}
+
+// Fonction pour fermer une notification
+function closeNotification(notificationId) {
+    const notification = document.getElementById(notificationId);
+    if (notification) {
+        notification.classList.add('hide');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 400);
+    }
+}
+
+// Fonction pour jouer un son
+function playNotificationSound(type) {
+    try {
+        const frequencies = {
+            success: [523.25, 659.25, 783.99], // Do, Mi, Sol
+            error: [220, 185], // La, Fa#
+            warning: [440, 554.37], // La, Do#
+            info: [523.25, 659.25] // Do, Mi
+        };
+        
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const freq = frequencies[type] || frequencies.info;
+        
+        freq.forEach((frequency, index) => {
+            setTimeout(() => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }, index * 50);
+        });
+    } catch (e) {
+        console.log('Audio not supported');
+    }
 }
 
 function viewSignalement(signalementId) {

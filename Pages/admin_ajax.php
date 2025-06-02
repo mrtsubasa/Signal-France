@@ -23,7 +23,7 @@ try {
     
     switch ($action) {
         case 'get_users':
-            $stmt = $conn->prepare("SELECT id, username, email, role, created_at, last_activity FROM users ORDER BY created_at DESC");
+            $stmt = $conn->prepare("SELECT id, username, email, role, created_at, last_activity, is_blacklisted, is_verified, is_active FROM users ORDER BY created_at DESC");
             $stmt->execute();
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
@@ -54,6 +54,15 @@ try {
             echo json_encode(['status' => 'success', 'message' => 'Utilisateur supprimé avec succès']);
             break;
             
+            case 'update_user_info': 
+                $userId = $_POST['user_id']?? 0;
+                $username = $_POST['username']?? '';
+                $email = $_POST['email']?? '';
+                $smt = $conn->prepare("UPDATE users SET username =?, email =? WHERE id =?");
+                $stmt->execute([$username, $email, $userId]);
+
+                echo json_encode(['status' =>'success','message' => 'Informations utilisateur mises à jour avec succès']);
+                break;
         case 'update_user_role':
             $userId = $_POST['user_id'] ?? 0;
             $newRole = $_POST['role'] ?? '';
@@ -74,6 +83,56 @@ try {
             echo json_encode(['status' => 'success', 'message' => 'Rôle mis à jour avec succès']);
             break;
             
+            case 'update_user_blacklist':
+                $userId = $_POST['user_id']?? 0;
+                $blacklistStatus = $_POST['blacklist_status']?? '';
+
+                if ($userId <= 0 || empty($blacklistStatus)) {
+                    throw new Exception('Données invalides');
+                }
+
+                // Vérifier que le statut existe
+                $validBlacklistStatuses = ['blacklisted', 'unblacklisted'];
+                if (!in_array($blacklistStatus, $validBlacklistStatuses)) {
+                    throw new Exception('Statut invalide');
+                }
+
+                if ($blacklistStatus === 'blacklisted') {
+                    $stmt = $conn->prepare("UPDATE users SET is_blacklisted = 1 WHERE id = ?");
+                    $stmt->execute([$userId]);
+                    echo json_encode(["status"=> "success", "message"=> "Utilisateur mis en liste noire avec succès"]);
+                } else {
+                    $stmt = $conn->prepare("UPDATE users SET is_blacklisted = 0 WHERE id =?");
+                    $stmt->execute([$userId]);
+                    echo json_encode(["status"=> "success", "message"=> "Utilisateur retiré de la liste noire avec succès"]);
+                }
+                break;
+
+                // Ajouter ce case dans le switch de admin_ajax.php
+case 'update_user_verified':
+    $user_id = $_POST['user_id'] ?? 0;
+    $verifStatus = $_POST['verif_status'] ?? '';
+    
+
+    if ($user_id === null || empty($verifStatus)) {
+        throw new Exception('Données invalides');
+    }
+
+    $validStatus = ["verified", "unverified"];
+    if (!in_array($verifStatus, $validStatus)) {
+        throw new Exception('Statut invalide');
+    }
+
+    if ($verifStatus === 'verified') {
+        $stmt = $conn->prepare("UPDATE users SET is_verified = 1 WHERE id =?");
+        $stmt->execute([$user_id]);
+        echo json_encode(["status"=> "success", "message"=> "Utilisateur vérifié avec succès"]);
+    } else {
+        $stmt = $conn->prepare("UPDATE users SET is_verified = 0 WHERE id =?");
+        $stmt->execute([$user_id]);
+        echo json_encode(["status"=> "success", "message"=> "Utilisateur non vérifié avec succès"]);
+    }
+    break;
         case 'get_user':
             $userId = $_GET['user_id'] ?? 0;
             
@@ -81,7 +140,7 @@ try {
                 throw new Exception('ID utilisateur invalide');
             }
             
-            $stmt = $conn->prepare("SELECT id, username, email, role, created_at, last_activity, access_level, accreditation, organization FROM users WHERE id = ?");
+            $stmt = $conn->prepare("SELECT id, username, email, role, created_at, last_activity, access_level, accreditation, organization, is_blacklisted, is_verified FROM users WHERE id = ?");
             $stmt->execute([$userId]);
             $user_data = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -433,6 +492,27 @@ try {
                     echo json_encode(['error' => $e->getMessage()]);
                 }
                 break;
+
+
+                case 'mark_contact_as_replied':
+                    try {
+                        $id = $_POST['id']?? 0;
+
+                        if (!$id) {
+                            throw new Exception('ID manquant');
+                        }
+
+                        $db = connect_db();
+
+                        // Mise à jour du statut du message
+                        $stmt = $conn->prepare("UPDATE messages_contact SET statut = 'repondu', repondu = 1 WHERE id = ?");
+                        $stmt->execute([$id]);
+
+                        echo json_encode(['status' =>'success','message' => 'Message marqué comme répondu']);
+                    } catch (Exception $e) {
+                        echo json_encode(['error' => $e->getMessage()]);
+                    }
+                    break;
 
             
             

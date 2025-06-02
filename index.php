@@ -1,8 +1,12 @@
-<?php include_once('Inc/Components/header.php'); ?>
-<?php include_once('Inc/Components/nav.php'); ?>
 
-<?php include('Inc/Constants/db.php');
 
+<?php 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+include_once('Inc/Components/header.php');
+include_once('Inc/Components/nav.php');
+include_once('Inc/Constants/db.php');
 try {
 $conn = connect_db();
 if (!$conn) {
@@ -45,7 +49,9 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
         
         if ($dataUser) {
             // Token valide, restaurer la session
-            session_start();
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             $_SESSION['user_id'] = $dataUser['id'];
             $_SESSION['user_email'] = $dataUser['email'];
             $_SESSION['user_username'] = $dataUser['username'];

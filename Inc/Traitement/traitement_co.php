@@ -14,7 +14,7 @@ if (isset($_POST['email'], $_POST['password'])) {
         $db = connect_db();
         
         // Requête optimisée avec index sur email
-        $req = $db->prepare("SELECT id, email, username, password, role, avatar, token, last_activity FROM users WHERE email = :email LIMIT 1");
+        $req = $db->prepare("SELECT id, email, username, password, role, avatar, token, last_activity, is_active FROM users WHERE email = :email LIMIT 1");
         $req->execute(['email' => $email]);
         $user = $req->fetch(PDO::FETCH_ASSOC);
 
@@ -28,6 +28,7 @@ if (isset($_POST['email'], $_POST['password'])) {
             $_SESSION['user_role'] = $user['role'];
             $_SESSION['user_avatar'] = $user['avatar'];
             $_SESSION['user_last_activity'] = date('Y-m-d H:i:s');
+            $_SESSION['user_active'] = $user['is_active'];
             
             // Gestion des cookies seulement si "Se souvenir de moi" est coché
             if (isset($_POST['remember_me'])) {
@@ -38,7 +39,7 @@ if (isset($_POST['email'], $_POST['password'])) {
             }
             
             // Mise à jour de la dernière activité
-            $updateStmt = $db->prepare("UPDATE users SET last_activity = datetime('now') WHERE id = :id");
+            $updateStmt = $db->prepare("UPDATE users SET last_activity = datetime('now'), is_active=1 WHERE id = :id");
             $updateStmt->execute(['id' => $user['id']]);
             
             // Redirection selon le rôle

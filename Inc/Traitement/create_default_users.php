@@ -100,6 +100,11 @@ function createDefaultUsers() {
             token VARCHAR(255) DEFAULT NULL,
             token_expiry DATETIME DEFAULT NULL,
             last_activity DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_active INTEGER DEFAULT 0,
+            is_verified INTEGER DEFAULT 0,
+            is_banned INTEGER DEFAULT 0,
+            is_deleted INTEGER DEFAULT 0,
+            is_blacklisted INTEGER DEFAULT 0,
             require_password_change INTEGER DEFAULT 0
         )");
 

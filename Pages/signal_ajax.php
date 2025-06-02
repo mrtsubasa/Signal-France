@@ -264,6 +264,19 @@ try {
                 break;
             }
             
+            // Check si l'utilisateur est blacklist ou non
+            $stmt = $conn->prepare("SELECT is_blacklisted FROM users WHERE id = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (empty($user)) {
+                echo json_encode(['success' => false, 'error' => 'Utilisateur non trouvé']);
+                break;
+            } elseif ($user['is_blacklisted']) {
+                echo json_encode(['success' => false, 'error' => 'Vous êtes blacklisté']);
+                break;
+            } else {
+                // Si l'utilisateur n'est pas blacklisté, continuer
+            }
             // Insertion en base avec les nouveaux champs
             $sql = "INSERT INTO signalements (user_id, titre, type, description, type_incident, priorite, email_contact, anonyme, preuves, incident_context, plateforme, lieu, statut, date_signalement) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'en_attente', datetime('now'))";

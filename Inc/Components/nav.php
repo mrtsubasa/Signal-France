@@ -1,9 +1,4 @@
 <?php
-// Démarrer la session si elle n'est pas déjà démarrée
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 // Déterminer le chemin vers la racine depuis ce fichier
 $rootPath = dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR;
 include_once($rootPath . "Inc" . DIRECTORY_SEPARATOR . "Constants" . DIRECTORY_SEPARATOR . "db.php");
@@ -91,7 +86,7 @@ try {
         }
         
         $avatarFile = $latestAvatar ? $avatarDir . $latestAvatar : null;
-        $defaultAvatar = $rootPath . "Assets/Images/default-avatar.png";
+        $defaultAvatar = $rootPath . "Assets/Images/SignaleFrance.png";
         $avatarname = $username . "'s Avatar";
     }
     
@@ -116,8 +111,8 @@ $basePath = $isInSubfolder ? '../' : './';
         <div class="flex justify-between items-center h-16 lg:h-20">
             <!-- Logo et titre -->
             <div class="flex items-center space-x-4">
-                <img src="<?php echo $basePath; ?>Assets/Images/alerte_france.png" 
-                     alt="Alerte France Logo" 
+                <img src="<?php echo $basePath; ?>Assets/Images/SignaleFrance.png" 
+                     alt="Signale France Logo" 
                      class="h-10 w-10 lg:h-12 lg:w-12">
                 <div class="hidden sm:block">
                     <h1 class="text-lg lg:text-xl font-bold text-france-blue">Signale France</h1>
