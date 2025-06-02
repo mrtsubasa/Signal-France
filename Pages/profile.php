@@ -116,85 +116,92 @@ function getRoleBadge($role) {
 }
 ?>
 
-<div class="min-h-screen bg-gray-50 py-8">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header du profil -->
-        <div class="bg-white shadow rounded-lg mb-8">
+        <!-- Header du profil avec effet glassmorphism -->
+        <div class="bg-white/80 backdrop-blur-lg shadow-2xl rounded-2xl mb-8 border border-white/20 overflow-hidden">
             <div class="relative">
-                <!-- Bannière de couverture -->
+                <!-- Bannière de couverture avec overlay -->
                 <?php if ($banner && file_exists('../Assets/Images/banners/'. $banner)):?>
-                    <img src="../Assets/Images/banners/<?= htmlspecialchars($banner)?>"
-                         alt="Bannière de couverture"
-                         class="w-full h-48 object-cover rounded-t-lg">
+                    <div class="relative">
+                        <img src="../Assets/Images/banners/<?= htmlspecialchars($banner)?>"
+                             alt="Bannière de couverture"
+                             class="w-full h-56 object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
+                    </div>
                 <?php else:?>
-                    <div class="h-48 bg-gradient-to-r from-france-blue to-blue-600 rounded-t-lg"></div>
+                    <div class="h-56 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+                        <div class="absolute top-4 right-4">
+                            <div class="w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <div class="w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+                        </div>
+                    </div>
                 <?php endif;?>
 
-                
                 <!-- Photo de profil et informations principales -->
-                <div class="relative px-6 pb-6">
-                    <div class="flex flex-col sm:flex-row sm:items-end sm:space-x-6">
-                        <!-- Avatar -->
-                        <div class="-mt-16 relative">
-                            <div class="w-32 h-32 bg-white rounded-full p-2 shadow-lg">
+                <div class="relative px-8 pb-8">
+                    <div class="flex flex-col sm:flex-row sm:items-end sm:space-x-8">
+                    <div class="-mt-20 relative group">
+                            <!-- Avatar plus grand : de w-36 h-36 à w-48 h-48 -->
+                            <div class="w-40 h-40 bg-gradient-to-br from-white to-gray-50 rounded-full p-1 shadow-2xl ring-4 ring-white/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-105">
                                 <?php if ($avatar && file_exists('../Assets/Images/avatars/' . $avatar)): ?>
                                     <img src="../Assets/Images/avatars/<?= htmlspecialchars($avatar) ?>" 
                                          alt="Avatar" 
-                                         class="w-full h-full rounded-full object-cover">
+                                         class="w-full h-full rounded-full object-cover shadow-inner">
                                 <?php else: ?>
-                                    <div class="w-full h-full rounded-full bg-france-blue flex items-center justify-center">
-                                        <i class="fas fa-user text-white text-4xl"></i>
+                                    <div class="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-inner">
+                                        <!-- Icône plus grande aussi : de text-5xl à text-6xl -->
+                                        <i class="fas fa-user text-white text-6xl"></i>
                                     </div>
                                 <?php endif; ?>
                             </div>
-                             <!-- Icon Verif-->
-                             <?php if ($verified):?>
-    <div class="absolute bottom-0 right-0 w-6 h-6 bg-gradient-to-br from-blue-800 to-blue-950 rounded-full shadow-lg border-2 border-white flex items-center justify-center">
-        <i class="fas fa-check-circle text-white text-xs"></i>
-    </div>
-<?php endif;?>
+                            
+                            <!-- Texte COMPTE VERIF directement sous la photo de profil -->
+                            <?php if ($verified): ?>
+                                <div class="mt-4 text-center">
+                                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        COMPTE CERTIFIÉ
+                                    </span>
+                                </div>
+                            <?php endif; ?>
                         </div>
                         
-                        <!-- Informations utilisateur -->
-                        <div class="mt-4 sm:mt-0 flex-1">
+                        <!-- Informations utilisateur avec typographie améliorée -->
+                        <div class="mt-0 sm:mt-0 flex-1">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                            <div class="space-y-2">
+                                    <h1 class="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent flex items-center flex-wrap gap-3">
                                         <?= htmlspecialchars($username) ?>
-                                        <span class="ml-3"><?= getRoleBadge($role) ?></span>
-                                         <!-- Icon Active-->
-                                         <?php if ($active):?>
-                                            <span class="ml-3">
-                                                <div class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors">
-                                                     <i class="fas fa-circle text-xs mr-1"></i>
-                                                        <span class="ml-2 text-sm text-green-600 font-medium">Actif</span>
-                                                 </div>
-                                            </span>
-                                        <?php endif;?>
-                                         <!-- Blacklist -->
-                                         <?php if ($blacklisted):?>
-                                            <span class="ml-3 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200 align-middle">
-                                                <i class="fas fa-ban mr-1.5 text-red-600"></i>
-                                                Blacklisté
-                                            </span>
-                                        <?php endif;?>
+                                        
+                                                                                                     <!-- Badge de vérification ULTRA PREMIUM -->
+
                                     </h1>
-                                    <p class="text-lg text-gray-600 mt-1">
-                                        <i class="fas fa-envelope mr-2"></i><?= htmlspecialchars($email) ?>
+                                    
+                                    <p class="text-lg text-gray-600 flex items-center space-x-2">
+                                        <i class="fas fa-envelope text-blue-500"></i>
+                                        <span><?= htmlspecialchars($email) ?></span>
                                     </p>
+                                    
                                     <?php if ($organization): ?>
-                                        <p class="text-gray-600 mt-1">
-                                            <i class="fas fa-building mr-2"></i><?= htmlspecialchars($organization) ?>
+                                        <p class="text-gray-600 flex items-center space-x-2">
+                                            <i class="fas fa-building text-indigo-500"></i>
+                                            <span><?= htmlspecialchars($organization) ?></span>
                                         </p>
                                     <?php endif; ?>
+                           
                                 </div>
                                 
-                                <div class="mt-4 sm:mt-0">
-                                    <!-- Remplacer les deux boutons par un seul -->
+                                <!-- Bouton d'édition modernisé -->
+                                <div class="mt-6 sm:mt-0">
                                     <button onclick="openEditProfileModal()" 
-                                            class="bg-france-blue text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2">
-                                        <i class="fas fa-edit"></i>
-                                        <span>Modifier le profil</span>
+                                            class="group relative bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center space-x-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                        <i class="fas fa-edit group-hover:rotate-12 transition-transform duration-300"></i>
+                                        <span class="font-medium">Modifier le profil</span>
+                                        <div class="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     </button>
                                 </div>
                             </div>
@@ -204,53 +211,64 @@ function getRoleBadge($role) {
             </div>
         </div>
         
-        <!-- Contenu principal -->
+        <!-- Contenu principal avec grille améliorée -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Colonne principale -->
             <div class="lg:col-span-2 space-y-8">
-                <!-- À propos -->
-                <div class="bg-white shadow rounded-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-user-circle text-france-blue mr-2"></i>
+                <!-- À propos avec design card moderne -->
+                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 border border-white/20 hover:shadow-2xl transition-all duration-300">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+                            <i class="fas fa-user-circle text-white"></i>
+                        </div>
                         À propos
                     </h2>
                     <?php if ($bio): ?>
-                        <p class="text-gray-700 leading-relaxed"><?= nl2br(htmlspecialchars($bio)) ?></p>
+                        <div class="prose prose-gray max-w-none">
+                            <p class="text-gray-700 leading-relaxed text-lg"><?= nl2br(htmlspecialchars($bio)) ?></p>
+                        </div>
                     <?php else: ?>
-                        <p class="text-gray-500 italic">Aucune biographie renseignée.</p>
-                        <button onclick="openEditProfileModal()" 
-                                class="mt-2 text-france-blue hover:text-blue-700 text-sm">
-                            Ajouter une biographie
-                        </button>
+                        <div class="text-center py-8">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-pen text-gray-400 text-xl"></i>
+                            </div>
+                            <p class="text-gray-500 italic mb-4">Aucune biographie renseignée.</p>
+                            <button onclick="openEditProfileModal()" 
+                                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-md hover:shadow-lg">
+                                Ajouter une biographie
+                            </button>
+                        </div>
                     <?php endif; ?>
                 </div>
                 
-                <!-- Activité récente -->
-                <div class="bg-white shadow rounded-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-clock text-france-blue mr-2"></i>
+                <!-- Activité récente avec timeline -->
+                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 border border-white/20 hover:shadow-2xl transition-all duration-300">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+                            <i class="fas fa-clock text-white"></i>
+                        </div>
                         Activité récente
                     </h2>
-                    <div class="space-y-4">
-                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-sign-in-alt text-green-600 text-sm"></i>
+                    <div class="space-y-6">
+                        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-100 hover:shadow-md transition-all duration-200">
+                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center shadow-lg">
+                                <i class="fas fa-sign-in-alt text-white"></i>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">Dernière connexion</p>
-                                <p class="text-xs text-gray-500">
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900">Dernière connexion</p>
+                                <p class="text-sm text-gray-600">
                                     <?= $last_activity ? date('d/m/Y à H:i', strtotime($last_activity)) : 'Jamais' ?>
                                 </p>
                             </div>
                         </div>
                         
-                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-user-plus text-blue-600 text-sm"></i>
+                        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-md transition-all duration-200">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg">
+                                <i class="fas fa-user-plus text-white"></i>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">Membre depuis</p>
-                                <p class="text-xs text-gray-500">
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900">Membre depuis</p>
+                                <p class="text-sm text-gray-600">
                                     <?= date('d/m/Y', strtotime($created_at)) ?>
                                 </p>
                             </div>
@@ -258,57 +276,82 @@ function getRoleBadge($role) {
                     </div>
                 </div>
 
-                 <!-- Informations complémentaires -->
-                <div class="bg-white shadow rounded-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-info-circle text-france-blue mr-2"></i>
+                <!-- Informations complémentaires avec icônes colorées -->
+                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 border border-white/20 hover:shadow-2xl transition-all duration-300">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+                            <i class="fas fa-info-circle text-white"></i>
+                        </div>
                         Informations complémentaires
                     </h2>
-                    <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Rôle de l'utilisateur -->
+                        <div class="flex items-center space-x-3 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
+                            <i class="fas fa-user-tag text-indigo-600 text-xl w-6"></i>
+                            <div>
+                                <span class="text-gray-500 text-sm">Rôle</span>
+                                <div class="text-gray-700 font-medium"><?= ucfirst(htmlspecialchars($role)) ?></div>
+                            </div>
+                        </div>
+
+                        <!-- Statut actif -->
+                        <div class="flex items-center space-x-3 p-3 <?= $active ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-red-50 hover:bg-red-100' ?> rounded-lg transition-colors">
+                            <i class="fas <?= $active ? 'fa-check-circle text-emerald-600' : 'fa-times-circle text-red-600' ?> text-xl w-6"></i>
+                            <div>
+                                <span class="text-gray-500 text-sm">Statut</span>
+                                <div class="<?= $active ? 'text-emerald-700' : 'text-red-700' ?> font-medium">
+                                    <?= $active ? 'Actif' : 'Inactif' ?>
+                                </div>
+                            </div>
+                        </div>
+
                         <?php if ($github):?>
-                            <div class="flex items-center space-x-3">
-                                <i class="fas fa-certificate text-gray-400 w-4"></i>
-                                <span class="text-sm text-gray-700"><?= htmlspecialchars($github)?></span>
+                            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <i class="fab fa-github text-gray-700 text-xl w-6"></i>
+                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($github)?></span>
                             </div>
                         <?php endif;?>
 
                         <?php if ($linkedin):?>
-                            <div class="flex items-center space-x-3">
-                                <i class="fab fa-linkedin text-gray-400 w-4"></i>
-                                <span class="text-sm text-gray-700"><?= htmlspecialchars($linkedin)?></span>
+                            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                                <i class="fab fa-linkedin text-blue-600 text-xl w-6"></i>
+                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($linkedin)?></span>
                             </div>
                         <?php endif;?>
 
                         <?php if ($website):?>
-                            <div class="flex items-center space-x-3">
-                                <i class="fas fa-globe text-gray-400 w-4"></i>
-                                <span class="text-sm text-gray-700"><?= htmlspecialchars($website)?></span>
+                            <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                                <i class="fas fa-globe text-green-600 text-xl w-6"></i>
+                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($website)?></span>
                             </div>
                         <?php endif;?>
                     </div>
+
                 </div>
             </div>
             
-            <!-- Sidebar -->
+            <!-- Sidebar avec design moderne -->
             <div class="space-y-8">
                 <!-- Informations de contact -->
-                <div class="bg-white shadow rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-address-card text-france-blue mr-2"></i>
-                        Informations de contact
+                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-white/20 hover:shadow-2xl transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-address-card text-white text-sm"></i>
+                        </div>
+                        Contact
                     </h3>
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                         <?php if ($phone): ?>
-                            <div class="flex items-center space-x-3">
-                                <i class="fas fa-phone text-gray-400 w-4"></i>
-                                <span class="text-sm text-gray-700"><?= htmlspecialchars($phone) ?></span>
+                            <div class="flex items-center space-x-3 p-3 bg-orange-50 rounded-lg">
+                                <i class="fas fa-phone text-orange-500 w-5"></i>
+                                <span class="text-gray-700"><?= htmlspecialchars($phone) ?></span>
                             </div>
                         <?php endif; ?>
                         
                         <?php if ($address): ?>
-                            <div class="flex items-center space-x-3">
-                                <i class="fas fa-map-marker-alt text-gray-400 w-4"></i>
-                                <span class="text-sm text-gray-700">
+                            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                <i class="fas fa-map-marker-alt text-blue-500 w-5"></i>
+                                <span class="text-gray-700">
                                     <?= htmlspecialchars($address) ?>
                                     <?= $city ? ', ' . htmlspecialchars($city) : '' ?>
                                 </span>
@@ -316,72 +359,91 @@ function getRoleBadge($role) {
                         <?php endif; ?>
                         
                         <?php if ($accreditation): ?>
-                            <div class="flex items-center space-x-3">
-                                <i class="fas fa-certificate text-gray-400 w-4"></i>
-                                <span class="text-sm text-gray-700"><?= htmlspecialchars($accreditation) ?></span>
+                            <div class="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
+                                <i class="fas fa-certificate text-purple-500 w-5"></i>
+                                <span class="text-gray-700"><?= htmlspecialchars($accreditation) ?></span>
                             </div>
                         <?php endif; ?>
                         
-                        
                         <?php if (!$phone && !$address && !$accreditation): ?>
-                            <p class="text-gray-500 text-sm italic">Aucune information de contact.</p>
-                            <button onclick="openEditProfileModal()" 
-                                    class="text-france-blue hover:text-blue-700 text-sm">
-                                Ajouter des informations
-                            </button>
+                            <div class="text-center py-4">
+                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-plus text-gray-400"></i>
+                                </div>
+                                <p class="text-gray-500 text-sm italic mb-3">Aucune information de contact.</p>
+                                <button onclick="openEditProfileModal()" 
+                                        class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                                    Ajouter des informations
+                                </button>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
                 
-                <!-- Statistiques -->
-                <div class="bg-white shadow rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-chart-bar text-france-blue mr-2"></i>
+                <!-- Statistiques avec graphiques visuels -->
+                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-white/20 hover:shadow-2xl transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-chart-bar text-white text-sm"></i>
+                        </div>
                         Statistiques
                     </h3>
                     <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Signalements créés</span>
-                            <span class="text-lg font-semibold text-gray-900">0</span>
+                        <div class="flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                            <span class="text-gray-700 font-medium">Signalements créés</span>
+                            <span class="text-2xl font-bold text-blue-600">0</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Signalements traités</span>
-                            <span class="text-lg font-semibold text-gray-900">0</span>
+                        <div class="flex justify-between items-center p-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg">
+                            <span class="text-gray-700 font-medium">Signalements traités</span>
+                            <span class="text-2xl font-bold text-emerald-600">0</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Niveau d'accès</span>
-                            <span class="text-sm font-medium text-france-blue"><?= ucfirst($user['access_level'] ?? 'basic') ?></span>
+                        <div class="flex justify-between items-center p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                            <span class="text-gray-700 font-medium">Niveau d'accès</span>
+                            <span class="text-sm font-bold text-purple-600 bg-purple-100 px-3 py-1 rounded-full"><?= ucfirst($user['access_level'] ?? 'basic') ?></span>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Actions rapides -->
-                <div class="bg-white shadow rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-bolt text-france-blue mr-2"></i>
+                <!-- Actions rapides avec design premium -->
+                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-white/20 hover:shadow-2xl transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-bolt text-white text-sm"></i>
+                        </div>
                         Actions rapides
                     </h3>
-                    <div class="space-y-3">
-                    <button onclick="openChangePasswordModal()" 
-        class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all font-medium shadow-lg">
-    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-    </svg>
-    Changer le mot de passe
-</button>
-                        
-                        <button onClick="fetchUserAccount()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all font-medium shadow-lg">
-                            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            Exporter mes données
+                    <div class="space-y-4">
+                        <button onclick="openChangePasswordModal()" 
+                                class="group w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-6 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div class="relative flex items-center justify-center space-x-3">
+                                <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <span>Changer le mot de passe</span>
+                            </div>
                         </button>
                         
-                        <button onClick="deleteAccount()" class="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium shadow-lg">
-                            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                            Supprimer mon compte
+                        <button onClick="fetchUserAccount()" 
+                                class="group w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 px-6 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div class="relative flex items-center justify-center space-x-3">
+                                <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <span>Exporter mes données</span>
+                            </div>
+                        </button>
+                        
+                        <button onClick="deleteAccount()" 
+                                class="group w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 px-6 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div class="relative flex items-center justify-center space-x-3">
+                                <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                <span>Supprimer mon compte</span>
+                            </div>
                         </button>
                     </div>
                 </div>
