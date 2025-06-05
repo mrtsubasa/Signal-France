@@ -17,10 +17,12 @@ $photo = '';
 $preuve = '';
 $email = '';
 $priorite = '';
+$nom = '';  // NOUVEAU
+$prenom = '';  // NOUVEAU
 $anonyme = false;
+$confirm = false;
 $success_message = '';
 $error_message = '';
-
 
 try {
     $conn = connect_db();
@@ -58,12 +60,10 @@ try {
             $preuve = htmlspecialchars(trim($_POST['preuve'] ?? ''), ENT_QUOTES, 'UTF-8');
             $email = htmlspecialchars(trim($_POST['email'] ?? ''), ENT_QUOTES, 'UTF-8');
             $priorite = htmlspecialchars(trim($_POST['priorite'] ?? 'normale'), ENT_QUOTES, 'UTF-8');
+            $nom = htmlspecialchars(trim($_POST['nom'] ?? ''), ENT_QUOTES, 'UTF-8');  // NOUVEAU
+            $prenom = htmlspecialchars(trim($_POST['prenom'] ?? ''), ENT_QUOTES, 'UTF-8');  // NOUVEAU
             $anonyme = isset($_POST['anonyme']) && $_POST['anonyme'] === 'on';
          
-            // Validation
-            if (empty($titre)) {
-                throw new Exception('Le titre est obligatoire');
-            }
             if (empty($type_incident)) {
                 throw new Exception('Le type d\'incident est obligatoire');
             }
@@ -79,16 +79,20 @@ try {
             if (empty($priorite)) {
                 throw new Exception('La priorité est obligatoire');
             }
+            // NOUVELLE VALIDATION : Nom et prénom requis si pas anonyme
+            if (!$anonyme && (empty($nom) || empty($prenom))) {
+                throw new Exception('Le nom et le prénom sont obligatoires si vous n\'êtes pas anonyme');
+            }
 
-            // Insert into database - FIXED: Added missing $email parameter
-            $req = $conn->prepare("INSERT INTO signalements (user_id, type_incident, titre, description, localisation, statut, priorite, anonyme, images, preuves, incident_context, email_contact, auteur) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            // Insert into database - MISE À JOUR avec les nouvelles colonnes
+            $req = $conn->prepare("INSERT INTO signalements (user_id, type_incident, titre, description, localisation, statut, priorite, anonyme, images, preuves, incident_context, email_contact, auteur, nom, prenom, plateforme, lieu) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
-            $req->execute([$id, $type_incident, $titre, $description, $lieu, 'en_attente', $priorite, $anonyme, $photo, $preuve, $contexte, $email, $auteur]);
+            $req->execute([$id, $type_incident, $titre, $description, $lieu, 'en_attente', $priorite, $anonyme, $photo, $preuve, $contexte, $email, $auteur, $nom, $prenom, $plateforme, $lieu]);
 
             $success_message = "Votre signalement a été envoyé avec succès. Nous vous recontacterons dans les plus brefs délais.";
             
             // Reset form variables after successful submission
-            $titre = $type_incident = $contexte = $plateforme = $lieu = $description = $photo = $preuve = $email = $priorite = '';
+            $titre = $type_incident = $contexte = $plateforme = $lieu = $description = $photo = $preuve = $email = $priorite = $nom = $prenom = '';
             $anonyme = false;
         
         } catch (Exception $e) {
@@ -103,109 +107,241 @@ try {
 <main class="flex-grow">
     <div class="container mx-auto px-4 py-8">
         <div class="max-w-4xl mx-auto">
-            <!-- Page Header -->
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Signaler un incident</h1>
-                <p class="text-gray-600">Aidez-nous à améliorer la sécurité numérique en signalant les incidents</p>
+            <!-- Page Header avec design amélioré -->
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-900 to-blue-700 rounded-full mb-6 shadow-lg">
+                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+                </div>
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-900 to-blue-700 bg-clip-text text-transparent mb-4">Signaler un incident</h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">Aidez-nous à améliorer la sécurité numérique en signalant les incidents. Votre signalement contribue à protéger la communauté.</p>
+                <div class="mt-6 flex justify-center space-x-8 text-sm text-gray-500">
+                    <div class="flex items-center">
+                        <i class="fas fa-lock text-green-600 mr-2"></i>
+                        <span>Données sécurisées</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-user-shield text-blue-600 mr-2"></i>
+                        <span>Anonymat possible</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-clock text-purple-600 mr-2"></i>
+                        <span>Traitement rapide</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- Success/Error Messages -->
+            <!-- Success/Error Messages avec design amélioré -->
             <?php if ($success_message): ?>
-                <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-center">
-                    <i class="fas fa-check-circle mr-2"></i><?= htmlspecialchars($success_message, ENT_QUOTES, 'UTF-8') ?>
+                <div class="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg shadow-md">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-green-800">Signalement envoyé avec succès</h3>
+                            <p class="mt-1 text-sm text-green-700"><?= htmlspecialchars($success_message, ENT_QUOTES, 'UTF-8') ?></p>
+                        </div>
+                    </div>
                 </div>
             <?php endif; ?>
 
             <?php if ($error_message): ?>
-                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i><?= htmlspecialchars($error_message, ENT_QUOTES, 'UTF-8') ?>
+                <div class="mb-8 p-6 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-500 rounded-lg shadow-md">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Erreur lors de l'envoi</h3>
+                            <p class="mt-1 text-sm text-red-700"><?= htmlspecialchars($error_message, ENT_QUOTES, 'UTF-8') ?></p>
+                        </div>
+                    </div>
                 </div>
             <?php endif; ?>
 
-            <!-- Main Form -->
-            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <!-- Main Form avec design amélioré -->
+            <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
                 <!-- Marianne Decorative Bar -->
-                <div class="h-2 bg-gradient-to-r from-blue-900 via-white to-red-600"></div>
+                <div class="h-3 bg-gradient-to-r from-blue-900 via-white to-red-600"></div>
                 
-                <form method="POST" action="signal.php" class="p-8 space-y-6">
-                    <!-- Title -->
-                    <div class="space-y-3">
-                        <label for="titre" class="block text-sm font-semibold text-gray-700">
-                            <i class="fas fa-heading text-blue-900 mr-2"></i>Titre du signalement *
-                        </label>
-                        <input type="text" 
-                               id="titre" 
-                               name="titre" 
-                               value="<?= htmlspecialchars($titre, ENT_QUOTES, 'UTF-8') ?>" 
-                               class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-900 focus:ring-4 focus:ring-blue-900/20 transition-all duration-300 hover:border-blue-700 hover:shadow-lg focus:shadow-xl text-gray-700" 
-                               placeholder="Décrivez brièvement l'incident (ex: Tentative de phishing par email)" 
-                               maxlength="150" 
-                               minlength="10" 
-                               required 
-                               aria-describedby="titre-help">
-                        <div id="titre-help" class="text-xs text-gray-500 mt-1">
-                            <i class="fas fa-info-circle mr-1"></i>Entre 10 et 150 caractères. Soyez précis et concis.
+                <form method="POST" action="signal.php" class="p-10 space-y-8">
+                    <!-- NOUVEAU: Section Informations personnelles -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-user text-blue-600 mr-3"></i>
+                            Informations personnelles
+                            <span class="ml-2 text-sm font-normal text-gray-500">(masquées si anonyme)</span>
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="personal-info-section">
+                            <!-- Prénom -->
+                            <div class="space-y-3">
+                                <label for="prenom" class="block text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-user text-blue-600 mr-2"></i>Prénom *
+                                </label>
+                                <input type="text" 
+                                       id="prenom" 
+                                       name="prenom" 
+                                       value="<?= htmlspecialchars($prenom, ENT_QUOTES, 'UTF-8') ?>" 
+                                       class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg text-gray-700" 
+                                       placeholder="Votre prénom" 
+                                       maxlength="50" 
+                                       <?= !$anonyme ? 'required' : '' ?>>
+                            </div>
+                            
+                            <!-- Nom -->
+                            <div class="space-y-3">
+                                <label for="nom" class="block text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-user text-blue-600 mr-2"></i>Nom *
+                                </label>
+                                <input type="text" 
+                                       id="nom" 
+                                       name="nom" 
+                                       value="<?= htmlspecialchars($nom, ENT_QUOTES, 'UTF-8') ?>" 
+                                       class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg text-gray-700" 
+                                       placeholder="Votre nom de famille" 
+                                       maxlength="50" 
+                                       <?= !$anonyme ? 'required' : '' ?>>
+                            </div>
+                        </div>
+                        
+                        <!-- Email dans la même section -->
+                        <div class="mt-6 space-y-3" id="email-section" style="display: <?= $anonyme ? 'none' : 'block' ?>">
+                            <label for="email" class="block text-sm font-semibold text-gray-700">
+                                <i class="fas fa-envelope text-blue-600 mr-2"></i>Adresse email *
+                            </label>
+                            <input type="email" id="email" name="email" value="<?= htmlspecialchars($email, ENT_QUOTES, 'UTF-8') ?>" 
+                                   class="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg text-gray-700" 
+                                   placeholder="Entrez votre adresse email" <?= !$anonyme ? 'required' : '' ?>>
                         </div>
                     </div>
 
-                    <!-- Context Selection -->
-                    <div class="space-y-4">
-    <label class="block text-sm font-semibold text-gray-800 mb-3">
-        <i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>Contexte de l'incident *
-    </label>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label class="relative cursor-pointer group">
-            <input type="radio" name="contexte" value="irl" <?= $contexte === 'irl' ? 'checked' : '' ?> 
-                   class="sr-only peer" required>
-            <div class="flex items-center p-4 border-2 border-gray-200 rounded-lg transition-all duration-200 
-                        peer-checked:border-blue-600 peer-checked:bg-blue-50 
-                        hover:border-blue-400 hover:shadow-md group-hover:scale-[1.02]">
-                <div class="flex items-center justify-center w-5 h-5 mr-3">
-                    <div class="w-4 h-4 border-2 border-gray-400 rounded-full transition-all duration-200 
-                                peer-checked:border-blue-600 peer-checked:bg-blue-600 
-                                peer-checked:shadow-[inset_0_0_0_2px_white]"></div>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-users text-blue-600 mr-3 text-lg"></i>
-                    <div>
-                        <span class="text-sm font-medium text-gray-800">Dans la vraie vie</span>
-                        <p class="text-xs text-gray-500 mt-1">Incident physique ou en personne</p>
-                    </div>
-                </div>
-            </div>
-        </label>
+                   <!-- Section Personne à signaler (remplace le titre) -->
+<div class="bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl p-6 border border-red-200">
+    <h3 class="text-lg font-semibold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-user-times text-red-600 mr-3"></i>
+        Personne à signaler *
+        <span class="ml-2 text-sm font-normal text-gray-500">(informations obligatoires)</span>
+    </h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Prénom de la personne à signaler -->
+        <div class="space-y-3">
+            <label for="prenom" class="block text-sm font-semibold text-gray-700">
+                <i class="fas fa-user text-red-600 mr-2"></i>Prénom de la personne *
+            </label>
+            <input type="text" 
+                   id="prenom" 
+                   name="prenom" 
+                   value="<?= htmlspecialchars($prenom, ENT_QUOTES, 'UTF-8') ?>" 
+                   class="w-full px-4 py-3 bg-white border-2 border-red-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 hover:border-red-400 hover:shadow-md focus:shadow-lg text-gray-700" 
+                   placeholder="Prénom de la personne à signaler" 
+                   maxlength="50" 
+                   required>
+        </div>
         
-        <label class="relative cursor-pointer group">
-            <input type="radio" name="contexte" value="virtuel" <?= $contexte === 'virtuel' ? 'checked' : '' ?> 
-                   class="sr-only peer" required>
-            <div class="flex items-center p-4 border-2 border-gray-200 rounded-lg transition-all duration-200 
-                        peer-checked:border-blue-600 peer-checked:bg-blue-50 
-                        hover:border-blue-400 hover:shadow-md group-hover:scale-[1.02]">
-                <div class="flex items-center justify-center w-5 h-5 mr-3">
-                    <div class="w-4 h-4 border-2 border-gray-400 rounded-full transition-all duration-200 
-                                peer-checked:border-blue-600 peer-checked:bg-blue-600 
-                                peer-checked:shadow-[inset_0_0_0_2px_white]"></div>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-globe text-blue-600 mr-3 text-lg"></i>
-                    <div>
-                        <span class="text-sm font-medium text-gray-800">En ligne/Virtuel</span>
-                        <p class="text-xs text-gray-500 mt-1">Incident numérique ou sur internet</p>
-                    </div>
-                </div>
+        <!-- Nom de la personne à signaler -->
+        <div class="space-y-3">
+            <label for="nom" class="block text-sm font-semibold text-gray-700">
+                <i class="fas fa-user text-red-600 mr-2"></i>Nom de la personne *
+            </label>
+            <input type="text" 
+                   id="nom" 
+                   name="nom" 
+                   value="<?= htmlspecialchars($nom, ENT_QUOTES, 'UTF-8') ?>" 
+                   class="w-full px-4 py-3 bg-white border-2 border-red-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 hover:border-red-400 hover:shadow-md focus:shadow-lg text-gray-700" 
+                   placeholder="Nom de famille de la personne à signaler" 
+                   maxlength="50" 
+                   required>
+        </div>
+    </div>
+    
+    <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div class="flex items-start">
+            <i class="fas fa-exclamation-triangle text-yellow-600 mr-3 mt-1"></i>
+            <div class="text-sm text-yellow-800">
+                <p class="font-medium">Information importante :</p>
+                <p>Assurez-vous que les informations saisies sont exactes. Un signalement avec de fausses informations peut avoir des conséquences légales.</p>
             </div>
-        </label>
+        </div>
     </div>
 </div>
 
 
+<!-- Anonymous Checkbox avec design amélioré -->
+<div class="flex items-center space-x-4 p-6 bg-gradient-to-r from-gray-50 to-slate-50 border-2 border-gray-200 rounded-2xl hover:shadow-md transition-all duration-300">
+    <div class="flex items-center">
+        <input type="checkbox" id="anonyme" name="anonyme" <?= $anonyme ? 'checked' : '' ?> 
+               class="w-6 h-6 text-blue-600 border-2 border-gray-300 rounded-lg focus:ring-blue-600 focus:ring-2 transition-all duration-200">
+    </div>
+    <div class="flex-1">
+        <label for="anonyme" class="text-base font-medium text-gray-700 cursor-pointer">
+            <i class="fas fa-user-secret text-gray-600 mr-3"></i>Signalement anonyme
+        </label>
+        <p class="text-sm text-gray-500 mt-1">Vos informations personnelles ne seront pas enregistrées</p>
+    </div>
+</div>
+
+
+
+                    <!-- Context Selection avec design amélioré -->
+                    <div class="space-y-4">
+                        <label class="block text-sm font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>Contexte de l'incident *
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <label class="relative cursor-pointer group">
+                                <input type="radio" name="contexte" value="irl" <?= $contexte === 'irl' ? 'checked' : '' ?> 
+                                       class="sr-only peer" required>
+                                <div class="flex items-center p-6 border-2 border-gray-200 rounded-2xl transition-all duration-300 
+                                            peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:shadow-lg
+                                            hover:border-blue-400 hover:shadow-md group-hover:scale-[1.02] bg-white">
+                                    <div class="flex items-center justify-center w-6 h-6 mr-4">
+                                        <div class="w-5 h-5 border-2 border-gray-400 rounded-full transition-all duration-200 
+                                                    peer-checked:border-blue-600 peer-checked:bg-blue-600 
+                                                    peer-checked:shadow-[inset_0_0_0_2px_white]"></div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-users text-blue-600 mr-4 text-xl"></i>
+                                        <div>
+                                            <span class="text-base font-semibold text-gray-800">Dans la vraie vie</span>
+                                            <p class="text-sm text-gray-500 mt-1">Incident physique ou en personne</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="relative cursor-pointer group">
+                                <input type="radio" name="contexte" value="virtuel" <?= $contexte === 'virtuel' ? 'checked' : '' ?> 
+                                       class="sr-only peer" required>
+                                <div class="flex items-center p-6 border-2 border-gray-200 rounded-2xl transition-all duration-300 
+                                            peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:shadow-lg
+                                            hover:border-blue-400 hover:shadow-md group-hover:scale-[1.02] bg-white">
+                                    <div class="flex items-center justify-center w-6 h-6 mr-4">
+                                        <div class="w-5 h-5 border-2 border-gray-400 rounded-full transition-all duration-200 
+                                                    peer-checked:border-blue-600 peer-checked:bg-blue-600 
+                                                    peer-checked:shadow-[inset_0_0_0_2px_white]"></div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-globe text-blue-600 mr-4 text-xl"></i>
+                                        <div>
+                                            <span class="text-base font-semibold text-gray-800">En ligne/Virtuel</span>
+                                            <p class="text-sm text-gray-500 mt-1">Incident numérique ou sur internet</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ... existing code ... -->
                     <!-- Incident Type -->
                     <div class="space-y-3">
                         <label for="type_incident" class="block text-sm font-semibold text-gray-700">
                             <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>Type d'incident *
                         </label>
                         <select name="type_incident" id="type_incident" required
-                                class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-900 focus:ring-4 focus:ring-blue-900/20 transition-all duration-300 hover:border-blue-700 hover:shadow-lg focus:shadow-xl text-gray-700">
+                                class="w-full px-4 py-4 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg text-gray-700 text-base">
                             <option value="">Sélectionnez un type d'incident</option>
                             
                             <!-- Options IRL -->
@@ -259,10 +395,10 @@ try {
                     <!-- Platform (conditional) -->
                     <div id="plateforme-section" class="space-y-3" style="display: <?= $contexte === 'virtuel' ? 'block' : 'none' ?>">
                         <label for="plateforme" class="block text-sm font-semibold text-gray-700">
-                            <i class="fas fa-globe text-blue-900 mr-2"></i>Plateforme concernée
+                            <i class="fas fa-globe text-blue-600 mr-2"></i>Plateforme concernée
                         </label>
                         <select name="plateforme" id="plateforme"
-                                class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-900 focus:ring-4 focus:ring-blue-900/20 transition-all duration-300 hover:border-blue-700 hover:shadow-lg focus:shadow-xl text-gray-700">
+                                class="w-full px-4 py-4 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg text-gray-700 text-base">
                             <option value="">Sélectionnez une plateforme</option>
                             <optgroup label="Réseaux sociaux">
                                 <option value="facebook" <?= $plateforme === 'facebook' ? 'selected' : '' ?>>Facebook</option>
@@ -298,101 +434,245 @@ try {
                     <!-- Location -->
                     <div class="space-y-3">
                         <label for="lieu" class="block text-sm font-semibold text-gray-700">
-                            <i class="fas fa-map-marker-alt text-blue-900 mr-2"></i>Lieu de l'incident
+                            <i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>Lieu de l'incident
                         </label>
                         <input type="text" id="lieu" name="lieu" value="<?= htmlspecialchars($lieu, ENT_QUOTES, 'UTF-8') ?>" 
-                               class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-900 focus:ring-4 focus:ring-blue-900/20 transition-all duration-300 hover:border-blue-700 hover:shadow-lg focus:shadow-xl text-gray-700" 
+                               class="w-full px-4 py-4 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg text-gray-700 text-base" 
                                placeholder="Ville, région ou URL du site web">
                     </div>
 
-                    <!-- Description -->
+                    <!-- Description avec design amélioré -->
                     <div class="space-y-3">
                         <label for="description" class="block text-sm font-semibold text-gray-700">
-                            <i class="fas fa-align-left text-blue-900 mr-2"></i>Description détaillée *
+                            <i class="fas fa-align-left text-blue-600 mr-2"></i>Description détaillée *
                         </label>
                         <div class="relative">
-                            <textarea id="description" name="description" rows="6" 
-                                      class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-900 focus:ring-4 focus:ring-blue-900/20 transition-all duration-300 hover:border-blue-700 hover:shadow-lg focus:shadow-xl resize-none text-gray-700" 
-                                      placeholder="Décrivez l'incident en détail : que s'est-il passé, quand, comment avez-vous été affecté..." 
+                            <textarea id="description" name="description" rows="8" 
+                                      class="w-full px-4 py-4 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg resize-none text-gray-700 text-base leading-relaxed" 
+                                      placeholder="Décrivez l'incident en détail : que s'est-il passé, quand, comment avez-vous été affecté, quelles sont les conséquences..." 
                                       maxlength="2000" 
                                       minlength="20" 
                                       required><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?></textarea>
-                            <div class="absolute bottom-3 right-3 text-xs text-gray-500">
+                            <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 text-xs text-gray-500 border border-gray-200">
                                 <span id="char-count">0</span>/2000
                             </div>
                         </div>
-                        <div class="text-xs text-gray-500">
-                            <i class="fas fa-info-circle mr-1"></i>Minimum 20 caractères requis. Soyez le plus précis possible.
+                        <div class="text-xs text-gray-500 flex items-center">
+                            <i class="fas fa-info-circle mr-2 text-blue-500"></i>Minimum 20 caractères requis. Plus vous êtes précis, mieux nous pourrons vous aider.
                         </div>
                     </div>
 
-                    <!-- Photo Evidence -->
+                    <!-- Photo Evidence avec design amélioré -->
                     <div class="space-y-3">
                         <label for="photo" class="block text-sm font-semibold text-gray-700">
-                            <i class="fas fa-camera text-blue-900 mr-2"></i>Photo/Capture d'écran
+                            <i class="fas fa-camera text-blue-600 mr-2"></i>Photo/Capture d'écran
                         </label>
                         <input type="url" id="photo" name="photo" value="<?= htmlspecialchars($photo, ENT_QUOTES, 'UTF-8') ?>" 
-                               class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-900 focus:ring-4 focus:ring-blue-900/20 transition-all duration-300 hover:border-blue-700 hover:shadow-lg focus:shadow-xl text-gray-700" 
-                               placeholder="URL de la photo ou capture d'écran">
+                               class="w-full px-4 py-4 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg text-gray-700 text-base" 
+                               placeholder="URL de la photo ou capture d'écran (optionnel)">
+                        <div class="text-xs text-gray-500 flex items-center">
+                            <i class="fas fa-shield-alt mr-2 text-green-500"></i>Les preuves visuelles renforcent votre signalement
+                        </div>
                     </div>
 
-                    <!-- Additional Proof -->
+                    <!-- Additional Proof avec design amélioré -->
                     <div class="space-y-3">
                         <label for="preuve" class="block text-sm font-semibold text-gray-700">
-                            <i class="fas fa-file-alt text-blue-900 mr-2"></i>Preuves supplémentaires
+                            <i class="fas fa-file-alt text-blue-600 mr-2"></i>Preuves supplémentaires
                         </label>
                         <input type="url" id="preuve" name="preuve" value="<?= htmlspecialchars($preuve, ENT_QUOTES, 'UTF-8') ?>" 
-                               class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-900 focus:ring-4 focus:ring-blue-900/20 transition-all duration-300 hover:border-blue-700 hover:shadow-lg focus:shadow-xl text-gray-700" 
-                               placeholder="URL vers des documents, emails, etc.">
+                               class="w-full px-4 py-4 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg text-gray-700 text-base" 
+                               placeholder="URL vers des documents, emails, etc. (optionnel)">
                     </div>
 
-                    <!-- Anonymous Checkbox -->
-                    <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-gray-50 to-white border-2 border-gray-200 rounded-xl">
-                        <input type="checkbox" id="anonyme" name="anonyme" <?= $anonyme ? 'checked' : '' ?> 
-                               class="w-5 h-5 text-blue-900 border-2 border-gray-300 rounded focus:ring-blue-900 focus:ring-2">
-                        <label for="anonyme" class="text-sm font-medium text-gray-700">
-                            <i class="fas fa-user-secret text-gray-600 mr-2"></i>Signalement anonyme
-                        </label>
-                    </div>
-
-                    <!-- Email (conditional) -->
-                    <div id="email-section" class="space-y-3" style="display: <?= $anonyme ? 'none' : 'block' ?>">
-                        <label for="email" class="block text-sm font-semibold text-gray-700">
-                            <i class="fas fa-envelope text-blue-900 mr-2"></i>Adresse email *
-                        </label>
-                        <input type="email" id="email" name="email" value="<?= htmlspecialchars($email, ENT_QUOTES, 'UTF-8') ?>" 
-                               class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-900 focus:ring-4 focus:ring-blue-900/20 transition-all duration-300 hover:border-blue-700 hover:shadow-lg focus:shadow-xl text-gray-700" 
-                               placeholder="Entrez votre adresse email" <?= !$anonyme ? 'required' : '' ?>>
-                    </div>
-
-                    <!-- Priority -->
+                    <!-- Priority avec design amélioré -->
                     <div class="space-y-3">
                         <label for="priorite" class="block text-sm font-semibold text-gray-700">
                             <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>Priorité *
                         </label>
                         <select name="priorite" id="priorite" required
-                                class="w-full px-4 py-3 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-900 focus:ring-4 focus:ring-blue-900/20 transition-all duration-300 hover:border-blue-700 hover:shadow-lg focus:shadow-xl text-gray-700">
+                                class="w-full px-4 py-4 bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-4 focus:ring-blue-600/20 transition-all duration-300 hover:border-blue-400 hover:shadow-md focus:shadow-lg text-gray-700 text-base">
                             <option value="">Sélectionnez une priorité</option>
-                            <option value="normale" <?= $priorite === 'normale' ? 'selected' : '' ?>>Normale</option>
-                            <option value="haute" <?= $priorite === 'haute' ? 'selected' : '' ?>>Haute</option>
-                            <option value="urgente" <?= $priorite === 'urgente' ? 'selected' : '' ?>>Urgente</option>
+                            <option value="normale" <?= $priorite === 'normale' ? 'selected' : '' ?>>🟢 Normale - Incident sans danger immédiat</option>
+                            <option value="haute" <?= $priorite === 'haute' ? 'selected' : '' ?>>🟡 Haute - Incident préoccupant</option>
+                            <option value="urgente" <?= $priorite === 'urgente' ? 'selected' : '' ?>>🔴 Urgente - Danger immédiat</option>
                         </select>
                     </div>
 
-                    <!-- Submit Button -->
-                    <div class="pt-6">
+                    <!-- Confirm Checkbox avec design amélioré -->
+<div class="flex items-center space-x-4 p-6 bg-gradient-to-r from-gray-50 to-slate-50 border-2 border-gray-200 rounded-2xl hover:shadow-md transition-all duration-300">
+    <div class="flex items-center">
+        <input type="checkbox" id="confirm" name="confirm" <?= $confirm ? 'checked' : '' ?> 
+               class="w-6 h-6 text-blue-600 border-2 border-gray-300 rounded-lg focus:ring-blue-600 focus:ring-2 transition-all duration-200">
+    </div>
+    <div class="flex-1">
+        <label for="confirm" class="text-base font-medium text-gray-700 cursor-pointer">
+        <i class="fa-solid fa-shield text-green-600 mr-3"></i>Confirmation du signalement
+        </label>
+        <p class="text-sm text-gray-500 mt-1">Je jure sur l'honneur que les informations signales sont toutes authentiques.</p>
+    </div>
+</div>
+                    <!-- Submit Button avec design amélioré -->
+                    <div class="pt-8">
                         <button type="submit" 
-                                class="w-full bg-gradient-to-r from-blue-900 to-blue-800 hover:from-blue-800 hover:to-blue-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-900/50 active:scale-95">
-                            <i class="fas fa-paper-plane mr-2"></i>Envoyer le signalement
+                                class="w-full bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 hover:from-blue-800 hover:via-blue-700 hover:to-blue-600 text-white font-bold py-5 px-8 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/50 active:scale-[0.98] text-lg">
+                            <i class="fas fa-paper-plane mr-3"></i>Envoyer le signalement
+                            <div class="text-sm font-normal mt-1 opacity-90">Votre signalement sera traité dans les plus brefs délais</div>
                         </button>
                     </div>
                 </form>
+            </div>
+            
+            <!-- Section d'aide avec design amélioré -->
+            <div class="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-question-circle text-blue-600 mr-3"></i>
+                    Besoin d'aide ?
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-phone text-white"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">Urgence</h4>
+                        <p class="text-sm text-gray-600">En cas de danger immédiat, contactez le <strong>3919</strong> ou le <strong>17</strong></p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-comments text-white"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">Support</h4>
+                        <p class="text-sm text-gray-600">Notre équipe est disponible pour vous accompagner</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-book text-white"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">Guide</h4>
+                        <p class="text-sm text-gray-600">Consultez notre <a href="faq.php" class="text-blue-600 hover:underline">FAQ</a> pour plus d'informations</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </main>
 
 <script>
+
+
+// ... existing code ...
+
+// NOUVEAU: Validation de la checkbox de confirmation
+function initConfirmationValidation() {
+    const form = document.querySelector('form');
+    const confirmCheckbox = document.getElementById('confirm');
+    const submitButton = document.querySelector('button[type="submit"]');
+    
+    if (form && confirmCheckbox) {
+        // Validation lors de la soumission du formulaire
+        form.addEventListener('submit', function(e) {
+            if (!confirmCheckbox.checked) {
+                e.preventDefault();
+                
+                // Afficher un message d'erreur
+                showConfirmationError();
+                
+                // Faire défiler vers la checkbox
+                confirmCheckbox.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                
+                // Ajouter un effet visuel d'erreur
+                addErrorEffect(confirmCheckbox.closest('.flex'));
+                
+                return false;
+            }
+        });
+        
+        // Mettre à jour l'état du bouton de soumission
+        confirmCheckbox.addEventListener('change', function() {
+            updateSubmitButton();
+            
+            // Supprimer l'effet d'erreur si la checkbox est cochée
+            if (this.checked) {
+                removeErrorEffect(this.closest('.flex'));
+                hideConfirmationError();
+            }
+        });
+        
+        // Initialiser l'état du bouton
+        updateSubmitButton();
+    }
+}
+
+// Fonction pour afficher un message d'erreur
+function showConfirmationError() {
+    // Supprimer le message existant s'il y en a un
+    hideConfirmationError();
+    
+    const confirmSection = document.getElementById('confirm').closest('.flex');
+    const errorMessage = document.createElement('div');
+    errorMessage.id = 'confirmation-error';
+    errorMessage.className = 'mt-4 p-4 bg-red-50 border border-red-200 rounded-lg';
+    errorMessage.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+            <div>
+                <h4 class="text-sm font-medium text-red-800">Confirmation requise</h4>
+                <p class="text-sm text-red-700 mt-1">Vous devez confirmer l'authenticité des informations avant de soumettre le signalement.</p>
+            </div>
+        </div>
+    `;
+    
+    confirmSection.parentNode.insertBefore(errorMessage, confirmSection.nextSibling);
+}
+
+// Fonction pour masquer le message d'erreur
+function hideConfirmationError() {
+    const errorMessage = document.getElementById('confirmation-error');
+    if (errorMessage) {
+        errorMessage.remove();
+    }
+}
+
+// Fonction pour ajouter un effet visuel d'erreur
+function addErrorEffect(element) {
+    element.classList.add('border-red-300', 'bg-red-50');
+    element.classList.remove('border-gray-200', 'bg-gradient-to-r', 'from-gray-50', 'to-slate-50');
+    
+    // Animation de secousse
+    element.style.animation = 'shake 0.5s ease-in-out';
+    setTimeout(() => {
+        element.style.animation = '';
+    }, 500);
+}
+
+// Fonction pour supprimer l'effet visuel d'erreur
+function removeErrorEffect(element) {
+    element.classList.remove('border-red-300', 'bg-red-50');
+    element.classList.add('border-gray-200', 'bg-gradient-to-r', 'from-gray-50', 'to-slate-50');
+}
+
+// Fonction pour mettre à jour l'état du bouton de soumission
+function updateSubmitButton() {
+    const confirmCheckbox = document.getElementById('confirm');
+    const submitButton = document.querySelector('button[type="submit"]');
+    
+    if (submitButton && confirmCheckbox) {
+        if (confirmCheckbox.checked) {
+            submitButton.disabled = false;
+            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitButton.classList.add('hover:shadow-lg', 'hover:scale-105');
+        } else {
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+            submitButton.classList.remove('hover:shadow-lg', 'hover:scale-105');
+        }
+    }
+}
+
+
 // Character counter for description
 function initCharacterCounter() {
     const descriptionTextarea = document.getElementById('description');
@@ -470,35 +750,85 @@ function initIncidentTypeToggle() {
     }
 }
 
-// Email toggle based on anonymous checkbox
-function initEmailToggle() {
+// NOUVEAU: Gestion des champs personnels et anonymat
+function initPersonalInfoToggle() {
     const anonymeCheckbox = document.getElementById('anonyme');
     const emailSection = document.getElementById('email-section');
     const emailInput = document.getElementById('email');
+    const nomInput = document.getElementById('nom');
+    const prenomInput = document.getElementById('prenom');
+    const personalInfoSection = document.getElementById('personal-info-section');
     
-    if (anonymeCheckbox && emailSection && emailInput) {
+    if (anonymeCheckbox && emailSection && emailInput && nomInput && prenomInput) {
         anonymeCheckbox.addEventListener('change', function() {
             if (this.checked) {
+                // Mode anonyme
                 emailSection.style.display = 'none';
                 emailInput.removeAttribute('required');
                 emailInput.value = '';
+                nomInput.removeAttribute('required');
+                nomInput.value = '';
+                prenomInput.removeAttribute('required');
+                prenomInput.value = '';
+                
+                // Ajouter un effet visuel pour indiquer que les champs sont désactivés
+                personalInfoSection.style.opacity = '0.5';
+                personalInfoSection.style.pointerEvents = 'none';
             } else {
+                // Mode normal
                 emailSection.style.display = 'block';
                 emailInput.setAttribute('required', 'required');
+                nomInput.setAttribute('required', 'required');
+                prenomInput.setAttribute('required', 'required');
+                
+                // Restaurer l'apparence normale
+                personalInfoSection.style.opacity = '1';
+                personalInfoSection.style.pointerEvents = 'auto';
+            }
+        });
+    }
+}
+
+// Validation améliorée du formulaire
+function initFormValidation() {
+    const form = document.querySelector('form');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const anonymeCheckbox = document.getElementById('anonyme');
+            const nomInput = document.getElementById('nom');
+            const prenomInput = document.getElementById('prenom');
+            const emailInput = document.getElementById('email');
+            
+            // Validation personnalisée pour les champs nom/prénom si pas anonyme
+            if (!anonymeCheckbox.checked) {
+                if (!nomInput.value.trim() || !prenomInput.value.trim()) {
+                    e.preventDefault();
+                    alert('Le nom et le prénom sont obligatoires si vous n\'êtes pas anonyme.');
+                    return false;
+                }
+                
+                if (!emailInput.value.trim()) {
+                    e.preventDefault();
+                    alert('L\'adresse email est obligatoire si vous n\'êtes pas anonyme.');
+                    return false;
+                }
             }
         });
     }
 }
 
 // Initialize all functions when DOM is loaded
+// Mettre à jour la fonction d'initialisation
 document.addEventListener('DOMContentLoaded', function() {
     initCharacterCounter();
     initPlatformToggle();
     initIncidentTypeToggle();
-    initEmailToggle();
+    initPersonalInfoToggle();
+    initConfirmationValidation(); // NOUVEAU
 });
-
-
 </script>
 
 <?php include_once('../Inc/Components/footer.php'); ?>
+<?php include_once('../Inc/Components/footers.php'); ?>
+<?php include('../Inc/Traitement/create_log.php'); ?>

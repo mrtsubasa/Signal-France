@@ -4,6 +4,10 @@ require_once '../Inc/Constants/db.php';
 $currentPath = $_SERVER['REQUEST_URI'];
 $isInSubfolder = (strpos($currentPath, '/Src/') !== false || strpos($currentPath, '/Pages/') !== false);
 $basePath = $isInSubfolder ? '../' : './';
+
+// Vérification de la connexion utilisateur
+$isLoggedIn = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+
 // Variables d'initialisation
 $searchResults = [];
 $searchPerformed = false;
@@ -32,24 +36,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search'])) {
         $pdo = connect_db();
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         
-        // Construction de la requête SQL avec les vrais noms de colonnes
+        // Construction de la requête SQL - CORRECTION: Supprimer le filtre statut = 'resolu'
         $sql = "SELECT s.*, 
-        u.username, u.email,
-        CASE 
-            WHEN s.anonyme = 1 THEN 'Anonyme'
-            WHEN u.username IS NOT NULL THEN u.username
-            ELSE 'Utilisateur supprimé'
-        END as auteur_complet
- FROM signalements s 
- LEFT JOIN users u ON s.user_id = u.id 
- WHERE s.statut = 'resolu'";
-$params = [];
+                u.username, u.email,
+                CASE 
+                    WHEN s.anonyme = 1 THEN 'Anonyme'
+                    WHEN u.username IS NOT NULL THEN u.username
+                    ELSE 'Utilisateur supprimé'
+                END as auteur_complet
+                FROM signalements s 
+                LEFT JOIN users u ON s.user_id = u.id 
+                WHERE 1=1";
+        $params = [];
         
         // Filtres de recherche par texte
         if (!empty($searchQuery)) {
             switch ($searchType) {
-                case 'titre':
-                    $sql .= " AND s.titre LIKE ?";
+                case 'nom_prenom':
+                    $sql .= " AND (s.nom LIKE ? OR s.prenom LIKE ? OR CONCAT(s.nom, ' ', s.prenom) LIKE ? OR CONCAT(s.prenom, ' ', s.nom) LIKE ?)";
+                    $params[] = "%$searchQuery%";
+                    $params[] = "%$searchQuery%";
+                    $params[] = "%$searchQuery%";
                     $params[] = "%$searchQuery%";
                     break;
                 case 'description':
@@ -76,9 +83,9 @@ $params = [];
                     $params[] = "%$searchQuery%";
                     break;
                 default: // 'all'
-                    $sql .= " AND (s.titre LIKE ? OR s.description LIKE ? OR s.localisation LIKE ? OR s.lieu LIKE ? OR s.type_incident LIKE ? OR s.plateforme LIKE ? OR s.auteur LIKE ? OR u.username LIKE ? OR u.email LIKE ?)";
+                    $sql .= " AND (s.nom LIKE ? OR s.prenom LIKE ? OR CONCAT(s.nom, ' ', s.prenom) LIKE ? OR s.description LIKE ? OR s.localisation LIKE ? OR s.lieu LIKE ? OR s.type_incident LIKE ? OR s.plateforme LIKE ? OR s.auteur LIKE ? OR u.username LIKE ? OR u.email LIKE ?)";
                     $searchTerm = "%$searchQuery%";
-                    $params = array_fill(0, 9, $searchTerm);
+                    $params = array_fill(0, 11, $searchTerm);
                     break;
             }
         }
@@ -100,7 +107,7 @@ $params = [];
         }
         
         // Tri sécurisé
-        $allowedSortFields = ['date_signalement', 'titre', 'statut', 'priorite', 'type_incident', 'created_at', 'updated_at'];
+        $allowedSortFields = ['date_signalement', 'nom', 'prenom', 'statut', 'priorite', 'type_incident', 'created_at', 'updated_at'];
         $allowedSortOrders = ['ASC', 'DESC'];
         
         if (in_array($sortBy, $allowedSortFields) && in_array($sortOrder, $allowedSortOrders)) {
@@ -187,632 +194,544 @@ function getPriorityIcon($priority) {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recherche Avancée - Signale France</title>
-    <link rel="stylesheet" href="../Assets/Css/styles.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-                 .french-gradient {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
-        }
-       
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(30, 58, 138, 0.1), 0 10px 10px -5px rgba(30, 58, 138, 0.04);
-        }
-        .search-highlight {
-            background-color: #fef3c7;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-weight: 600;
-        }
-        .modal-backdrop {
-            backdrop-filter: blur(8px);
-            background-color: rgba(30, 58, 138, 0.3);
-        }
-        .pulse-animation {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        .slide-in {
-            animation: slideIn 0.5s ease-out;
-        }
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
-</head>
-<body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
-    <?php include '../Inc/Components/header.php'; ?>
-    <?php include '../Inc/Components/nav.php'; ?>
+<?php include '../Inc/Components/header.php'; ?>
+<?php include '../Inc/Components/nav.php'; ?>
 
-    <!-- Hero Section -->
-    <div class="french-gradient text-white py-16">
-        <div class="container mx-auto px-4">
-            <div class="max-w-4xl mx-auto text-center">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                    <i class="fas fa-search mr-4"></i>Recherche Avancée
-                </h1>
-                <p class="text-xl opacity-90 mb-8">Explorez notre base de données de signalements résolus</p>
-                
-                <!-- Barre de recherche principale -->
-                <form method="POST" class="max-w-2xl mx-auto">
-                    <div class="relative">
-                        <input type="text" 
-                               name="search_query" 
-                               value="<?php echo htmlspecialchars($searchQuery); ?>"
-                               placeholder="Rechercher par titre, description, localisation..."
-                               class="search-input w-full px-6 py-4 pr-16 text-gray-800 rounded-2xl border-0 focus:ring-4 focus:ring-white/30 focus:outline-none text-lg">
-                        <button type="submit" name="search" 
-                                class="absolute right-2 top-2 bottom-2 px-6 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 flex items-center">
-                            <i class="fas fa-search text-lg"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Filtres rapides -->
-                    <div class="flex flex-wrap justify-center gap-3 mt-6">
-                        <select name="search_type" class="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:ring-2 focus:ring-white/50">
-                            <option value="all" <?php echo $searchType === 'all' ? 'selected' : ''; ?>>Recherche globale</option>
-                            <option value="titre" <?php echo $searchType === 'titre' ? 'selected' : ''; ?>>Titre uniquement</option>
-                            <option value="description" <?php echo $searchType === 'description' ? 'selected' : ''; ?>>Description</option>
-                            <option value="localisation" <?php echo $searchType === 'localisation' ? 'selected' : ''; ?>>Localisation</option>
-                            <option value="type_incident" <?php echo $searchType === 'type_incident' ? 'selected' : ''; ?>>Type d'incident</option>
-                            <option value="plateforme" <?php echo $searchType === 'plateforme' ? 'selected' : ''; ?>>Plateforme</option>
-                            <option value="auteur" <?php echo $searchType === 'auteur' ? 'selected' : ''; ?>>Auteur</option>
-                        </select>
-                        
-                        <select name="sort_by" class="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:ring-2 focus:ring-white/50">
-                            <option value="date_signalement" <?php echo $sortBy === 'date_signalement' ? 'selected' : ''; ?>>Date signalement</option>
-                            <option value="created_at" <?php echo $sortBy === 'created_at' ? 'selected' : ''; ?>>Date création</option>
-                            <option value="updated_at" <?php echo $sortBy === 'updated_at' ? 'selected' : ''; ?>>Dernière modification</option>
-                            <option value="titre" <?php echo $sortBy === 'titre' ? 'selected' : ''; ?>>Titre</option>
-                            <option value="priorite" <?php echo $sortBy === 'priorite' ? 'selected' : ''; ?>>Priorité</option>
-                        </select>
-                        
-                        <select name="sort_order" class="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:ring-2 focus:ring-white/50">
-                            <option value="DESC" <?php echo $sortOrder === 'DESC' ? 'selected' : ''; ?>>Plus récent</option>
-                            <option value="ASC" <?php echo $sortOrder === 'ASC' ? 'selected' : ''; ?>>Plus ancien</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
+<main>
+    <!-- En-tête avec animation -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 min-h-[60vh]">
+        <!-- Particules animées en arrière-plan -->
+        <div class="absolute inset-0">
+            <div class="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400 rounded-full animate-pulse opacity-60"></div>
+            <div class="absolute top-1/3 right-1/3 w-1 h-1 bg-white rounded-full animate-ping opacity-40"></div>
+            <div class="absolute bottom-1/4 left-1/3 w-3 h-3 bg-indigo-400 rounded-full animate-bounce opacity-50"></div>
+            <div class="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse opacity-70"></div>
         </div>
-    </div>
-
-    <div class="container mx-auto px-4 py-8">
-        <div class="max-w-7xl mx-auto">
-            
-            <!-- Filtres avancés -->
-            <div class="filter-card rounded-2xl shadow-lg p-6 mb-8 animate-fade-in">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-filter mr-2 text-blue-600"></i>Filtres avancés
-                </h2>
+        
+        <!-- Mesh gradient overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-transparent to-purple-600/20"></div>
+        
+        <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex items-center min-h-[60vh]">
+            <div class="w-full">
+                <!-- Badge de statut -->
+                <div class="flex justify-center mb-8">
+                    <div class="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                        Base de données active
+                    </div>
+                </div>
                 
-                <form method="POST">
-                    <input type="hidden" name="search_query" value="<?php echo htmlspecialchars($searchQuery); ?>">
-                    <input type="hidden" name="search_type" value="<?php echo htmlspecialchars($searchType); ?>">
-                    <input type="hidden" name="sort_by" value="<?php echo htmlspecialchars($sortBy); ?>">
-                    <input type="hidden" name="sort_order" value="<?php echo htmlspecialchars($sortOrder); ?>">
+                <div class="text-center">
+                    <h1 class="text-6xl md:text-7xl font-black text-white mb-6 tracking-tight">
+                        <span class="bg-white bg-clip-text text-transparent">
+                            Recherche
+                        </span>
+                        <br>
+                        <span class="text-white">Intelligente</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl text-white/80 max-w-4xl mx-auto leading-relaxed mb-12">
+                        Explorez notre base de données avec des outils de recherche 
+                        <span class="text-blue-300 font-semibold">puissants</span> et 
+                        <span class="text-purple-300 font-semibold">intuitifs</span>
+                    </p>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-flag mr-1"></i>Statut
-                            </label>
-                            <select name="status_filter" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">Tous les statuts</option>
-                                <?php foreach ($availableStatuses as $status): ?>
-                                    <option value="<?php echo htmlspecialchars($status); ?>" <?php echo $statusFilter === $status ? 'selected' : ''; ?>>
-                                        <?php echo ucfirst(str_replace('_', ' ', $status)); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                    <!-- Stats cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                            <div class="text-3xl font-bold text-blue-300 mb-2"><?php echo $totalResults > 0 ? $totalResults : '∞'; ?></div>
+                            <div class="text-white/80 text-sm font-medium">Signalements disponibles</div>
                         </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>Priorité
-                            </label>
-                            <select name="priority_filter" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">Toutes les priorités</option>
-                                <?php foreach ($availablePriorities as $priority): ?>
-                                    <option value="<?php echo htmlspecialchars($priority); ?>" <?php echo $priorityFilter === $priority ? 'selected' : ''; ?>>
-                                        <?php echo ucfirst($priority); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                            <div class="text-3xl font-bold text-purple-300 mb-2">< 1s</div>
+                            <div class="text-white/80 text-sm font-medium">Temps de recherche</div>
                         </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-tags mr-1"></i>Type d'incident
-                            </label>
-                            <select name="type_filter" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">Tous les types</option>
-                                <?php foreach ($availableTypes as $type): ?>
-                                    <option value="<?php echo htmlspecialchars($type); ?>" <?php echo $typeFilter === $type ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($type); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-center mt-6">
-                        <button type="submit" name="search" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center shadow-lg">
-                            <i class="fas fa-search mr-2"></i>Appliquer les filtres
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Messages d'erreur -->
-            <?php if (!empty($error)): ?>
-                <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg animate-fade-in">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-triangle text-red-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-red-700"><?php echo htmlspecialchars($error); ?></p>
+                        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                            <div class="text-3xl font-bold text-cyan-300 mb-2">24/7</div>
+                            <div class="text-white/80 text-sm font-medium">Disponibilité</div>
                         </div>
                     </div>
                 </div>
-            <?php endif; ?>
+            </div>
+        </div>
+        
+        <!-- Vague en bas -->
+        <div class="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="rgb(249 250 251)"/>
+            </svg>
+        </div>
+    </div>
 
-                                     <?php foreach ($searchResults as $index => $signalement): ?>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-30 relative z-20">
+        <!-- Formulaire de recherche moderne -->
+        <form method="POST" class="bg-white rounded-3xl shadow-2xl p-8 mb-12 border border-gray-100 backdrop-blur-sm">
+            <!-- Barre de recherche principale -->
+            <div class="mb-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Que recherchez-vous ?</h2>
+                    <p class="text-gray-600">Utilisez notre moteur de recherche intelligent</p>
+                </div>
+                
+                <div class="relative w-full max-w-4xl mx-auto px-4 sm:px-0">
+                    <!-- Version Desktop/Tablet -->
+                    <div class="hidden sm:block relative">
+                        <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                            <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" name="search_query" id="search_query" 
+                               value="<?php echo htmlspecialchars($searchQuery); ?>"
+                               placeholder="Rechercher par nom, description, localisation..." 
+                               class="w-full pl-14 pr-32 py-6 text-lg rounded-2xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 bg-gray-50 focus:bg-white shadow-sm hover:shadow-md">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-2">
+                            <button type="submit" name="search" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                <span class="flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    Rechercher
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Version Mobile -->
+                    <div class="block sm:hidden space-y-4">
+                        <!-- Champ de recherche mobile -->
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <input type="text" name="search_query" id="search_query_mobile" 
+                                   value="<?php echo htmlspecialchars($searchQuery); ?>"
+                                   placeholder="Que recherchez-vous ?" 
+                                   class="w-full pl-12 pr-4 py-4 text-base rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-3 focus:ring-blue-500/20 transition-all duration-300 bg-gray-50 focus:bg-white shadow-sm">
+                        </div>
+                        
+                        <!-- Bouton de recherche mobile -->
+                        <button type="submit" name="search" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg active:scale-95">
+                            <span class="flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                Rechercher
+                            </span>
+                        </button>
+                        
+                        <!-- Suggestions rapides mobile -->
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <span class="text-xs text-gray-500 font-medium">Suggestions :</span>
+                            <button type="button" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200" onclick="document.getElementById('search_query_mobile').value = 'accident'; this.form.submit();">
+                                Accident
+                            </button>
+                            <button type="button" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors duration-200" onclick="document.getElementById('search_query_mobile').value = 'vol'; this.form.submit();">
+                                Vol
+                            </button>
+                            <button type="button" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors duration-200" onclick="document.getElementById('search_query_mobile').value = 'urgence'; this.form.submit();">
+                                Urgence
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+           
+                </div>
+            </div>
+        </form>
+
+        <!-- Section des résultats de recherche -->
+        <?php if ($searchPerformed): ?>
+            <div class="container mx-auto px-4 py-8">
+                <?php if (!empty($error)): ?>
+                    <!-- Message d'erreur -->
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                            <span class="text-red-700"><?php echo htmlspecialchars($error); ?></span>
+                        </div>
+                    </div>
+                <?php elseif (!empty($searchResults)): ?>
+                    <!-- En-tête des résultats -->
+                    <div class="mb-8">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                                    Résultats de recherche
+                                </h2>
+                                <p class="text-gray-600">
+                                    <?php echo $totalResults; ?> signalement<?php echo $totalResults > 1 ? 's' : ''; ?> trouvé<?php echo $totalResults > 1 ? 's' : ''; ?>
+                                    <?php if (!empty($searchQuery)): ?>
+                                        pour "<span class="font-semibold text-blue-600"><?php echo htmlspecialchars($searchQuery); ?></span>"
+                                    <?php endif; ?>
+                                </p>
+                            </div>
                             
-                            <div class="group relative bg-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 border-2 border-gray-100 hover:border-[#000091] animate-fade-in transform hover:-translate-y-1" style="animation-delay: <?php echo $index * 0.1; ?>s">
-                                <!-- Effet de bordure animée -->
-                                <div class="absolute inset-0 bg-gradient-to-r from-[#000091] via-[#6a6af4] to-[#e1000f] rounded-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 -z-10"></div>
+                            <!-- Options de tri -->
+                            <div class="flex items-center space-x-4 mt-4 sm:mt-0">
+                                <form method="POST" class="flex items-center space-x-2">
+                                    <input type="hidden" name="search" value="1">
+                                    <input type="hidden" name="search_query" value="<?php echo htmlspecialchars($searchQuery); ?>">
+                                    <input type="hidden" name="search_type" value="<?php echo htmlspecialchars($searchType); ?>">
+                                    <input type="hidden" name="status_filter" value="<?php echo htmlspecialchars($statusFilter); ?>">
+                                    <input type="hidden" name="priority_filter" value="<?php echo htmlspecialchars($priorityFilter); ?>">
+                                    <input type="hidden" name="type_filter" value="<?php echo htmlspecialchars($typeFilter); ?>">
+                                    
+                                    <select name="sort_by" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="date_signalement" <?php echo $sortBy === 'date_signalement' ? 'selected' : ''; ?>>Date</option>
+                                        <option value="nom" <?php echo $sortBy === 'nom' ? 'selected' : ''; ?>>Nom</option>
+                                        <option value="statut" <?php echo $sortBy === 'statut' ? 'selected' : ''; ?>>Statut</option>
+                                        <option value="priorite" <?php echo $sortBy === 'priorite' ? 'selected' : ''; ?>>Priorité</option>
+                                    </select>
+                                    <select name="sort_order" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="DESC" <?php echo $sortOrder === 'DESC' ? 'selected' : ''; ?>>Décroissant</option>
+                                        <option value="ASC" <?php echo $sortOrder === 'ASC' ? 'selected' : ''; ?>>Croissant</option>
+                                    </select>
+                                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                        <i class="fas fa-sort mr-1"></i>Trier
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grille des résultats -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <?php foreach ($searchResults as $index => $signalement): ?>
+                            <div class="group relative bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                                 
-                                <div class="flex flex-col lg:flex-row gap-6">
-                                    <!-- Informations principales à gauche -->
-                                    <div class="flex-1 space-y-5">
-                                        <!-- Badge ID en haut -->
-                                        <div class="flex items-start justify-between mb-4">
-                                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-[#000091] to-[#6a6af4] text-white shadow-lg">
-                                                <i class="fas fa-hashtag mr-2"></i><?php echo $signalement['id']; ?>
-                                            </span>
+                                <?php if ($isLoggedIn): ?>
+                                    <!-- AFFICHAGE COMPLET POUR UTILISATEURS CONNECTÉS -->
+                                    <!-- Image du signalement -->
+                                    <div class="relative h-48 overflow-hidden rounded-t-xl">
+                                        <img src="<?php echo !empty($signalement['photo']) ? htmlspecialchars($signalement['photo']) : '../Assets/Images/IMG_5652.jpg'; ?>" 
+                                             alt="Photo du signalement" 
+                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                        
+                                    </div>
+                                    
+                                    <!-- Contenu de la carte -->
+                                    <div class="p-6">
+                                        <!-- Titre et ID -->
+                                        <div class="mb-4">
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
+                                                <?php echo htmlspecialchars($signalement['nom'] . ' ' . $signalement['prenom']); ?>
+                                            </h3>
+                                            <p class="text-sm text-gray-500">
+                                                Signalement #<?php echo $signalement['id']; ?>
+                                            </p>
                                         </div>
-
-                                        <!-- Titre principal -->
-                                        <h3 class="text-2xl font-bold text-gray-900 mb-4 hover:bg-gradient-to-r hover:from-[#000091] hover:to-[#e1000f] hover:bg-clip-text hover:text-transparent transition-all duration-300 cursor-pointer leading-tight" onclick="showSignalementDetails(<?php echo $signalement['id']; ?>)">
-                                            <?php 
-                                            $titre = htmlspecialchars($signalement['titre']);
-                                            if ($searchType === 'titre' && !empty($searchQuery)) {
-                                                $titre = str_ireplace($searchQuery, '<mark class="bg-yellow-200 px-2 py-1 rounded-lg font-semibold">' . htmlspecialchars($searchQuery) . '</mark>', $titre);
-                                            }
-                                            echo $titre;
-                                            ?>
-                                        </h3>
-
-                                        <!-- Grille d'informations compacte -->
-                                        <div class="grid grid-cols-2 gap-3">
-                                            <!-- Localisation -->
+                                        
+                                        <!-- Informations principales -->
+                                        <div class="space-y-2 mb-4">
+                                            <div class="flex items-center text-sm text-gray-600">
+                                                <i class="fas fa-calendar mr-2 text-gray-400"></i>
+                                                <span><?php echo date('d/m/Y à H:i', strtotime($signalement['date_signalement'])); ?></span>
+                                            </div>
+                                            
                                             <?php if (!empty($signalement['localisation'])): ?>
-                                                <div class="flex items-center p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl border border-red-100 hover:shadow-md transition-shadow">
-                                                    <div class="w-8 h-8 bg-gradient-to-r from-[#e1000f] to-red-600 rounded-xl flex items-center justify-center mr-3 shadow-sm">
-                                                        <i class="fas fa-map-marker-alt text-white text-sm"></i>
-                                                    </div>
-                                                    <span class="text-gray-700 font-medium text-sm truncate"><?php echo htmlspecialchars($signalement['localisation']); ?></span>
+                                                <div class="flex items-center text-sm text-gray-600">
+                                                    <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                                                    <span class="truncate"><?php echo htmlspecialchars($signalement['localisation']); ?></span>
                                                 </div>
                                             <?php endif; ?>
                                             
-                                            <!-- Auteur -->
-                                            <div class="flex items-center p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 hover:shadow-md transition-shadow">
-                                                <div class="w-8 h-8 bg-gradient-to-r from-[#6a6af4] to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-sm">
-                                                    <i class="fas fa-user text-white text-sm"></i>
-                                                </div>
-                                                <span class="text-gray-700 font-medium text-sm truncate"><?php echo htmlspecialchars($signalement['auteur_complet']); ?></span>
-                                            </div>
-                                            
-                                            <!-- Date -->
-                                            <div class="flex items-center p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-100 hover:shadow-md transition-shadow">
-                                                <div class="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mr-3 shadow-sm">
-                                                    <i class="fas fa-calendar text-white text-sm"></i>
-                                                </div>
-                                                <span class="text-gray-700 font-medium text-sm"><?php echo date('d/m/Y', strtotime($signalement['date_signalement'])); ?></span>
-                                            </div>
-                                            
-                                            <!-- Type d'incident -->
                                             <?php if (!empty($signalement['type_incident'])): ?>
-                                                <div class="flex items-center p-3 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border border-slate-100 hover:shadow-md transition-shadow">
-                                                    <div class="w-8 h-8 bg-gradient-to-r from-slate-600 to-gray-600 rounded-xl flex items-center justify-center mr-3 shadow-sm">
-                                                        <i class="fas fa-tag text-white text-sm"></i>
-                                                    </div>
-                                                    <span class="text-gray-700 font-medium text-sm truncate"><?php echo htmlspecialchars($signalement['type_incident']); ?></span>
+                                                <div class="flex items-center text-sm text-gray-600">
+                                                    <i class="fas fa-exclamation-triangle mr-2 text-gray-400"></i>
+                                                    <span><?php echo htmlspecialchars($signalement['type_incident']); ?></span>
                                                 </div>
                                             <?php endif; ?>
                                         </div>
                                         
-                                        <!-- Bouton d'action principal -->
-                                        <?php if (isset($_SESSION['user_id'])): ?>
+                                        <!-- Description -->
+                                        <div class="mb-4">
+                                            <p class="text-sm text-gray-700 line-clamp-3">
+                                                <?php echo htmlspecialchars(substr($signalement['description'], 0, 150)) . (strlen($signalement['description']) > 150 ? '...' : ''); ?>
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Bouton d'action -->
+                                        <div class="flex justify-between items-center">
                                             <button onclick="showSignalementDetails(<?php echo $signalement['id']; ?>)" 
-                                                    class="group relative w-full lg:w-auto px-8 py-4 bg-gradient-to-r from-[#000091] to-[#6a6af4] text-white rounded-2xl hover:from-[#6a6af4] hover:to-[#000091] transition-all duration-500 flex items-center justify-center shadow-xl hover:shadow-2xl transform hover:-translate-y-1 overflow-hidden font-semibold">
-                                                <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                                <i class="fas fa-eye mr-3 text-lg"></i>
-                                                <span>View details</span>
+                                                    class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
+                                                <i class="fas fa-eye mr-2"></i>Voir détails
                                             </button>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <!-- Photo rectangulaire moderne à droite -->
-                                    <div class="lg:w-80 lg:flex-shrink-0">
-                                        <div class="relative group">
-                                            <!-- Conteneur avec bordure tricolore moderne -->
-                                            <div class="relative bg-gradient-to-br from-blue-500 via-blue-600 to-blue-800 p-1 rounded-3xl shadow-2xl group-hover:shadow-3xl transition-all duration-500">
-                                                <!-- Image avec coins arrondis -->
-                                                <div class="bg-white p-2 rounded-[22px] shadow-inner">
-                                                    <?php if (!empty($signalement['photo'])): ?>
-                                                        <img src="<?php echo htmlspecialchars($signalement['photo']); ?>" alt="Photo du signalement" class="w-full h-64 object-cover rounded-2xl group-hover:scale-105 transition-transform duration-500">
-                                                    <?php else: ?>
-                                                        <img src="<?php echo $basePath; ?>Assets/Images/IMG_5652.jpg" alt="Photo par défaut" class="w-full h-64 object-cover rounded-2xl group-hover:scale-105 transition-transform duration-500">
-                                                    <?php endif; ?>
-                                                </div>
-                                                
-                                                <!-- Badge photo moderne -->
-                                                <div class="absolute bottom-4 right-4 w-12 h-12 bg-white rounded-full shadow-xl flex items-center justify-center border-2 border-[#000091] group-hover:scale-110 transition-transform duration-300">
-                                                    <i class="fas fa-camera text-[#000091] text-lg"></i>
-                                                </div>
-                                                
-                                                <!-- Effet de brillance subtil -->
-                                                <div class="absolute top-4 left-6 w-8 h-8 bg-white/40 rounded-full blur-md opacity-70"></div>
-                                                
-                                               
+                                            
+                                            <div class="text-xs text-gray-500">
+                                                <?php if (!empty($signalement['updated_at']) && $signalement['updated_at'] !== $signalement['created_at']): ?>
+                                                    Modifié le <?php echo date('d/m/Y', strtotime($signalement['updated_at'])); ?>
+                                                <?php else: ?>
+                                                    Créé le <?php echo date('d/m/Y', strtotime($signalement['created_at'])); ?>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                
-                                <!-- Section description moderne -->
-                                <div class="mt-6 bg-gradient-to-r from-gray-50 via-slate-50 to-gray-50 rounded-3xl p-6 border border-gray-100 shadow-inner">
-                                    <div class="flex items-center mb-4">
-                                        <div class="w-10 h-10 bg-gradient-to-r from-[#000091] to-[#6a6af4] rounded-2xl flex items-center justify-center mr-3 shadow-lg">
-                                            <i class="fas fa-file-text text-white"></i>
+                                    
+                                <?php else: ?>
+                                    <!-- AFFICHAGE SIMPLIFIÉ POUR UTILISATEURS NON CONNECTÉS -->
+                                    <div class="p-8 text-center">
+                                        <!-- Icône de confirmation -->
+                                        <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                                            <i class="fas fa-check text-white text-2xl"></i>
                                         </div>
-                                        <h4 class="text-xl font-bold text-gray-800">Description</h4>
+                                        
+                                        <!-- Message de confirmation -->
+                                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Résultat trouvé</h3>
+                                        <p class="text-lg font-bold text-green-600 mb-3">OUI</p>
+                                        <p class="text-sm text-gray-600 mb-4">
+                                            Un signalement correspond à votre recherche.
+                                        </p>
+                                        
+                                        <!-- Informations limitées -->
+                                        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                            <div class="text-sm text-gray-600 space-y-1">
+                                                <p><strong>ID:</strong> #<?php echo $signalement['id']; ?></p>
+                                                <p><strong>Date:</strong> <?php echo date('d/m/Y', strtotime($signalement['date_signalement'])); ?></p>
+                                                <?php if (!empty($signalement['type_incident'])): ?>
+                                                    <p><strong>Type:</strong> <?php echo htmlspecialchars($signalement['type_incident']); ?></p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Bouton de connexion -->
+                                        <div class="space-y-2">
+                                            <p class="text-sm text-gray-600">Pour voir les détails complets :</p>
+                                            <a href="login.php" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
+                                                <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                                            </a>
+                                        </div>
                                     </div>
-                                    <p class="text-gray-700 leading-relaxed text-lg font-medium">
-                                        <?php echo htmlspecialchars(substr($signalement['description'], 0, 200)) . (strlen($signalement['description']) > 200 ? '...' : ''); ?>
-                                    </p>
-                                    
-                                    <!-- Badges d'informations supplémentaires -->
-                                    <div class="flex flex-wrap gap-3 mt-4">
-                                        <?php if (!empty($signalement['preuves'])): ?>
-                                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-[#000091] to-[#6a6af4] text-white shadow-lg">
-                                                <i class="fas fa-paperclip mr-2"></i>Preuves
-                                            </span>
-                                        <?php endif; ?>
-                                        <?php if (!empty($signalement['images'])): ?>
-                                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg">
-                                                <i class="fas fa-images mr-2"></i>Images
-                                            </span>
-                                        <?php endif; ?>
-                                        <?php if (!empty($signalement['email_contact'])): ?>
-                                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-lg">
-                                                <i class="fas fa-envelope mr-2"></i>Contact
-                                            </span>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
+                                <?php endif; ?>
+                                
                             </div>
-                                       
-                                    
                         <?php endforeach; ?>
                     </div>
-         
-        </div>
-    </div>
-
-    <!-- Modal pour les détails -->
-    <div id="signalementModal" class="fixed inset-0 modal-backdrop hidden z-50">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
-                <div class="flex justify-between items-center p-6 border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                    <h3 class="text-xl font-bold"><i class="fas fa-file-alt mr-2"></i>Détails du signalement</h3>
-                    <button onclick="closeModal()" class="text-white hover:text-gray-200 transition-colors">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
-                </div>
-                <div id="modalContent" class="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-                    <!-- Contenu chargé dynamiquement -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-    function showSignalementDetails(id) {
-        const modal = document.getElementById('signalementModal');
-        const content = document.getElementById('modalContent');
-        
-        content.innerHTML = `
-            <div class="text-center py-12">
-                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <p class="text-gray-600">Chargement des détails...</p>
-            </div>
-        `;
-        modal.classList.remove('hidden');
-        
-        fetch('search_ajax.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `action=get_signalement&signalement_id=${id}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                displaySignalementDetails(data.signalement);
-            } else {
-                content.innerHTML = `
+                    
+                <?php else: ?>
+                    <!-- Message d'erreur -->
                     <div class="text-center py-12">
-                        <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                        <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-red-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                            <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Erreur de chargement</h3>
-                        <p class="text-gray-600">${data.error || 'Une erreur est survenue'}</p>
+
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun résultat trouvé</h3>
+                        <p class="text-lg font-bold text-red-600 mb-3">NON</p>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Aucun signalement ne correspond à votre recherche.
+                        </p>
+                        
+                        <!-- Suggestions -->
+                        <div class="bg-gray-50 rounded-lg p-6 max-w-md mx-auto">
+                            <h4 class="font-semibold text-gray-900 mb-3">Suggestions :</h4>
+                            <ul class="text-sm text-gray-600 space-y-1 text-left">
+                                <li>• Vérifiez l'orthographe des mots-clés</li>
+                                <li>• Essayez des termes plus généraux</li>
+                                <li>• Utilisez moins de filtres</li>
+                                <li>• Essayez une recherche dans "Tout"</li>
+                            </ul>
+                        </div>
                     </div>
-                `;
-            }
-        })
-        .catch(error => {
-            content.innerHTML = `
-                <div class="text-center py-12">
-                    <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-wifi text-red-500 text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Erreur de connexion</h3>
-                    <p class="text-gray-600">Impossible de charger les détails</p>
-                </div>
-            `;
-        });
-    }
-    
-    function displaySignalementDetails(signalement) {
-        const content = document.getElementById('modalContent');
-        const statusClass = getStatusClass(signalement.statut);
-        const priorityClass = getPriorityClass(signalement.priorite);
-        const statusIcon = getStatusIcon(signalement.statut);
-        const priorityIcon = getPriorityIcon(signalement.priorite);
-        
-        content.innerHTML = `
-            <div class="space-y-8">
-                <!-- En-tête -->
-                <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-2 md:mb-0">${escapeHtml(signalement.titre)}</h2>
-                     <img src="${signalement.photo ? signalement.photo : '../Assets/Images/IMG_5652.jpg'}" alt="Photo du signalement" class="w-16 h-16 rounded-lg object-cover">
-                    </div>
-                    <p class="text-gray-600">Signalement #${signalement.id}</p>
-                </div>
+                <?php endif; ?>
+
+
                 
-                <!-- Informations principales -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="space-y-6">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                <i class="fas fa-info-circle mr-2 text-blue-600"></i>Informations générales
-                            </h3>
-                            <div class="bg-gray-50 rounded-lg p-4 space-y-3">
-                                <div class="flex items-center">
-                                    <i class="fas fa-user w-5 text-purple-500 mr-3"></i>
-                                    <span class="font-medium text-gray-700">Auteur:</span>
-                                    <span class="ml-2">${signalement.anonyme == 1 ? 'Anonyme' : (signalement.auteur || 'Utilisateur supprimé')}</span>
-                                </div>
-                                ${signalement.email_contact ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-envelope w-5 text-blue-500 mr-3"></i>
-                                        <span class="font-medium text-gray-700">Email:</span>
-                                        <span class="ml-2">${escapeHtml(signalement.email_contact)}</span>
-                                    </div>
-                                ` : ''}
-                                ${signalement.localisation ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-map-marker-alt w-5 text-red-500 mr-3"></i>
-                                        <span class="font-medium text-gray-700">Localisation:</span>
-                                        <span class="ml-2">${escapeHtml(signalement.localisation)}</span>
-                                    </div>
-                                ` : ''}
-                                ${signalement.lieu ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-location-dot w-5 text-green-500 mr-3"></i>
-                                        <span class="font-medium text-gray-700">Lieu:</span>
-                                        <span class="ml-2">${escapeHtml(signalement.lieu)}</span>
-                                    </div>
-                                ` : ''}
-                                ${signalement.plateforme ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-globe w-5 text-indigo-500 mr-3"></i>
-                                        <span class="font-medium text-gray-700">Plateforme:</span>
-                                        <span class="ml-2">${escapeHtml(signalement.plateforme)}</span>
-                                    </div>
-                                ` : ''}
-                                ${signalement.type_incident ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-tag w-5 text-orange-500 mr-3"></i>
-                                        <span class="font-medium text-gray-700">Type:</span>
-                                        <span class="ml-2">${escapeHtml(signalement.type_incident)}</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
+                            <?php if (!$isLoggedIn): ?>
+                    <!-- Bouton pour afficher/masquer le message -->
+                    <div class="text-center mt-8 mb-4">
+                        <button id="toggleInfoBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            Afficher les informations de connexion
+                        </button>
                     </div>
                     
-                    <div class="space-y-6">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                <i class="fas fa-clock mr-2 text-green-600"></i>Chronologie
-                            </h3>
-                            <div class="bg-gray-50 rounded-lg p-4 space-y-3">
-                                <div class="flex items-center">
-                                    <i class="fas fa-plus-circle w-5 text-blue-500 mr-3"></i>
-                                    <span class="font-medium text-gray-700">Créé le:</span>
-                                    <span class="ml-2">${new Date(signalement.created_at).toLocaleString('fr-FR')}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-edit w-5 text-orange-500 mr-3"></i>
-                                    <span class="font-medium text-gray-700">Modifié le:</span>
-                                    <span class="ml-2">${new Date(signalement.updated_at).toLocaleString('fr-FR')}</span>
-                                </div>
-                                ${signalement.date_traitement ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-check-circle w-5 text-green-500 mr-3"></i>
-                                        <span class="font-medium text-gray-700">Traité le:</span>
-                                        <span class="ml-2">${new Date(signalement.date_traitement).toLocaleString('fr-FR')}</span>
+                    <!-- Message d'information (initialement caché) -->
+                    <div id="infoMessage" class="relative mx-auto mt-8 mb-8 max-w-4xl overflow-hidden hidden">
+                    <div class="relative mx-4 mb-8 overflow-hidden">
+                        <!-- Fond avec gradient et effet glassmorphism -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 rounded-2xl opacity-80"></div>
+                        <div class="absolute inset-0 bg-white/30 backdrop-blur-sm rounded-2xl border border-amber-200/50"></div>
+                        
+                        <!-- Contenu du message -->
+                        <div class="relative p-6 rounded-2xl">
+                            <div class="flex items-start space-x-4">
+                                <!-- Icône avec animation -->
+                                <div class="flex-shrink-0">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
                                     </div>
-                                ` : ''}
-                                ${signalement.traite_par_nom ? `
-                                    <div class="flex items-center">
-                                        <i class="fas fa-user-check w-5 text-purple-500 mr-3"></i>
-                                        <span class="font-medium text-gray-700">Traité par:</span>
-                                        <span class="ml-2">${signalement.traite_par_nom} ${signalement.traite_par_prenom || ''}</span>
+                                </div>
+
+
+                             
+                                
+                                <!-- Contenu textuel -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h3 class="text-lg font-semibold text-gray-800">Information importante</h3>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                            Accès limité
+                                        </span>
                                     </div>
-                                ` : ''}
+                                    
+                                    <p class="text-gray-700 leading-relaxed mb-4">
+                                        Vous pouvez effectuer des recherches et consulter les résultats, mais une connexion est requise pour accéder aux détails complets des signalements.
+                                    </p>
+                                    
+                                    <!-- Bouton de connexion stylisé -->
+                                    <div class="flex items-center space-x-3">
+                                        <a href="login.php" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium rounded-lg hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1"></path>
+                                            </svg>
+                                            Se connecter
+                                        </a>
+                                        
+                                        <span class="text-sm text-gray-500">ou</span>
+                                        
+                                        <a href="#" class="text-sm text-amber-600 hover:text-amber-700 font-medium hover:underline transition-colors duration-200">
+                                            Créer un compte
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
+                            
+                            <!-- Décoration subtile -->
+                            <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-200/20 to-orange-200/20 rounded-full -translate-y-10 translate-x-10"></div>
+                            <div class="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-yellow-200/20 to-amber-200/20 rounded-full translate-y-8 -translate-x-8"></div>
                         </div>
                     </div>
+                    </div>
+                    
+                    <script>
+                        document.getElementById('toggleInfoBtn').addEventListener('click', function() {
+                            const message = document.getElementById('infoMessage');
+                            const btn = this;
+                            
+                            if (message.classList.contains('hidden')) {
+                                message.classList.remove('hidden');
+                                message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                btn.textContent = 'Masquer les informations';
+                            } else {
+                                message.classList.add('hidden');
+                                btn.textContent = 'Afficher les informations de connexion';
+                            }
+                        });
+                    </script>
+                <?php endif; ?>
+            </div>
+
+        <?php endif;?>
+    </div>
+</main>
+
+<!-- Modal pour les détails -->
+<div id="signalementModal" class="fixed inset-0 modal-backdrop hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div id="modalContent">
+                <!-- Le contenu sera chargé ici via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fonction pour afficher les détails d'un signalement
+function showSignalementDetails(id) {
+    const modal = document.getElementById('signalementModal');
+    const modalContent = document.getElementById('modalContent');
+    
+    // Afficher le modal avec un loader
+    modalContent.innerHTML = `
+        <div class="p-8 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Chargement des détails...</p>
+        </div>
+    `;
+    modal.classList.remove('hidden');
+    
+    // Charger les détails via AJAX
+    fetch('search_ajax.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=get_details&id=' + id
+    })
+    .then(response => response.text())
+    .then(data => {
+        modalContent.innerHTML = data;
+    })
+    .catch(error => {
+        modalContent.innerHTML = `
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
                 </div>
-                
-                <!-- Description -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-file-text mr-2 text-blue-600"></i>Description détaillée
-                    </h3>
-                    <div class="bg-gray-50 rounded-lg p-6">
-                        <p class="text-gray-700 whitespace-pre-wrap leading-relaxed">${escapeHtml(signalement.description)}</p>
-                    </div>
-                </div>
-                
-                ${signalement.commentaire_traitement ? `
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-comment mr-2 text-green-600"></i>Commentaire de traitement
-                        </h3>
-                        <div class="bg-green-50 border-l-4 border-green-400 rounded-lg p-6">
-                            <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(signalement.commentaire_traitement)}</p>
-                        </div>
-                    </div>
-                ` : ''}
-                
-                ${signalement.preuves || signalement.images ? `
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-paperclip mr-2 text-purple-600"></i>Fichiers attachés
-                        </h3>
-                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            ${signalement.preuves ? signalement.preuves.split(',').map(preuve => `
-                                <div class="group relative bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all duration-300 overflow-hidden">
-                                    <img src="../uploads/${preuve.trim()}" alt="Preuve" class="w-full h-32 object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300" onclick="window.open(this.src, '_blank')">
-                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
-                                        <i class="fas fa-expand text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></i>
-                                    </div>
-                                </div>
-                            `).join('') : ''}
-                            ${signalement.images ? signalement.images.split(',').map(image => `
-                                <div class="group relative bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all duration-300 overflow-hidden">
-                                    <img src="../uploads/${image.trim()}" alt="Image" class="w-full h-32 object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300" onclick="window.open(this.src, '_blank')">
-                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
-                                        <i class="fas fa-expand text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></i>
-                                    </div>
-                                </div>
-                            `).join('') : ''}
-                        </div>
-                    </div>
-                ` : ''}
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Erreur</h3>
+                <p class="text-gray-600">Impossible de charger les détails du signalement.</p>
+                <button onclick="closeModal()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    Fermer
+                </button>
             </div>
         `;
-    }
-    
-    function closeModal() {
-        document.getElementById('signalementModal').classList.add('hidden');
-    }
-    
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    function getStatusClass(status) {
-        switch (status.toLowerCase()) {
-            case 'en_attente': return 'bg-amber-100 text-amber-800 border-amber-200';
-            case 'en_cours': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'resolu': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-            case 'rejete': return 'bg-red-100 text-red-800 border-red-200';
-            default: return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    }
-    
-    function getPriorityClass(priority) {
-        switch (priority.toLowerCase()) {
-            case 'faible': return 'bg-green-100 text-green-800 border-green-200';
-            case 'normale': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'elevee': return 'bg-orange-100 text-orange-800 border-orange-200';
-            case 'critique': return 'bg-red-100 text-red-800 border-red-200';
-            default: return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    }
-    
-    function getStatusIcon(status) {
-        switch (status.toLowerCase()) {
-            case 'en_attente': return 'fas fa-clock';
-            case 'en_cours': return 'fas fa-spinner';
-            case 'resolu': return 'fas fa-check-circle';
-            case 'rejete': return 'fas fa-times-circle';
-            default: return 'fas fa-question-circle';
-        }
-    }
-    
-    function getPriorityIcon(priority) {
-        switch (priority.toLowerCase()) {
-            case 'faible': return 'fas fa-arrow-down';
-            case 'normale': return 'fas fa-minus';
-            case 'elevee': return 'fas fa-arrow-up';
-            case 'critique': return 'fas fa-exclamation-triangle';
-            default: return 'fas fa-question';
-        }
-    }
-    
-    // Fermer le modal en cliquant à l'extérieur
-    document.getElementById('signalementModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeModal();
-        }
     });
-    
-    // Animation d'apparition des cartes
-    document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.animate-fade-in');
-        cards.forEach((card, index) => {
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-    });
-    </script>
+}
 
-    <?php include '../Inc/Components/footer.php'; ?>
-</body>
-</html>
+// Fonction pour fermer le modal
+function closeModal() {
+    document.getElementById('signalementModal').classList.add('hidden');
+}
+
+// Fermer le modal en cliquant sur l'arrière-plan
+document.getElementById('signalementModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+// Animation des cartes au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.animate-fade-in');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+
+<style>
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    --webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    --webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.animate-fade-in {
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+</style>
+
+<?php include '../Inc/Components/footer.php'; ?>
+<?php include '../Inc/Components/footers.php'; ?>
+<?php include('../Inc/Traitement/create_log.php'); ?>

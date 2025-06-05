@@ -105,6 +105,7 @@ function createDefaultUsers() {
             is_banned INTEGER DEFAULT 0,
             is_deleted INTEGER DEFAULT 0,
             is_blacklisted INTEGER DEFAULT 0,
+            is_public INTEGER DEFAULT 0,
             require_password_change INTEGER DEFAULT 0
         )");
 

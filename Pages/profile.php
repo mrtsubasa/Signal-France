@@ -37,6 +37,7 @@ try {
             $website = $dataUser['website']?? '';
             $active = $dataUser['is_active'] ?? 1;
             $verified = $dataUser['is_verified']??0;
+            $is_public = $dataUser['is_public'] ?? 0;
             $blacklisted = $dataUser['is_blacklisted']??0;
         }
     } else if (isset($_COOKIE['user_token']) && !empty($_COOKIE['user_token'])) {
@@ -78,6 +79,7 @@ try {
                 $active = $dataUser['is_active']?? 1;
                 $verified = $dataUser['is_verified']??0;
                 $blacklisted = $dataUser['is_blacklisted']??0;
+                $is_public = $dataUser['is_public'] ?? 0;
                 $token = $cookieToken;
             } else {
                 setcookie('user_token', '', time() - 3600, '/');
@@ -116,242 +118,367 @@ function getRoleBadge($role) {
 }
 ?>
 
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header du profil avec effet glassmorphism -->
-        <div class="bg-white/80 backdrop-blur-lg shadow-2xl rounded-2xl mb-8 border border-white/20 overflow-hidden">
-            <div class="relative">
-                <!-- Bannière de couverture avec overlay -->
-                <?php if ($banner && file_exists('../Assets/Images/banners/'. $banner)):?>
-                    <div class="relative">
-                        <img src="../Assets/Images/banners/<?= htmlspecialchars($banner)?>"
-                             alt="Bannière de couverture"
-                             class="w-full h-56 object-cover">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-                    </div>
-                <?php else:?>
-                    <div class="h-56 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
-                        <div class="absolute top-4 right-4">
-                            <div class="w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
-                        </div>
-                        <div class="absolute bottom-4 left-4">
-                            <div class="w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
-                        </div>
-                    </div>
-                <?php endif;?>
 
-                <!-- Photo de profil et informations principales -->
-                <div class="relative px-8 pb-8">
-                    <div class="flex flex-col sm:flex-row sm:items-end sm:space-x-8">
-                    <div class="-mt-20 relative group">
-                            <!-- Avatar plus grand : de w-36 h-36 à w-48 h-48 -->
-                            <div class="w-40 h-40 bg-gradient-to-br from-white to-gray-50 rounded-full p-1 shadow-2xl ring-4 ring-white/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-105">
-                                <?php if ($avatar && file_exists('../Assets/Images/avatars/' . $avatar)): ?>
-                                    <img src="../Assets/Images/avatars/<?= htmlspecialchars($avatar) ?>" 
-                                         alt="Avatar" 
-                                         class="w-full h-full rounded-full object-cover shadow-inner">
+<style>
+/* Animations personnalisées */
+@keyframes profileFloat {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.profile-card {
+    animation: fadeInScale 0.6s ease-out;
+}
+
+.stat-card {
+    animation: slideInUp 0.8s ease-out;
+}
+
+.action-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.action-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.action-button:hover::before {
+    left: 100%;
+}
+
+.glassmorphism-enhanced {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar {
+    animation: profileFloat 6s ease-in-out infinite;
+}
+
+.shimmer-effect {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+.france-gradient {
+    background: linear-gradient(135deg, #002395 0%, #FFFFFF 50%, #ED2939 100%);
+}
+
+.interactive-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+}
+
+.status-indicator {
+    position: relative;
+}
+
+.status-indicator::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background: #10B981;
+    border-radius: 50%;
+    border: 2px solid white;
+    animation: pulse-glow 2s infinite;
+}
+
+.profile-section {
+    animation: slideInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.profile-section:nth-child(1) { animation-delay: 0.1s; }
+.profile-section:nth-child(2) { animation-delay: 0.2s; }
+.profile-section:nth-child(3) { animation-delay: 0.3s; }
+</style>
+
+<!-- Background amélioré avec particules animées -->
+<div class="min-h-screen relative overflow-hidden">
+    <!-- Fond avec gradient France et particules -->
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-900 via-white to-red-900 opacity-10"></div>
+    <div class="absolute inset-0">
+        <div class="absolute top-10 left-10 w-32 h-32 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div class="absolute top-40 right-20 w-24 h-24 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div class="absolute bottom-20 left-20 w-28 h-28 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse animation-delay-4000"></div>
+        <div class="absolute bottom-40 right-10 w-20 h-20 bg-blue-600 rounded-full mix-blend-multiply filter blur-xl opacity-25 animate-pulse animation-delay-1000"></div>
+    </div>
+    
+    <div class="relative z-10 container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Profil principal avec design premium -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- En-tête du profil avec glassmorphism avancé -->
+                <div class="profile-card glassmorphism-enhanced rounded-3xl overflow-hidden interactive-card">
+                    <!-- Bannière avec overlay gradient -->
+                    <div class="relative h-48 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+                        <?php if ($banner): ?>
+                            <img src="../Assets/Images/banners/<?= htmlspecialchars($banner)?>" alt="Bannière" class="w-full h-full object-cover">
+                        <?php endif; ?>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                        
+                        <!-- Bouton d'édition flottant -->
+                        <button onclick="openEditProfileModal()" 
+                                class="absolute top-4 right-4 bg-white/20 backdrop-blur-md text-white p-3 rounded-full hover:bg-white/30 transition-all duration-300 group">
+                            <i class="fas fa-edit group-hover:rotate-12 transition-transform duration-300"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Contenu du profil -->
+                    <div class="relative p-8">
+                        <!-- Avatar avec effet de flottement -->
+                        <div class="absolute -top-16 left-8">
+                            <div class="profile-avatar status-indicator">
+                                <?php if ($avatar): ?>
+                                    <img src="../Assets/Images/avatars/<?= htmlspecialchars($avatar)?>" alt="Avatar" 
+                                         class="w-32 h-32 rounded-full border-4 border-white shadow-2xl object-cover">
                                 <?php else: ?>
-                                    <div class="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-inner">
-                                        <!-- Icône plus grande aussi : de text-5xl à text-6xl -->
-                                        <i class="fas fa-user text-white text-6xl"></i>
+                                    <div class="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full border-4 border-white shadow-2xl flex items-center justify-center">
+                                        <i class="fas fa-user text-white text-4xl"></i>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <!-- Informations utilisateur -->
+                        <div class="pt-20">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                                <div>
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <h1 class="text-3xl font-bold text-gray-900"><?= htmlspecialchars($username) ?></h1>
+                                        <?php if ($verified): ?>
+                                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center space-x-1 shadow-lg">
+                                                <i class="fas fa-check-circle"></i>
+                                                <span>CERTIFIÉ</span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-4 text-gray-600 mb-4">
+                                        <div class="flex items-center space-x-2">
+                                            <i class="fas fa-envelope text-blue-500"></i>
+                                            <span><?= htmlspecialchars($email) ?></span>
+                                        </div>
+                                        <?php if ($organization): ?>
+                                            <div class="flex items-center space-x-2">
+                                                <i class="fas fa-building text-purple-500"></i>
+                                                <span><?= htmlspecialchars($organization) ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <!-- Badge de rôle avec design amélioré -->
+                                    <div class="mb-4">
+                                        <?= getRoleBadge($user['access_level'] ?? 'basic') ?>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Section À propos avec design moderne -->
+                            <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 mb-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                    <div class="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-user text-white text-xs"></i>
+                                    </div>
+                                    À propos
+                                </h3>
+                                <?php if ($bio): ?>
+                                    <p class="text-gray-700 leading-relaxed"><?= nl2br(htmlspecialchars($bio)) ?></p>
+                                <?php else: ?>
+                                    <div class="text-center py-6">
+                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <i class="fas fa-plus text-gray-400 text-xl"></i>
+                                        </div>
+                                        <p class="text-gray-500 italic mb-3">Aucune biographie ajoutée.</p>
+                                        <button onclick="openEditProfileModal()" 
+                                                class="text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                                            Ajouter une biographie
+                                        </button>
                                     </div>
                                 <?php endif; ?>
                             </div>
                             
-                            <!-- Texte COMPTE VERIF directement sous la photo de profil -->
-                            <?php if ($verified): ?>
-                                <div class="mt-4 text-center">
-                                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-                                        <i class="fas fa-check-circle mr-2"></i>
-                                        COMPTE CERTIFIÉ
-                                    </span>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <!-- Informations utilisateur avec typographie améliorée -->
-                        <div class="mt-0 sm:mt-0 flex-1">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                            <div class="space-y-2">
-                                    <h1 class="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent flex items-center flex-wrap gap-3">
-                                        <?= htmlspecialchars($username) ?>
-                                        
-                                                                                                     <!-- Badge de vérification ULTRA PREMIUM -->
-
-                                    </h1>
-                                    
-                                    <p class="text-lg text-gray-600 flex items-center space-x-2">
-                                        <i class="fas fa-envelope text-blue-500"></i>
-                                        <span><?= htmlspecialchars($email) ?></span>
-                                    </p>
-                                    
-                                    <?php if ($organization): ?>
-                                        <p class="text-gray-600 flex items-center space-x-2">
-                                            <i class="fas fa-building text-indigo-500"></i>
-                                            <span><?= htmlspecialchars($organization) ?></span>
-                                        </p>
-                                    <?php endif; ?>
-                           
-                                </div>
-                                
-                                <!-- Bouton d'édition modernisé -->
-                                <div class="mt-6 sm:mt-0">
-                                    <button onclick="openEditProfileModal()" 
-                                            class="group relative bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center space-x-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                                        <i class="fas fa-edit group-hover:rotate-12 transition-transform duration-300"></i>
-                                        <span class="font-medium">Modifier le profil</span>
-                                        <div class="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    </button>
+                            <!-- Activité récente avec timeline -->
+                            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                    <div class="w-6 h-6 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-2">
+                                        <i class="fas fa-clock text-white text-xs"></i>
+                                    </div>
+                                    Activité récente
+                                </h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center space-x-3 p-3 bg-white/60 rounded-lg">
+                                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-sign-in-alt text-white text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 text-sm">Dernière connexion</span>
+                                            <div class="text-gray-800 font-medium"><?= $last_activity ? date('d/m/Y à H:i', strtotime($last_activity)) : 'Jamais' ?></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3 p-3 bg-white/60 rounded-lg">
+                                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-calendar-plus text-white text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 text-sm">Membre depuis</span>
+                                            <div class="text-gray-800 font-medium"><?= date('d/m/Y', strtotime($created_at)) ?></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Contenu principal avec grille améliorée -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Colonne principale -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- À propos avec design card moderne -->
-                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 border border-white/20 hover:shadow-2xl transition-all duration-300">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                            <i class="fas fa-user-circle text-white"></i>
-                        </div>
-                        À propos
-                    </h2>
-                    <?php if ($bio): ?>
-                        <div class="prose prose-gray max-w-none">
-                            <p class="text-gray-700 leading-relaxed text-lg"><?= nl2br(htmlspecialchars($bio)) ?></p>
-                        </div>
-                    <?php else: ?>
-                        <div class="text-center py-8">
-                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-pen text-gray-400 text-xl"></i>
-                            </div>
-                            <p class="text-gray-500 italic mb-4">Aucune biographie renseignée.</p>
-                            <button onclick="openEditProfileModal()" 
-                                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-md hover:shadow-lg">
-                                Ajouter une biographie
-                            </button>
-                        </div>
-                    <?php endif; ?>
                 </div>
                 
-                <!-- Activité récente avec timeline -->
-                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 border border-white/20 hover:shadow-2xl transition-all duration-300">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                            <i class="fas fa-clock text-white"></i>
+                <!-- Informations détaillées avec cartes interactives -->
+                <div class="profile-section glassmorphism-enhanced rounded-3xl p-8 interactive-card">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-info-circle text-white text-sm"></i>
                         </div>
-                        Activité récente
-                    </h2>
-                    <div class="space-y-6">
-                        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-100 hover:shadow-md transition-all duration-200">
-                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center shadow-lg">
-                                <i class="fas fa-sign-in-alt text-white"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-semibold text-gray-900">Dernière connexion</p>
-                                <p class="text-sm text-gray-600">
-                                    <?= $last_activity ? date('d/m/Y à H:i', strtotime($last_activity)) : 'Jamais' ?>
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-md transition-all duration-200">
-                            <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg">
-                                <i class="fas fa-user-plus text-white"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-semibold text-gray-900">Membre depuis</p>
-                                <p class="text-sm text-gray-600">
-                                    <?= date('d/m/Y', strtotime($created_at)) ?>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Informations complémentaires avec icônes colorées -->
-                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 border border-white/20 hover:shadow-2xl transition-all duration-300">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                            <i class="fas fa-info-circle text-white"></i>
-                        </div>
-                        Informations complémentaires
-                    </h2>
+                        Informations détaillées
+                    </h3>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Rôle de l'utilisateur -->
-                        <div class="flex items-center space-x-3 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
-                            <i class="fas fa-user-tag text-indigo-600 text-xl w-6"></i>
-                            <div>
-                                <span class="text-gray-500 text-sm">Rôle</span>
-                                <div class="text-gray-700 font-medium"><?= ucfirst(htmlspecialchars($role)) ?></div>
+                        <!-- Statut avec indicateur animé -->
+                        <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl hover:from-emerald-100 hover:to-green-100 transition-all duration-300">
+                            <div class="relative">
+                                <i class="fas <?= $active ? 'fa-check-circle text-emerald-600' : 'fa-times-circle text-red-600' ?> text-2xl"></i>
+                                <?php if ($active): ?>
+                                    <div class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-ping"></div>
+                                <?php endif; ?>
                             </div>
-                        </div>
-
-                        <!-- Statut actif -->
-                        <div class="flex items-center space-x-3 p-3 <?= $active ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-red-50 hover:bg-red-100' ?> rounded-lg transition-colors">
-                            <i class="fas <?= $active ? 'fa-check-circle text-emerald-600' : 'fa-times-circle text-red-600' ?> text-xl w-6"></i>
                             <div>
-                                <span class="text-gray-500 text-sm">Statut</span>
-                                <div class="<?= $active ? 'text-emerald-700' : 'text-red-700' ?> font-medium">
+                                <span class="text-gray-500 text-sm font-medium">Statut du compte</span>
+                                <div class="<?= $is_active ? 'text-emerald-700' : 'text-red-700' ?> font-bold text-lg">
                                     <?= $active ? 'Actif' : 'Inactif' ?>
                                 </div>
                             </div>
                         </div>
-
-                        <?php if ($github):?>
-                            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                <i class="fab fa-github text-gray-700 text-xl w-6"></i>
-                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($github)?></span>
+                        
+                        <!-- Visibilité -->
+                        <?php if ($is_public): ?>
+                            <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-all duration-300">
+                                <i class="fas fa-globe text-purple-600 text-2xl"></i>
+                                <div>
+                                    <span class="text-gray-500 text-sm font-medium">Visibilité</span>
+                                    <div class="text-purple-700 font-bold text-lg">
+                                        <?= $is_public == 1 ? 'Public' : 'Privé' ?>
+                                    </div>
+                                </div>
                             </div>
-                        <?php endif;?>
-
-                        <?php if ($linkedin):?>
-                            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                                <i class="fab fa-linkedin text-blue-600 text-xl w-6"></i>
-                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($linkedin)?></span>
-                            </div>
-                        <?php endif;?>
-
-                        <?php if ($website):?>
-                            <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                                <i class="fas fa-globe text-green-600 text-xl w-6"></i>
-                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($website)?></span>
-                            </div>
-                        <?php endif;?>
+                        <?php endif; ?>
+                        
+                        <!-- Liens sociaux avec hover effects -->
+                        <?php if ($github): ?>
+                            <a href="<?= htmlspecialchars($github) ?>" target="_blank" 
+                               class="flex items-center space-x-3 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl hover:from-gray-100 hover:to-slate-100 transition-all duration-300 group">
+                                <i class="fab fa-github text-gray-700 text-2xl group-hover:scale-110 transition-transform"></i>
+                                <div>
+                                    <span class="text-gray-500 text-sm font-medium">GitHub</span>
+                                    <div class="text-gray-700 font-bold truncate"><?= htmlspecialchars($github) ?></div>
+                                </div>
+                            </a>
+                        <?php endif; ?>
+                        
+                        <?php if ($linkedin): ?>
+                            <a href="<?= htmlspecialchars($linkedin) ?>" target="_blank" 
+                               class="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 group">
+                                <i class="fab fa-linkedin text-blue-600 text-2xl group-hover:scale-110 transition-transform"></i>
+                                <div>
+                                    <span class="text-gray-500 text-sm font-medium">LinkedIn</span>
+                                    <div class="text-blue-700 font-bold truncate"><?= htmlspecialchars($linkedin) ?></div>
+                                </div>
+                            </a>
+                        <?php endif; ?>
+                        
+                        <?php if ($website): ?>
+                            <a href="<?= htmlspecialchars($website) ?>" target="_blank" 
+                               class="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl hover:from-green-100 hover:to-emerald-100 transition-all duration-300 group">
+                                <i class="fas fa-globe text-green-600 text-2xl group-hover:scale-110 transition-transform"></i>
+                                <div>
+                                    <span class="text-gray-500 text-sm font-medium">Site web</span>
+                                    <div class="text-green-700 font-bold truncate"><?= htmlspecialchars($website) ?></div>
+                                </div>
+                            </a>
+                        <?php endif; ?>
                     </div>
-
                 </div>
             </div>
             
-            <!-- Sidebar avec design moderne -->
+            <!-- Sidebar avec design premium -->
             <div class="space-y-8">
-                <!-- Informations de contact -->
-                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-white/20 hover:shadow-2xl transition-all duration-300">
+                <!-- Informations de contact avec animations -->
+                <div class="profile-section glassmorphism-enhanced rounded-3xl p-6 interactive-card">
                     <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
+                        <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
                             <i class="fas fa-address-card text-white text-sm"></i>
                         </div>
                         Contact
                     </h3>
                     <div class="space-y-4">
                         <?php if ($phone): ?>
-                            <div class="flex items-center space-x-3 p-3 bg-orange-50 rounded-lg">
-                                <i class="fas fa-phone text-orange-500 w-5"></i>
-                                <span class="text-gray-700"><?= htmlspecialchars($phone) ?></span>
+                            <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl hover:from-orange-100 hover:to-red-100 transition-all duration-300 group">
+                                <i class="fas fa-phone text-orange-500 text-lg group-hover:rotate-12 transition-transform"></i>
+                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($phone) ?></span>
                             </div>
                         <?php endif; ?>
                         
                         <?php if ($address): ?>
-                            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-                                <i class="fas fa-map-marker-alt text-blue-500 w-5"></i>
-                                <span class="text-gray-700">
+                            <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 group">
+                                <i class="fas fa-map-marker-alt text-blue-500 text-lg group-hover:bounce transition-transform"></i>
+                                <span class="text-gray-700 font-medium">
                                     <?= htmlspecialchars($address) ?>
                                     <?= $city ? ', ' . htmlspecialchars($city) : '' ?>
                                 </span>
@@ -359,20 +486,20 @@ function getRoleBadge($role) {
                         <?php endif; ?>
                         
                         <?php if ($accreditation): ?>
-                            <div class="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
-                                <i class="fas fa-certificate text-purple-500 w-5"></i>
-                                <span class="text-gray-700"><?= htmlspecialchars($accreditation) ?></span>
+                            <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-all duration-300 group">
+                                <i class="fas fa-certificate text-purple-500 text-lg group-hover:rotate-12 transition-transform"></i>
+                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($accreditation) ?></span>
                             </div>
                         <?php endif; ?>
                         
                         <?php if (!$phone && !$address && !$accreditation): ?>
-                            <div class="text-center py-4">
-                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <i class="fas fa-plus text-gray-400"></i>
+                            <div class="text-center py-6">
+                                <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                                    <i class="fas fa-plus text-gray-400 text-xl"></i>
                                 </div>
-                                <p class="text-gray-500 text-sm italic mb-3">Aucune information de contact.</p>
+                                <p class="text-gray-500 text-sm italic mb-4">Aucune information de contact.</p>
                                 <button onclick="openEditProfileModal()" 
-                                        class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                                        class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                                     Ajouter des informations
                                 </button>
                             </div>
@@ -380,43 +507,67 @@ function getRoleBadge($role) {
                     </div>
                 </div>
                 
-                <!-- Statistiques avec graphiques visuels -->
-                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-white/20 hover:shadow-2xl transition-all duration-300">
+                <!-- Statistiques avec graphiques visuels améliorés -->
+                <div class="profile-section glassmorphism-enhanced rounded-3xl p-6 interactive-card">
                     <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
                             <i class="fas fa-chart-bar text-white text-sm"></i>
                         </div>
                         Statistiques
                     </h3>
                     <div class="space-y-4">
-                        <div class="flex justify-between items-center p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
-                            <span class="text-gray-700 font-medium">Signalements créés</span>
-                            <span class="text-2xl font-bold text-blue-600">0</span>
+                        <div class="stat-card p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 group">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+                                        <i class="fas fa-plus text-white text-sm"></i>
+                                    </div>
+                                    <span class="text-gray-700 font-medium">Signalements créés</span>
+                                </div>
+                                <span class="text-3xl font-bold text-blue-600 group-hover:scale-110 transition-transform">0</span>
+                            </div>
                         </div>
-                        <div class="flex justify-between items-center p-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg">
-                            <span class="text-gray-700 font-medium">Signalements traités</span>
-                            <span class="text-2xl font-bold text-emerald-600">0</span>
+                        
+                        <div class="stat-card p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl hover:from-emerald-100 hover:to-green-100 transition-all duration-300 group">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
+                                        <i class="fas fa-check text-white text-sm"></i>
+                                    </div>
+                                    <span class="text-gray-700 font-medium">Signalements traités</span>
+                                </div>
+                                <span class="text-3xl font-bold text-emerald-600 group-hover:scale-110 transition-transform">0</span>
+                            </div>
                         </div>
-                        <div class="flex justify-between items-center p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
-                            <span class="text-gray-700 font-medium">Niveau d'accès</span>
-                            <span class="text-sm font-bold text-purple-600 bg-purple-100 px-3 py-1 rounded-full"><?= ucfirst($user['access_level'] ?? 'basic') ?></span>
+                        
+                        <div class="stat-card p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-all duration-300 group">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center shadow-lg">
+                                        <i class="fas fa-shield-alt text-white text-sm"></i>
+                                    </div>
+                                    <span class="text-gray-700 font-medium">Niveau d'accès</span>
+                                </div>
+                                <span class="text-sm font-bold text-purple-600 bg-purple-100 px-3 py-1 rounded-full group-hover:scale-105 transition-transform">
+                                    <?= ucfirst($user['access_level'] ?? 'basic') ?>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Actions rapides avec design premium -->
-                <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-white/20 hover:shadow-2xl transition-all duration-300">
+                <!-- Actions rapides avec design premium et effets -->
+                <div class="profile-section glassmorphism-enhanced rounded-3xl p-6 interactive-card">
                     <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
+                        <div class="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
                             <i class="fas fa-bolt text-white text-sm"></i>
                         </div>
                         Actions rapides
                     </h3>
                     <div class="space-y-4">
                         <button onclick="openChangePasswordModal()" 
-                                class="group w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-6 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden">
-                            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <div class="relative flex items-center justify-center space-x-3">
+                                class="action-button group w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-6 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-2xl transform hover:-translate-y-2">
+                            <div class="flex items-center justify-center space-x-3">
                                 <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                                 </svg>
@@ -425,9 +576,8 @@ function getRoleBadge($role) {
                         </button>
                         
                         <button onClick="fetchUserAccount()" 
-                                class="group w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 px-6 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden">
-                            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <div class="relative flex items-center justify-center space-x-3">
+                                class="action-button group w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 px-6 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-2xl transform hover:-translate-y-2">
+                            <div class="flex items-center justify-center space-x-3">
                                 <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
@@ -436,9 +586,8 @@ function getRoleBadge($role) {
                         </button>
                         
                         <button onClick="deleteAccount()" 
-                                class="group w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 px-6 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 relative overflow-hidden">
-                            <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <div class="relative flex items-center justify-center space-x-3">
+                                class="action-button group w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 px-6 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-2xl transform hover:-translate-y-2">
+                            <div class="flex items-center justify-center space-x-3">
                                 <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
@@ -451,6 +600,8 @@ function getRoleBadge($role) {
         </div>
     </div>
 </div>
+
+
 
 <!-- Modal unifié d'édition de profil et avatar -->
 <div id="editProfileModal" class="hidden fixed inset-0 bg-black bg-opacity-60 overflow-y-auto h-full w-full z-50 backdrop-blur-sm">
@@ -667,6 +818,43 @@ function getRoleBadge($role) {
                             <input type="text" id="editAccreditation" value="<?= htmlspecialchars($accreditation) ?>"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
                                    placeholder="Numéro d'accréditation, certification...">
+                        </div>
+                    </div>
+
+                      <!-- Paramètres de confidentialité -->
+                      <div class="bg-red-50 p-6 rounded-xl">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-white text-sm"></i>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-800">Confidentialité</h4>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-red-200">
+                                <div class="flex-1">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Profil public</label>
+                                    <p class="text-sm text-gray-600">Permettre aux autres utilisateurs de voir votre profil complet</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="editIsPublic" <?= $is_public ? 'checked' : '' ?> class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <div class="flex items-start space-x-3">
+                                    <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                                    <div>
+                                        <h5 class="text-sm font-semibold text-blue-800 mb-1">À propos de la visibilité</h5>
+                                        <ul class="text-xs text-blue-700 space-y-1">
+                                            <li>• <strong>Profil public :</strong> Votre profil est visible par tous les utilisateurs</li>
+                                            <li>• <strong>Profil privé :</strong> Seuls les administrateurs peuvent voir votre profil complet</li>
+                                            <li>• Votre nom d'utilisateur reste toujours visible dans les discussions</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1181,6 +1369,7 @@ document.getElementById('editProfileForm').addEventListener('submit', async func
     formData.append('website', document.getElementById('editWebsite').value);
     formData.append('github', document.getElementById('editGithub').value);
     formData.append('linkedin', document.getElementById('editLinkedIn').value);
+    formData.append('is_public', document.getElementById('editIsPublic').checked ? '1' : '0');
     
     // Ajouter l'avatar s'il y en a un
     const avatarFile = document.getElementById('avatarFile').files[0];
@@ -1232,3 +1421,4 @@ document.getElementById('editProfileModal').addEventListener('click', function(e
 
 <?php require_once '../Inc/Components/footers.php'; ?>
 <?php require_once '../Inc/Components/footer.php'; ?>
+<?php include('../Inc/Traitement/create_log.php'); ?>

@@ -16,6 +16,28 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'get_member') {
+    if (!isset($_GET['id'])) {
+        echo json_encode(['success' => false, 'message' => 'ID du membre manquant']);
+        exit;
+    }
+    try {
+        $db = connect_db();
+        $stmt = $db->prepare('SELECT * FROM users WHERE id =?');
+        $stmt->execute([$_GET['id']]);
+        $member = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($member) {
+            echo json_encode(['success' => true,'member' => $member]);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false,'message' => $e->getMessage()]);
+        exit;
+    }
+}
+
+
 if ($_POST['action'] === 'update_profile') {
     try {
         $db = connect_db();
@@ -24,6 +46,7 @@ if ($_POST['action'] === 'update_profile') {
         $avatarUpdated = false;
         $newAvatar = null;
         
+        $is_public = isset($_POST['is_public']) ? (int)$_POST['is_public'] : 0;
         if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['avatar'];
             $userId = $_SESSION['user_id'];
@@ -94,7 +117,7 @@ if ($_POST['action'] === 'update_profile') {
         
         // Préparer la requête selon qu'on met à jour l'avatar ou non
         if ($avatarUpdated && $bannerUpdated) {
-            $stmt = $db->prepare('UPDATE users SET username = ?, email = ?, bio = ?, phone = ?, organization = ?, address = ?, city = ?, accreditation = ?, github = ?, linkedin = ?, website = ?, avatar = ?, banner = ? WHERE id = ?');
+            $stmt = $db->prepare('UPDATE users SET username = ?, email = ?, bio = ?, phone = ?, organization = ?, address = ?, city = ?, accreditation = ?, github = ?, linkedin = ?, website = ?, avatar = ?, banner = ?, is_public = ? WHERE id = ?');
             $stmt->execute([
                 $_POST['username'],
                 $_POST['email'],
@@ -109,10 +132,11 @@ if ($_POST['action'] === 'update_profile') {
                 $_POST['website'],
                 $newAvatar,
                 $newBanner,
+                $is_public,
                 $_SESSION['user_id']
             ]);
         } elseif ($avatarUpdated) {
-            $stmt = $db->prepare('UPDATE users SET username = ?, email = ?, bio = ?, phone = ?, organization = ?, address = ?, city = ?, accreditation = ?, github = ?, linkedin = ?, website = ?, avatar = ? WHERE id = ?');
+            $stmt = $db->prepare('UPDATE users SET username = ?, email = ?, bio = ?, phone = ?, organization = ?, address = ?, city = ?, accreditation = ?, github = ?, linkedin = ?, website = ?, avatar = ?, is_public = ? WHERE id = ?');
             $stmt->execute([
                 $_POST['username'],
                 $_POST['email'],
@@ -126,10 +150,11 @@ if ($_POST['action'] === 'update_profile') {
                 $_POST['linkedin'],
                 $_POST['website'],
                 $newAvatar,
+                $is_public,
                 $_SESSION['user_id']
             ]);
         } elseif ($bannerUpdated) {
-            $stmt = $db->prepare('UPDATE users SET username = ?, email = ?, bio = ?, phone = ?, organization = ?, address = ?, city = ?, accreditation = ?, github = ?, linkedin = ?, website = ?, banner = ? WHERE id = ?');
+            $stmt = $db->prepare('UPDATE users SET username = ?, email = ?, bio = ?, phone = ?, organization = ?, address = ?, city = ?, accreditation = ?, github = ?, linkedin = ?, website = ?, banner = ?, is_public = ? WHERE id = ?');
             $stmt->execute([
                 $_POST['username'],
                 $_POST['email'],
@@ -143,11 +168,12 @@ if ($_POST['action'] === 'update_profile') {
                 $_POST['linkedin'],
                 $_POST['website'],
                 $newBanner,
+                $is_public,
                 $_SESSION['user_id']
             ]);
         } else {
             // Aucun fichier, mise à jour normale
-            $stmt = $db->prepare('UPDATE users SET username = ?, email = ?, bio = ?, phone = ?, organization = ?, address = ?, city = ?, accreditation = ?, github = ?, linkedin = ?, website = ? WHERE id = ?');
+            $stmt = $db->prepare('UPDATE users SET username = ?, email = ?, bio = ?, phone = ?, organization = ?, address = ?, city = ?, accreditation = ?, github = ?, linkedin = ?, website = ?, is_public = ? WHERE id = ?');
             $stmt->execute([
                 $_POST['username'],
                 $_POST['email'],
@@ -160,6 +186,7 @@ if ($_POST['action'] === 'update_profile') {
                 $_POST['github'],
                 $_POST['linkedin'],
                 $_POST['website'],
+                $is_public,
                 $_SESSION['user_id']
             ]);
         }
@@ -241,7 +268,7 @@ if ($_POST['action'] === 'update_profile') {
     } catch (Exception $e) {
         echo json_encode(['success' => false,'message' => $e->getMessage()]);
     }
-}
+} 
 
 // Vider et arrêter la mise en mémoire tampon
 ob_end_flush();

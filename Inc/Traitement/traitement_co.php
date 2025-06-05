@@ -7,9 +7,6 @@ if (isset($_POST['email'], $_POST['password'])) {
     $email = trim(htmlspecialchars($_POST['email']));
     $password = trim(htmlspecialchars($_POST['password']));
 
-    // ❌ SUPPRIMER CETTE VALIDATION - Elle ne doit être que lors de la création/modification de mot de passe
-    // La validation du format ne doit PAS être dans le processus de connexion
-    
     try {
         $db = connect_db();
         
@@ -27,7 +24,7 @@ if (isset($_POST['email'], $_POST['password'])) {
             $_SESSION['user_username'] = $user['username'];
             $_SESSION['user_role'] = $user['role'];
             $_SESSION['user_avatar'] = $user['avatar'];
-            $_SESSION['user_last_activity'] = date('Y-m-d H:i:s');
+            $_SESSION['user_last_activity'] = time(); // Utiliser timestamp pour timeout
             $_SESSION['user_active'] = $user['is_active'];
             
             // Gestion des cookies seulement si "Se souvenir de moi" est coché

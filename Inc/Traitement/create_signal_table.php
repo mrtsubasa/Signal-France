@@ -4,7 +4,6 @@ require_once("../Constants/db.php");
 function createSignalementsTable() {
     try {
         $db = connect_db();
-        
         // Créer la table signalements avec les NOUVELLES colonnes
         $sql = "CREATE TABLE IF NOT EXISTS signalements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,6 +19,8 @@ function createSignalementsTable() {
             longitude DECIMAL(11, 8),
             statut VARCHAR(50) DEFAULT 'en_attente',
             auteur VARCHAR(255) NULL,
+            nom VARCHAR(255) NULL,
+            prenom VARCHAR(255) NULL,
             priorite VARCHAR(20) DEFAULT 'normale',
             date_signalement DATETIME DEFAULT CURRENT_TIMESTAMP,
             date_traitement DATETIME NULL,
@@ -35,9 +36,7 @@ function createSignalementsTable() {
             FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (traite_par) REFERENCES users(id)
         )";
-        
         $result = $db->exec($sql);
-        
         if ($result !== false) {
             echo "Table 'signalements' créée avec succès";
             
@@ -49,7 +48,6 @@ function createSignalementsTable() {
         } else {
             echo "Erreur lors de la création de la table";
         }
-        
     } catch (Exception $e) {
         echo "Erreur de connexion à la base de données: " . $e->getMessage();
     }
@@ -80,6 +78,23 @@ function addMissingColumns($db) {
     } catch (Exception $e) {
         // Colonne existe déjà
     }
+    
+    // NOUVELLES COLONNES POUR LA RECHERCHE PAR NOM ET PRÉNOM
+    try {
+        // Ajouter colonne nom
+        $db->exec("ALTER TABLE signalements ADD COLUMN nom VARCHAR(255) NULL");
+        echo "Colonne nom ajoutée.\n";
+    } catch (Exception $e) {
+        // Colonne existe déjà
+    }
+    
+    try {
+        // Ajouter colonne prenom
+        $db->exec("ALTER TABLE signalements ADD COLUMN prenom VARCHAR(255) NULL");
+        echo "Colonne prenom ajoutée.\n";
+    } catch (Exception $e) {
+        // Colonne existe déjà
+    }
 }
 
 function addTestData($db) {
@@ -100,7 +115,9 @@ function addTestData($db) {
                     'localisation' => 'Parc Central, Paris 15ème',
                     'statut' => 'en_attente',
                     'priorite' => 'haute',
-                    'anonyme' => 0
+                    'anonyme' => 0,
+                    'nom' => 'Dupont',
+                    'prenom' => 'Jean'
                 ],
                 [
                     'user_id' => 2,
@@ -110,7 +127,9 @@ function addTestData($db) {
                     'localisation' => 'Lyon 3ème',
                     'statut' => 'en_cours',
                     'priorite' => 'normale',
-                    'anonyme' => 1
+                    'anonyme' => 1,
+                    'nom' => 'Martin',
+                    'prenom' => 'Sophie'
                 ],
                 [
                     'user_id' => 1,
@@ -120,7 +139,9 @@ function addTestData($db) {
                     'localisation' => 'En ligne',
                     'statut' => 'resolu',
                     'priorite' => 'urgente',
-                    'anonyme' => 0
+                    'anonyme' => 0,
+                    'nom' => 'Bernard',
+                    'prenom' => 'Marie'
                 ],
                 [
                     'user_id' => 2,
@@ -130,7 +151,9 @@ function addTestData($db) {
                     'localisation' => 'Métro Châtelet, Paris',
                     'statut' => 'en_attente',
                     'priorite' => 'haute',
-                    'anonyme' => 1
+                    'anonyme' => 1,
+                    'nom' => 'Leroy',
+                    'prenom' => 'Pierre'
                 ],
                 [
                     'user_id' => 1,
@@ -140,12 +163,14 @@ function addTestData($db) {
                     'localisation' => 'Marseille 13ème',
                     'statut' => 'en_cours',
                     'priorite' => 'normale',
-                    'anonyme' => 0
+                    'anonyme' => 0,
+                    'nom' => 'Moreau',
+                    'prenom' => 'Claire'
                 ]
             ];
             
-            $insertSql = "INSERT INTO signalements (user_id, type, titre, description, localisation, statut, priorite, anonyme) 
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $insertSql = "INSERT INTO signalements (user_id, type_incident, titre, description, localisation, statut, priorite, anonyme, nom, prenom) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $db->prepare($insertSql);
             
@@ -158,7 +183,9 @@ function addTestData($db) {
                     $signalement['localisation'],
                     $signalement['statut'],
                     $signalement['priorite'],
-                    $signalement['anonyme']
+                    $signalement['anonyme'],
+                    $signalement['nom'],
+                    $signalement['prenom']
                 ]);
             }
             

@@ -36,7 +36,12 @@ try {
                            WHEN s.anonyme = 1 THEN 'Anonyme'
                            WHEN u.username IS NOT NULL THEN u.username
                            ELSE 'Utilisateur supprimé'
-                       END as auteur_complet
+                       END as auteur_complet,
+                       CASE 
+                           WHEN s.nom IS NOT NULL AND s.prenom IS NOT NULL THEN CONCAT(s.prenom, ' ', s.nom)
+                           WHEN s.titre IS NOT NULL THEN s.titre
+                           ELSE 'Signalement sans titre'
+                       END as titre_complet
                 FROM signalements s 
                 LEFT JOIN users u ON s.user_id = u.id 
                 LEFT JOIN users t ON s.traite_par = t.id
@@ -74,7 +79,7 @@ try {
             ]);
             break;
             
-        case 'autocomplete_titre':
+        case 'autocomplete_nom_prenom':
             if (!isset($_POST['query'])) {
                 throw new Exception('Requête manquante');
             }
@@ -88,14 +93,25 @@ try {
             }
             
             $stmt = $conn->prepare("
-                SELECT DISTINCT titre, id, statut, date_signalement
+                SELECT DISTINCT 
+                    CONCAT(prenom, ' ', nom) as nom_complet,
+                    nom,
+                    prenom,
+                    id, 
+                    statut, 
+                    date_signalement,
+                    type_incident
                 FROM signalements 
-                WHERE titre LIKE ? OR titre LIKE ? OR titre LIKE ?
+                WHERE (nom LIKE ? OR prenom LIKE ? OR CONCAT(prenom, ' ', nom) LIKE ?)
+                    AND nom IS NOT NULL 
+                    AND prenom IS NOT NULL
                 ORDER BY 
                     CASE 
-                        WHEN titre = ? THEN 1
-                        WHEN titre LIKE ? THEN 2
-                        ELSE 3
+                        WHEN CONCAT(prenom, ' ', nom) = ? THEN 1
+                        WHEN CONCAT(prenom, ' ', nom) LIKE ? THEN 2
+                        WHEN nom LIKE ? THEN 3
+                        WHEN prenom LIKE ? THEN 4
+                        ELSE 5
                     END,
                     date_signalement DESC
                 LIMIT ?
@@ -105,7 +121,66 @@ try {
             $startsWith = "$query%";
             $contains = "%$query%";
             
-            $stmt->execute([$exactMatch, $startsWith, $contains, $exactMatch, $startsWith, $limit]);
+            $stmt->execute([
+                $contains, $contains, $contains, // WHERE conditions
+                $exactMatch, $startsWith, $startsWith, $startsWith, // ORDER BY conditions
+                $limit
+            ]);
+            $suggestions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            echo json_encode(['suggestions' => $suggestions]);
+            break;
+            
+        case 'autocomplete_titre':
+            // Maintenir la compatibilité avec l'ancien système
+            if (!isset($_POST['query'])) {
+                throw new Exception('Requête manquante');
+            }
+            
+            $query = trim($_POST['query']);
+            $limit = isset($_POST['limit']) ? min((int)$_POST['limit'], 10) : 5;
+            
+            if (strlen($query) < 2) {
+                echo json_encode(['suggestions' => []]);
+                break;
+            }
+            
+            $stmt = $conn->prepare("
+                SELECT DISTINCT 
+                    CASE 
+                        WHEN nom IS NOT NULL AND prenom IS NOT NULL THEN CONCAT(prenom, ' ', nom)
+                        WHEN titre IS NOT NULL THEN titre
+                        ELSE 'Signalement sans titre'
+                    END as titre,
+                    id, 
+                    statut, 
+                    date_signalement
+                FROM signalements 
+                WHERE (titre LIKE ? OR titre LIKE ? OR titre LIKE ? 
+                       OR nom LIKE ? OR prenom LIKE ? 
+                       OR CONCAT(prenom, ' ', nom) LIKE ?)
+                ORDER BY 
+                    CASE 
+                        WHEN titre = ? THEN 1
+                        WHEN titre LIKE ? THEN 2
+                        WHEN CONCAT(prenom, ' ', nom) = ? THEN 3
+                        WHEN CONCAT(prenom, ' ', nom) LIKE ? THEN 4
+                        ELSE 5
+                    END,
+                    date_signalement DESC
+                LIMIT ?
+            ");
+            
+            $exactMatch = $query;
+            $startsWith = "$query%";
+            $contains = "%$query%";
+            
+            $stmt->execute([
+                $exactMatch, $startsWith, $contains, // titre conditions
+                $contains, $contains, $contains, // nom/prenom conditions
+                $exactMatch, $startsWith, $exactMatch, $startsWith, // ORDER BY conditions
+                $limit
+            ]);
             $suggestions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             echo json_encode(['suggestions' => $suggestions]);
@@ -125,17 +200,100 @@ try {
             }
             
             $stmt = $conn->prepare("
-                SELECT id, titre, type_incident, statut, date_signalement, priorite
+                SELECT 
+                    id, 
+                    CASE 
+                        WHEN nom IS NOT NULL AND prenom IS NOT NULL THEN CONCAT(prenom, ' ', nom)
+                        WHEN titre IS NOT NULL THEN titre
+                        ELSE 'Signalement sans titre'
+                    END as titre,
+                    nom,
+                    prenom,
+                    type_incident, 
+                    statut, 
+                    date_signalement, 
+                    priorite
                 FROM signalements 
-                WHERE titre LIKE ? OR type_incident LIKE ? OR description LIKE ? OR localisation LIKE ? OR lieu LIKE ?
+                WHERE titre LIKE ? 
+                   OR type_incident LIKE ? 
+                   OR description LIKE ? 
+                   OR localisation LIKE ? 
+                   OR lieu LIKE ?
+                   OR nom LIKE ?
+                   OR prenom LIKE ?
+                   OR CONCAT(prenom, ' ', nom) LIKE ?
                 ORDER BY date_signalement DESC
                 LIMIT ?
             ");
             $searchTerm = "%$query%";
-            $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $limit]);
+            $stmt->execute([
+                $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm,
+                $searchTerm, $searchTerm, $searchTerm, // nom/prenom search
+                $limit
+            ]);
             $suggestions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             echo json_encode(['suggestions' => $suggestions]);
+            break;
+            
+        case 'search_by_person':
+            if (!isset($_POST['nom']) && !isset($_POST['prenom'])) {
+                throw new Exception('Nom ou prénom requis');
+            }
+            
+            $nom = isset($_POST['nom']) ? trim($_POST['nom']) : '';
+            $prenom = isset($_POST['prenom']) ? trim($_POST['prenom']) : '';
+            $limit = isset($_POST['limit']) ? min((int)$_POST['limit'], 50) : 20;
+            
+            $whereConditions = [];
+            $params = [];
+            
+            if (!empty($nom)) {
+                $whereConditions[] = "nom LIKE ?";
+                $params[] = "%$nom%";
+            }
+            
+            if (!empty($prenom)) {
+                $whereConditions[] = "prenom LIKE ?";
+                $params[] = "%$prenom%";
+            }
+            
+            if (empty($whereConditions)) {
+                throw new Exception('Au moins un critère de recherche requis');
+            }
+            
+            $whereClause = implode(' AND ', $whereConditions);
+            $params[] = $limit;
+            
+            $stmt = $conn->prepare("
+                SELECT 
+                    id,
+                    nom,
+                    prenom,
+                    CONCAT(prenom, ' ', nom) as nom_complet,
+                    type_incident,
+                    statut,
+                    priorite,
+                    date_signalement,
+                    description,
+                    localisation,
+                    lieu,
+                    incident_context,
+                    plateforme
+                FROM signalements 
+                WHERE $whereClause
+                ORDER BY date_signalement DESC
+                LIMIT ?
+            ");
+            
+            $stmt->execute($params);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            echo json_encode([
+                'success' => true,
+                'results' => $results,
+                'count' => count($results)
+            ]);
             break;
             
         case 'get_stats':
@@ -157,6 +315,21 @@ try {
             $stmt = $conn->query("SELECT incident_context, COUNT(*) as count FROM signalements GROUP BY incident_context");
             $stats['by_context'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
+            // Statistiques par nom/prénom (personnes les plus signalées)
+            $stmt = $conn->query("
+                SELECT 
+                    CONCAT(prenom, ' ', nom) as nom_complet,
+                    nom,
+                    prenom,
+                    COUNT(*) as count 
+                FROM signalements 
+                WHERE nom IS NOT NULL AND prenom IS NOT NULL
+                GROUP BY nom, prenom 
+                ORDER BY count DESC 
+                LIMIT 10
+            ");
+            $stats['most_reported'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
             // Total
             $stmt = $conn->query("SELECT COUNT(*) as total FROM signalements");
             $stats['total'] = $stmt->fetchColumn();
@@ -165,14 +338,19 @@ try {
             $stmt = $conn->query("SELECT COUNT(*) as recent FROM signalements WHERE date_signalement >= datetime('now', '-1 day')");
             $stats['recent'] = $stmt->fetchColumn();
             
+            // Signalements avec nom/prénom vs anciens avec titre
+            $stmt = $conn->query("SELECT COUNT(*) as with_names FROM signalements WHERE nom IS NOT NULL AND prenom IS NOT NULL");
+            $stats['with_names'] = $stmt->fetchColumn();
+            
+            $stmt = $conn->query("SELECT COUNT(*) as with_title_only FROM signalements WHERE (nom IS NULL OR prenom IS NULL) AND titre IS NOT NULL");
+            $stats['with_title_only'] = $stmt->fetchColumn();
+            
             echo json_encode([
                 'success' => true,
                 'stats' => $stats
             ]);
             break;
                 
-                
-            
         default:
             throw new Exception('Action non reconnue');
     }

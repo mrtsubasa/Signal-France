@@ -1283,3 +1283,707 @@ button a {
 }
 
 /*# sourceMappingURL=styles.css.map */
+/* =================================
+   RESPONSIVE DESIGN AMÉLIORÉ
+   ================================= */
+
+/* Breakpoints personnalisés */
+@media (max-width: 1536px) {
+  .max-w-7xl {
+    max-width: 1280px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .max-w-7xl {
+    max-width: 1024px;
+  }
+  
+  /* Ajustement des statistiques */
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Header responsive */
+  .bg-gradient-to-r.from-blue-600 {
+    padding: 1.5rem;
+  }
+  
+  .text-4xl {
+    font-size: 2rem;
+  }
+  
+  .text-lg {
+    font-size: 1rem;
+  }
+  
+  /* Masquer l'horloge sur tablette */
+  .hidden.lg\:block {
+    display: none !important;
+  }
+  
+  /* Statistiques en 2 colonnes */
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-5 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  /* Layout principal en une colonne */
+  .grid.grid-cols-1.lg\:grid-cols-4 {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  /* Menu latéral en pleine largeur */
+  .lg\:col-span-1 {
+    order: 2;
+  }
+  
+  .lg\:col-span-3 {
+    order: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Container principal */
+  .max-w-7xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Header mobile */
+  .bg-gradient-to-r.from-blue-600 {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+  
+  .text-4xl {
+    font-size: 1.75rem;
+  }
+  
+  .flex.items-center.justify-between {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  /* Statistiques en une colonne */
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-5 {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  /* Cartes statistiques plus compactes */
+  .bg-white.rounded-2xl.shadow-lg {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+  
+  .flex.items-center .ml-4 {
+    margin-left: 0.75rem;
+  }
+  
+  .text-3xl {
+    font-size: 1.5rem;
+  }
+  
+  /* Menu navigation mobile */
+  .admin-nav-link {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .admin-nav-link .p-2 {
+    padding: 0.5rem;
+  }
+  
+  /* Sections admin responsive */
+  .admin-section {
+    margin-bottom: 1rem;
+  }
+  
+  .bg-gradient-to-r.from-blue-50 {
+    padding: 1rem;
+  }
+  
+  .text-2xl {
+    font-size: 1.25rem;
+  }
+  
+  /* Tables responsive */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 600px;
+  }
+  
+  /* Boutons responsive */
+  .bg-gradient-to-r.from-blue-600 {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Modales responsive */
+  .fixed.inset-0 .bg-white {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Très petits écrans */
+  .px-4 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .py-8 {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  
+  /* Header très compact */
+  .bg-gradient-to-r.from-blue-600 {
+    padding: 0.75rem;
+  }
+  
+  .text-4xl {
+    font-size: 1.5rem;
+  }
+  
+  .p-3 {
+    padding: 0.5rem;
+  }
+  
+  /* Statistiques très compactes */
+  .bg-white.rounded-2xl.shadow-lg {
+    padding: 0.75rem;
+  }
+  
+  .text-3xl {
+    font-size: 1.25rem;
+  }
+  
+  .text-sm {
+    font-size: 0.75rem;
+  }
+  
+  /* Navigation très compacte */
+  .admin-nav-link {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .admin-nav-link span {
+    font-size: 0.75rem;
+  }
+  
+  /* Badges plus petits */
+  .text-xs {
+    font-size: 0.625rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  /* Formulaires responsive */
+  .enhanced-input {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Boutons pleine largeur sur mobile */
+  .bg-gradient-to-r.from-blue-600,
+  .bg-gradient-to-r.from-red-600,
+  .bg-gradient-to-r.from-green-600 {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Écrans très petits (anciens smartphones) */
+  .container {
+    padding: 0.5rem;
+  }
+  
+  /* Header minimal */
+  .text-4xl {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+  
+  .text-lg {
+    font-size: 0.875rem;
+  }
+  
+  /* Statistiques en stack vertical */
+  .flex.items-center {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .ml-4 {
+    margin-left: 0;
+  }
+  
+  /* Navigation en liste simple */
+  .admin-nav-link {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem 0.5rem;
+  }
+  
+  .admin-nav-link .flex-1 {
+    margin-top: 0.5rem;
+  }
+  
+  /* Tables en scroll horizontal */
+  .overflow-x-auto {
+    border-radius: 0.5rem;
+  }
+  
+  table {
+    font-size: 0.75rem;
+  }
+  
+  th, td {
+    padding: 0.5rem 0.25rem;
+  }
+}
+
+/* Améliorations pour l'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  .transition-all,
+  .transition-colors,
+  .transition-transform {
+    transition: none;
+  }
+  
+  .animate-pulse {
+    animation: none;
+  }
+  
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+}
+
+/* Mode sombre responsive */
+@media (prefers-color-scheme: dark) {
+  .bg-white {
+    background-color: #1f2937;
+    color: #f9fafb;
+  }
+  
+  .text-gray-900 {
+    color: #f9fafb;
+  }
+  
+  .text-gray-600 {
+    color: #d1d5db;
+  }
+  
+  .border-gray-100 {
+    border-color: #374151;
+  }
+}
+
+/* Orientation paysage sur mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .py-8 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+/* Améliorations pour les écrans tactiles */
+@media (hover: none) and (pointer: coarse) {
+  .hover\:scale-105:hover {
+    transform: scale(1.02);
+  }
+  
+  .admin-nav-link {
+    min-height: 44px; /* Taille minimale recommandée pour le tactile */
+  }
+  
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+
+/* =================================
+   RESPONSIVE PARFAIT - ZÉRO SCROLL HORIZONTAL
+   ================================= */
+
+/* Base responsive - Empêcher tout débordement */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+.container, .max-w-7xl {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Corrections spécifiques pour admin.php */
+@media (max-width: 768px) {
+  /* Forcer tous les conteneurs à rester dans la largeur */
+  .max-w-7xl {
+    max-width: 100vw;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  /* Header responsive sans débordement */
+  .bg-gradient-to-r.from-blue-600 {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 1rem 0.75rem;
+    border-radius: 0.75rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Titre responsive */
+  .text-4xl {
+    font-size: 1.5rem;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+  
+  .text-lg {
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+  
+  /* Flex header sans débordement */
+  .flex.items-center.justify-between {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  
+  /* Statistiques - Une seule colonne sur mobile */
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-5 {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* Cartes statistiques sans débordement */
+  .bg-white.rounded-2xl.shadow-lg {
+    padding: 0.75rem;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border-radius: 0.75rem;
+  }
+  
+  /* Contenu des cartes responsive */
+  .flex.items-center {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .ml-4 {
+    margin-left: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  /* Textes responsive */
+  .text-3xl {
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+  
+  .text-sm {
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+  
+  /* Layout principal - Une colonne sur mobile */
+  .grid.grid-cols-1.lg\:grid-cols-4 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* Menu latéral responsive */
+  .lg\:col-span-1,
+  .lg\:col-span-3 {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  /* Navigation responsive */
+  .admin-nav-link {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-break: break-word;
+  }
+  
+  .admin-nav-link span {
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+  
+  /* Badges responsive */
+  .text-xs {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.4rem;
+    white-space: nowrap;
+  }
+  
+  /* Tables responsive - Scroll uniquement pour les tables */
+  .overflow-x-auto {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0.5rem;
+  }
+  
+  table {
+    min-width: 100%;
+    width: 100%;
+    font-size: 0.7rem;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    padding: 0.4rem 0.2rem;
+    text-align: left;
+    word-break: break-word;
+    max-width: 120px;
+  }
+  
+  /* Boutons responsive */
+  .bg-gradient-to-r.from-blue-600,
+  .bg-gradient-to-r.from-red-600,
+  .bg-gradient-to-r.from-green-600,
+  button {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    box-sizing: border-box;
+    word-break: break-word;
+  }
+  
+  /* Formulaires responsive */
+  .enhanced-input,
+  input, select, textarea {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.6rem;
+    font-size: 0.8rem;
+    box-sizing: border-box;
+  }
+  
+  /* Modales responsive */
+  .fixed.inset-0 {
+    padding: 0.5rem;
+  }
+  
+  .fixed.inset-0 .bg-white {
+    width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100vh - 1rem);
+    margin: 0.5rem;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Très petits écrans - Ultra compact */
+  .max-w-7xl {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  .bg-gradient-to-r.from-blue-600 {
+    padding: 0.75rem 0.5rem;
+    margin: 0;
+  }
+  
+  .text-4xl {
+    font-size: 1.2rem;
+    line-height: 1.1;
+  }
+  
+  .text-lg {
+    font-size: 0.8rem;
+  }
+  
+  /* Cartes ultra compactes */
+  .bg-white.rounded-2xl.shadow-lg {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+  }
+  
+  .text-3xl {
+    font-size: 1.1rem;
+  }
+  
+  .text-sm {
+    font-size: 0.7rem;
+  }
+  
+  /* Navigation ultra compacte */
+  .admin-nav-link {
+    padding: 0.5rem 0.3rem;
+    font-size: 0.75rem;
+  }
+  
+  .admin-nav-link span {
+    font-size: 0.7rem;
+  }
+  
+  /* Tables ultra compactes */
+  table {
+    font-size: 0.65rem;
+  }
+  
+  th, td {
+    padding: 0.3rem 0.1rem;
+    max-width: 80px;
+  }
+  
+  /* Boutons ultra compacts */
+  button {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Smartphones très anciens */
+  .max-w-7xl {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+  
+  .bg-gradient-to-r.from-blue-600 {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .text-4xl {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+  
+  /* Statistiques en stack complet */
+  .flex.items-center {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.25rem;
+    align-items: center;
+  }
+  
+  .ml-4 {
+    margin-left: 0;
+    margin-top: 0.25rem;
+  }
+  
+  /* Navigation en liste verticale */
+  .admin-nav-link {
+    flex-direction: column;
+    text-align: center;
+    padding: 0.75rem 0.25rem;
+    gap: 0.25rem;
+  }
+  
+  .admin-nav-link .flex-1 {
+    margin-top: 0.25rem;
+    margin-left: 0;
+  }
+  
+  /* Tables minimales */
+  table {
+    font-size: 0.6rem;
+  }
+  
+  th, td {
+    padding: 0.2rem 0.1rem;
+    max-width: 60px;
+  }
+}
+
+/* Corrections spéciales pour éviter le débordement */
+@media (max-width: 768px) {
+  /* Empêcher tout débordement horizontal */
+  .container,
+  .max-w-7xl,
+  .grid,
+  .flex,
+  .bg-white,
+  .rounded-2xl,
+  .shadow-lg,
+  .admin-nav-link,
+  .bg-gradient-to-r {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Forcer le word-wrap sur tous les textes */
+  * {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Empêcher les marges négatives de créer du débordement */
+  .absolute,
+  .relative {
+    max-width: 100% !important;
+  }
+  
+  /* Corrections pour les éléments positionnés */
+  .absolute.top-0.right-0,
+  .absolute.bottom-0.left-0 {
+    display: none; /* Masquer les éléments décoratifs qui peuvent déborder */
+  }
+}
+
+/* Correction finale - Empêcher absolument tout scroll horizontal */
+body {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+
+html {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
