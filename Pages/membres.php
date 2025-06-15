@@ -4,7 +4,6 @@ require_once '../Inc/Constants/db.php';
 require_once '../Inc/Components/header.php';
 require_once '../Inc/Components/nav.php';
 
-
 try {
     $conn = connect_db();
     if (!$conn) {
@@ -54,704 +53,980 @@ try {
     $publicUsers = [];
 }
 ?>
-<main>
-<!-- Section Membres avec Tailwind -->
-<section class="py-20 px-5 max-w-7xl mx-auto">
-<div class="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-    <!-- Particules flottantes avec couleurs France -->
-    <div class="absolute inset-0">
-        <div class="particle w-32 h-32 bg-blue-500 top-10 left-10 opacity-20 blur-xl" style="animation-delay: 0s;"></div>
-        <div class="particle w-24 h-24 bg-red-500 top-40 right-20 opacity-15 blur-xl" style="animation-delay: 2s;"></div>
-        <div class="particle w-28 h-28 bg-white bottom-20 left-20 opacity-25 blur-xl" style="animation-delay: 4s;"></div>
-        <div class="particle w-20 h-20 bg-blue-600 bottom-40 right-10 opacity-20 blur-xl" style="animation-delay: 1s;"></div>
-        <div class="particle w-16 h-16 bg-red-400 top-1/2 left-1/3 opacity-15 blur-xl" style="animation-delay: 3s;"></div>
-    </div>
-    
-    <!-- Mesh gradient overlay -->
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-900/20 via-transparent to-red-900/20"></div>
-    
-    <div class="relative z-10">
-        <!-- En-tête de section avec design premium -->
-        <section class="py-20 px-5 max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-red-500 rounded-full mb-6 shadow-2xl morphing-bg">
-                    <i class="fas fa-users text-white text-3xl"></i>
-                </div>
-                <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-white via-blue-200 to-white bg-clip-text text-transparent mb-4">
-                    Nos Membres
-                </h1>
-                <p class="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                    Découvrez les profils publics de notre communauté engagée pour la sécurité en France
-                </p>
-                <div class="mt-8 flex justify-center">
-                    <div class="france-gradient h-1 w-32 rounded-full"></div>
-                </div>
-            </div>
-            
-            <?php if (empty($publicUsers)): ?>
-                <!-- État vide amélioré -->
-                <div class="text-center py-20 member-card">
-                    <div class="glassmorphism-premium w-40 h-40 rounded-full flex items-center justify-center mx-auto mb-8 morphing-bg">
-                        <i class="fas fa-users text-6xl text-blue-400"></i>
-                    </div>
-                    <h3 class="text-4xl font-bold text-white mb-6">Aucun profil public</h3>
-                    <p class="text-slate-400 max-w-md mx-auto text-lg leading-relaxed mb-8">
-                        Personne n'a encore rendu son profil public. 
-                        Soyez le premier à rejoindre la communauté visible !
-                    </p>
-                    <a href="profile.php" class="inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-red-500 text-white px-8 py-4 rounded-full font-semibold hover:from-blue-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:-translate-y-2">
-                        <i class="fas fa-user-plus"></i>
-                        Rendre mon profil public
-                    </a>
-                </div>
-            <?php else: ?>
-                
-                <!-- Grille des membres avec design premium -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                                       <?php foreach ($publicUsers as $index => $member): ?>
-                        <div class="member-card bg-[#2f3136] rounded-lg overflow-hidden hover:bg-[#36393f] transition-all duration-200 relative" 
-                             data-role="<?= htmlspecialchars($member['role']) ?>" 
-                             style="animation-delay: <?= $index * 0.1 ?>s">
-                            
-                            <!-- Bannière style Discord -->
-                            <div class="h-24 relative overflow-hidden bg-[#5865f2]">
-                                <?php if ($member['banner'] && file_exists('../Assets/Images/banners/' . $member['banner'])): ?>
-                                    <img src="../Assets/Images/banners/<?= htmlspecialchars($member['banner']) ?>" 
-                                         alt="Bannière de <?= htmlspecialchars($member['username']) ?>"
-                                         class="w-full h-full object-cover">
-                                <?php else: ?>
-                                    <div class="w-full h-full bg-gradient-to-r from-[#5865f2] to-[#7289da]"></div>
-                                <?php endif; ?>
-                                
-                                <!-- Badge rôle style Discord -->
-                                <?php 
-                                $badgeColors = [
-                                    'admin' => 'bg-[#f23f42]',
-                                    'moderator' => 'bg-[#5865f2]',
-                                    'verified' => 'bg-[#57f287]',
-                                    'user' => 'bg-[#99aab5]'
-                                ];
-                                $badgeClass = $badgeColors[$member['role']] ?? $badgeColors['user'];
-                                ?>
-                                <div class="absolute top-3 right-3 px-2 py-1 <?= $badgeClass ?> text-white rounded text-xs font-semibold uppercase">
-                                    <?= htmlspecialchars($member['role']) ?>
-                                </div>
-                            </div>
-                            
-                            <!-- Avatar style Discord - chevauche entre bannière et contenu -->
-                            <div class="absolute top-16 left-4 z-10">
-                                <div class="relative">
-                                    <div class="w-20 h-20 rounded-full border-6 border-[#2f3136] overflow-hidden bg-[#36393f] hover:border-[#5865f2] transition-all duration-200">
-                                        <?php if ($member['avatar'] && file_exists('../Assets/Images/avatars/' . $member['avatar'])): ?>
-                                            <img src="../Assets/Images/avatars/<?= htmlspecialchars($member['avatar']) ?>" 
-                                                 alt="Avatar de <?= htmlspecialchars($member['username']) ?>"
-                                                 class="w-full h-full object-cover">
-                                        <?php else: ?>
-                                            <div class="w-full h-full bg-[#5865f2] flex items-center justify-center text-white text-xl font-bold">
-                                                <?= strtoupper(substr($member['username'], 0, 1)) ?>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <!-- Indicateur de statut style Discord -->
-                                    <div class="absolute -bottom-1 -right-1 w-6 h-6 <?= $member['is_active'] ? 'bg-[#23a55a]' : 'bg-[#80848e]' ?> border-4 border-[#2f3136] rounded-full"></div>
-                                </div>
-                            </div>
 
-                            <!-- Contenu principal style Discord -->
-                            <div class="pt-12 pb-4 px-4">
-                                <!-- Nom et discriminator style Discord -->
-                                <div class="mb-3">
-                                    <h3 class="text-white text-lg font-semibold hover:underline cursor-pointer">
-                                        <?= htmlspecialchars($member['username']) ?>
-                                    </h3>
-                                    <p class="text-[#b9bbbe] text-sm">
-                                        <?= htmlspecialchars($member['email']) ?>
-                                    </p>
-                                </div>
-                                
-                                <!-- Informations style Discord -->
-                                <div class="space-y-2 text-sm">
-                                    <?php if (!empty($member['organization'])): ?>
-                                        <div class="flex items-center gap-2 text-[#b9bbbe]">
-                                            <i class="fas fa-building text-[#b9bbbe] w-4"></i>
-                                            <span><?= htmlspecialchars($member['organization']) ?></span>
-                                        </div>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (!empty($member['accreditation'])): ?>
-                                        <div class="flex items-center gap-2 text-[#b9bbbe]">
-                                            <i class="fas fa-certificate text-[#faa61a] w-4"></i>
-                                            <span><?= htmlspecialchars($member['accreditation']) ?></span>
-                                        </div>
-                                    <?php endif; ?>
-                                    
-                                    <div class="flex items-center gap-2 text-[#b9bbbe]">
-                                        <i class="fas fa-calendar text-[#b9bbbe] w-4"></i>
-                                        <span>Membre depuis <?= date('M Y', strtotime($member['created_at'])) ?></span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Bio style Discord -->
-                                <?php if (!empty($member['bio'])): ?>
-                                    <div class="mt-3 p-3 bg-[#202225] rounded border-l-4 border-[#5865f2]">
-                                        <p class="text-[#dcddde] text-sm leading-relaxed">
-                                            <?= nl2br(htmlspecialchars($member['bio'])) ?>
-                                        </p>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                                              <!-- Bouton d'action style Discord -->
-                                                              <div class="mt-4">
-                                    <button onclick="showProfile(<?= $member['id'] ?>)" class="w-full bg-[#5865f2] hover:bg-[#4752c4] text-white py-3 px-4 rounded-md text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg hover:scale-[1.02]">
-                                        <i class="fas fa-eye"></i>
-                                        Voir le profil
-                                    </button>
-                                </div>
+    <main class="relative min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 overflow-hidden">
+        <!-- Background Elements -->
+        <div class="absolute inset-0">
+            <!-- Animated grid -->
+            <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+
+            <!-- Floating orbs -->
+            <div class="floating-orb orb-1"></div>
+            <div class="floating-orb orb-2"></div>
+            <div class="floating-orb orb-3"></div>
+            <div class="floating-orb orb-4"></div>
+            <div class="floating-orb orb-5"></div>
+
+            <!-- Gradient overlays -->
+            <div class="absolute inset-0 bg-gradient-radial from-blue-500/10 via-transparent to-purple-500/10"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent"></div>
+        </div>
+
+        <div class="relative z-10">
+            <!-- Hero Section -->
+            <section class="py-20 px-4 lg:px-8">
+                <div class="max-w-7xl mx-auto">
+                    <!-- Header avec animation sophistiquée -->
+                    <div class="text-center mb-20">
+                        <div class="relative inline-block mb-8">
+                            <div class="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur-3xl opacity-30 animate-pulse-slow"></div>
+                            <div class="relative bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-6 rounded-3xl shadow-2xl transform hover:scale-110 transition-all duration-500">
+                                <i class="fas fa-users text-white text-4xl"></i>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                                </div>
-                                
-                </div>
-                
-                
-                
-                
-                <!-- Section Stats avec design premium -->
-                <div class="mt-20 glassmorphism-premium rounded-3xl p-10 interactive-hover">
-                    <div class="text-center mb-12">
-                        <h2 class="text-4xl font-bold bg-gradient-to-r from-white via-blue-200 to-white bg-clip-text text-transparent mb-4">
-                            Statistiques de la communauté
-                        </h2>
-                        <div class="france-gradient h-1 w-24 rounded-full mx-auto"></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                        <?php
-                        $adminCount = count(array_filter($publicUsers, function($u) { return $u['role'] === 'admin'; }));
-                        $modCount = count(array_filter($publicUsers, function($u) { return $u['role'] === 'moderator'; }));
-                        $userCount = count(array_filter($publicUsers, function($u) { return $u['role'] === 'user'; }));
-                        $verifiedCount = count(array_filter($publicUsers, function($u) { return $u['role'] === 'verified'; }));
-                        
-                        $stats = [
-                            ['count' => $adminCount, 'label' => 'Admins', 'icon' => 'crown', 'color' => 'red'],
-                            ['count' => $modCount, 'label' => 'Modérateurs', 'icon' => 'shield-alt', 'color' => 'blue'],
-                            ['count' => $verifiedCount, 'label' => 'Vérifiés', 'icon' => 'check-circle', 'color' => 'green'],
-                            ['count' => $userCount, 'label' => 'Utilisateurs', 'icon' => 'users', 'color' => 'purple']
-                        ];
-                        ?>
-                        
-                        <?php foreach ($stats as $stat): ?>
-                            <div class="text-center stats-counter group">
-                                <div class="w-20 h-20 mx-auto mb-4 glassmorphism-premium rounded-2xl flex items-center justify-center border border-<?= $stat['color'] ?>-500/30 group-hover:border-<?= $stat['color'] ?>-400/50 transition-all duration-300 morphing-bg">
-                                    <i class="fas fa-<?= $stat['icon'] ?> text-3xl text-<?= $stat['color'] ?>-400 group-hover:scale-110 transition-transform"></i>
-                                </div>
-                                <div class="text-4xl font-bold text-white mb-2 font-mono group-hover:text-<?= $stat['color'] ?>-300 transition-colors"><?= $stat['count'] ?></div>
-                                <div class="text-slate-400 font-medium group-hover:text-slate-300 transition-colors"><?= $stat['label'] ?></div>
+
+                        <h1 class="text-6xl lg:text-8xl font-black mb-6">
+                        <span class="bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent drop-shadow-2xl">
+                            Notre
+                        </span>
+                            <br>
+                            <span class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                            Communauté
+                        </span>
+                        </h1>
+
+                        <p class="text-xl lg:text-2xl text-slate-300 max-w-4xl mx-auto leading-relaxed mb-8 font-light">
+                            Découvrez les membres engagés de Signale France, une communauté unie pour la sécurité et la protection de tous
+                        </p>
+
+                        <!-- Statistics bar -->
+                        <div class="flex justify-center items-center space-x-8 mb-8">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-white mb-1"><?= count($publicUsers) ?></div>
+                                <div class="text-sm text-slate-400">Membres publics</div>
                             </div>
-                        <?php endforeach; ?>
+                            <div class="w-px h-12 bg-slate-600"></div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-white mb-1"><?= count(array_filter($publicUsers, fn($u) => $u['is_active'])) ?></div>
+                                <div class="text-sm text-slate-400">En ligne</div>
+                            </div>
+                            <div class="w-px h-12 bg-slate-600"></div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-white mb-1"><?= count(array_filter($publicUsers, fn($u) => $u['role'] !== 'user')) ?></div>
+                                <div class="text-sm text-slate-400">Staff</div>
+                            </div>
+                        </div>
+
+                        <!-- France colors separator -->
+                        <div class="flex justify-center">
+                            <div class="h-1 w-64 bg-gradient-to-r from-blue-600 via-white to-red-600 rounded-full shadow-lg"></div>
+                        </div>
+                    </div>
+
+                    <?php if (empty($publicUsers)): ?>
+                        <!-- Empty state -->
+                        <div class="text-center py-20">
+                            <div class="relative inline-block mb-8">
+                                <div class="absolute inset-0 bg-slate-800 rounded-full blur-2xl opacity-50"></div>
+                                <div class="relative glassmorphism w-48 h-48 rounded-full flex items-center justify-center mx-auto border border-slate-700/50">
+                                    <i class="fas fa-users text-6xl text-slate-400"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-4xl font-bold text-white mb-6">Aucun profil public</h3>
+                            <p class="text-xl text-slate-400 max-w-2xl mx-auto mb-8 leading-relaxed">
+                                Soyez le premier à rejoindre notre communauté visible et à partager votre engagement pour la sécurité
+                            </p>
+                            <a href="profile.php" class="group inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 shadow-2xl hover:shadow-blue-500/25 transform hover:-translate-y-2 hover:scale-105">
+                                <i class="fas fa-user-plus group-hover:scale-110 transition-transform"></i>
+                                Rendre mon profil public
+                            </a>
+                        </div>
+                    <?php else: ?>
+
+                        <!-- Filters and Search -->
+                        <div class="flex flex-col lg:flex-row gap-6 mb-16">
+                            <div class="flex-1">
+                                <div class="relative">
+                                    <input type="text" id="searchMembers" placeholder="Rechercher un membre..."
+                                           class="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300">
+                                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <select id="roleFilter" class="px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+                                    <option value="">Tous les rôles</option>
+                                    <option value="admin">Administrateurs</option>
+                                    <option value="moderator">Modérateurs</option>
+                                    <option value="verified">Vérifiés</option>
+                                    <option value="user">Utilisateurs</option>
+                                </select>
+                                <select id="sortFilter" class="px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+                                    <option value="activity">Dernière activité</option>
+                                    <option value="name">Nom (A-Z)</option>
+                                    <option value="role">Rôle</option>
+                                    <option value="date">Date d'inscription</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Members Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-20" id="membersGrid">
+                            <?php foreach ($publicUsers as $index => $member): ?>
+                                <div class="member-card group relative" data-member='<?= json_encode($member) ?>' style="animation-delay: <?= $index * 0.1 ?>s">
+                                    <!-- Glow effect -->
+                                    <div class="absolute -inset-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+
+                                    <!-- Card content -->
+                                    <div class="relative glassmorphism rounded-3xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-all duration-500 hover:transform hover:scale-[1.02] hover:-translate-y-2">
+
+                                        <!-- Banner -->
+                                        <div class="relative h-32 overflow-hidden">
+                                            <?php if ($member['banner'] && file_exists('../Assets/Images/banners/' . $member['banner'])): ?>
+                                                <img src="../Assets/Images/banners/<?= htmlspecialchars($member['banner']) ?>"
+                                                     alt="Bannière" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                                            <?php else: ?>
+                                                <div class="w-full h-full bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 group-hover:scale-110 transition-transform duration-700"></div>
+                                            <?php endif; ?>
+
+                                            <!-- Role badge -->
+                                            <div class="absolute top-4 right-4">
+                                                <?php
+                                                $badgeConfig = [
+                                                    'admin' => ['bg' => 'bg-red-500', 'icon' => 'crown', 'text' => 'Admin'],
+                                                    'moderator' => ['bg' => 'bg-blue-500', 'icon' => 'shield-alt', 'text' => 'Modo'],
+                                                    'verified' => ['bg' => 'bg-green-500', 'icon' => 'check-circle', 'text' => 'Vérifié'],
+                                                    'user' => ['bg' => 'bg-slate-500', 'icon' => 'user', 'text' => 'Membre']
+                                                ];
+                                                $badge = $badgeConfig[$member['role']] ?? $badgeConfig['user'];
+                                                ?>
+                                                <div class="<?= $badge['bg'] ?> text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg backdrop-blur-sm">
+                                                    <i class="fas fa-<?= $badge['icon'] ?> text-xs"></i>
+                                                    <span class="hidden sm:inline"><?= $badge['text'] ?></span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Online status -->
+                                            <div class="absolute top-4 left-4">
+                                                <div class="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1">
+                                                    <div class="w-3 h-3 <?= $member['is_active'] ? 'bg-green-500 animate-pulse' : 'bg-slate-400' ?> rounded-full"></div>
+                                                    <span class="text-white text-xs font-medium"><?= $member['is_active'] ? 'En ligne' : 'Hors ligne' ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Avatar -->
+                                        <div class="absolute top-20 left-1/2 transform -translate-x-1/2">
+                                            <div class="relative">
+                                                <div class="w-24 h-24 rounded-full border-4 border-white/20 overflow-hidden shadow-2xl group-hover:border-white/40 transition-all duration-300">
+                                                    <?php if ($member['avatar'] && file_exists('../Assets/Images/avatars/' . $member['avatar'])): ?>
+                                                        <img src="../Assets/Images/avatars/<?= htmlspecialchars($member['avatar']) ?>"
+                                                             alt="Avatar" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                                    <?php else: ?>
+                                                        <div class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">
+                                                            <?= strtoupper(substr($member['username'], 0, 1)) ?>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <!-- Verification badge -->
+                                                <?php if ($member['role'] === 'verified' || $member['role'] === 'admin'): ?>
+                                                    <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-500 rounded-full border-4 border-white/20 flex items-center justify-center">
+                                                        <i class="fas fa-check text-white text-xs"></i>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+
+                                        <!-- Content -->
+                                        <div class="pt-16 pb-6 px-6 text-center">
+                                            <!-- Name and title -->
+                                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors">
+                                                <?= htmlspecialchars($member['username']) ?>
+                                            </h3>
+
+                                            <?php if (!empty($member['organization'])): ?>
+                                                <p class="text-slate-400 text-sm mb-3 flex items-center justify-center gap-2">
+                                                    <i class="fas fa-building text-xs"></i>
+                                                    <?= htmlspecialchars($member['organization']) ?>
+                                                </p>
+                                            <?php endif; ?>
+
+                                            <!-- Bio preview -->
+                                            <?php if (!empty($member['bio'])): ?>
+                                                <p class="text-slate-300 text-sm mb-4 line-clamp-2 leading-relaxed">
+                                                    <?= htmlspecialchars(substr($member['bio'], 0, 100)) ?><?= strlen($member['bio']) > 100 ? '...' : '' ?>
+                                                </p>
+                                            <?php endif; ?>
+
+                                            <!-- Stats -->
+                                            <div class="flex justify-center items-center gap-4 mb-6 text-xs text-slate-400">
+                                                <div class="flex items-center gap-1">
+                                                    <i class="fas fa-calendar"></i>
+                                                    <span><?= date('M Y', strtotime($member['created_at'])) ?></span>
+                                                </div>
+                                                <?php if ($member['last_activity']): ?>
+                                                    <div class="w-px h-4 bg-slate-600"></div>
+                                                    <div class="flex items-center gap-1">
+                                                        <i class="fas fa-clock"></i>
+                                                        <span><?= timeAgo($member['last_activity']) ?></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Social links -->
+                                            <div class="flex justify-center gap-3 mb-6">
+                                                <?php if (!empty($member['website'])): ?>
+                                                    <a href="<?= htmlspecialchars($member['website']) ?>" target="_blank"
+                                                       class="w-8 h-8 bg-white/10 hover:bg-blue-500 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300 hover:scale-110">
+                                                        <i class="fas fa-globe text-xs"></i>
+                                                    </a>
+                                                <?php endif; ?>
+                                                <?php if (!empty($member['github'])): ?>
+                                                    <a href="<?= htmlspecialchars($member['github']) ?>" target="_blank"
+                                                       class="w-8 h-8 bg-white/10 hover:bg-gray-800 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300 hover:scale-110">
+                                                        <i class="fab fa-github text-xs"></i>
+                                                    </a>
+                                                <?php endif; ?>
+                                                <?php if (!empty($member['linkedin'])): ?>
+                                                    <a href="<?= htmlspecialchars($member['linkedin']) ?>" target="_blank"
+                                                       class="w-8 h-8 bg-white/10 hover:bg-blue-600 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300 hover:scale-110">
+                                                        <i class="fab fa-linkedin text-xs"></i>
+                                                    </a>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- View profile button -->
+                                            <button onclick="showProfile(<?= $member['id'] ?>)"
+                                                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 group-hover:shadow-blue-500/25">
+                                                <i class="fas fa-eye mr-2"></i>Voir le profil
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <!-- Community Stats -->
+                        <div class="glassmorphism rounded-3xl p-10 border border-white/10 mb-20">
+                            <div class="text-center mb-12">
+                                <h2 class="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-4">
+                                    Statistiques de la Communauté
+                                </h2>
+                                <div class="h-1 w-32 bg-gradient-to-r from-blue-600 via-white to-red-600 rounded-full mx-auto"></div>
+                            </div>
+
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                                <?php
+                                $stats = [
+                                    ['count' => count(array_filter($publicUsers, fn($u) => $u['role'] === 'admin')), 'label' => 'Administrateurs', 'icon' => 'crown', 'color' => 'red', 'gradient' => 'from-red-500 to-pink-500'],
+                                    ['count' => count(array_filter($publicUsers, fn($u) => $u['role'] === 'moderator')), 'label' => 'Modérateurs', 'icon' => 'shield-alt', 'color' => 'blue', 'gradient' => 'from-blue-500 to-cyan-500'],
+                                    ['count' => count(array_filter($publicUsers, fn($u) => $u['role'] === 'verified')), 'label' => 'Vérifiés', 'icon' => 'check-circle', 'color' => 'green', 'gradient' => 'from-green-500 to-emerald-500'],
+                                    ['count' => count(array_filter($publicUsers, fn($u) => $u['role'] === 'user')), 'label' => 'Membres', 'icon' => 'users', 'color' => 'purple', 'gradient' => 'from-purple-500 to-indigo-500']
+                                ];
+                                ?>
+
+                                <?php foreach ($stats as $stat): ?>
+                                    <div class="stat-card group text-center">
+                                        <div class="relative mb-6">
+                                            <div class="absolute inset-0 bg-gradient-to-r <?= $stat['gradient'] ?> rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
+                                            <div class="relative w-20 h-20 mx-auto bg-gradient-to-r <?= $stat['gradient'] ?> rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                                                <i class="fas fa-<?= $stat['icon'] ?> text-white text-2xl"></i>
+                                            </div>
+                                        </div>
+                                        <div class="text-4xl font-bold text-white mb-2 font-mono counter" data-target="<?= $stat['count'] ?>">0</div>
+                                        <div class="text-slate-400 font-medium group-hover:text-slate-300 transition-colors"><?= $stat['label'] ?></div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Call to Action -->
+                    <div class="glassmorphism rounded-3xl p-12 text-center border border-white/10 relative overflow-hidden">
+                        <!-- Background patterns -->
+                        <div class="absolute inset-0 opacity-5">
+                            <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"></div>
+                            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 40px 40px;"></div>
+                        </div>
+
+                        <div class="relative z-10">
+                            <div class="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl animate-pulse-slow">
+                                <i class="fas fa-user-plus text-white text-4xl"></i>
+                            </div>
+
+                            <h2 class="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-300 via-white to-purple-300 bg-clip-text text-transparent">
+                                Rejoignez-nous
+                            </h2>
+
+                            <p class="text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed">
+                                Faites partie de notre communauté engagée ! Rendez votre profil public et connectez-vous avec d'autres membres passionnés par la sécurité et la protection de tous.
+                            </p>
+
+                            <div class="flex flex-col sm:flex-row gap-6 justify-center">
+                                <a href="profile.php" class="group inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 shadow-2xl hover:shadow-blue-500/25 transform hover:-translate-y-2 hover:scale-105">
+                                    <i class="fas fa-user-cog group-hover:scale-110 transition-transform"></i>
+                                    Gérer mon profil
+                                </a>
+                                <a href="signal.php" class="group inline-flex items-center gap-3 bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 border border-white/20 hover:border-white/40 backdrop-blur-sm transform hover:-translate-y-2 hover:scale-105">
+                                    <i class="fas fa-plus group-hover:scale-110 transition-transform"></i>
+                                    Créer un signalement
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            <?php endif; ?>
-        </section>
-  <!-- CTA Section avec design France premium -->
-  <section class="py-20 px-5 max-w-4xl mx-auto">
-            <div class="glassmorphism-premium rounded-3xl p-12 text-center text-white relative overflow-hidden interactive-hover">
-                <!-- Pattern de fond France -->
-                <div class="absolute inset-0 opacity-10">
-                    <div class="absolute inset-0 france-gradient"></div>
-                    <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 40px 40px;"></div>
-                </div>
-                
-                <!-- Particules flottantes -->
-                <div class="absolute top-10 left-10 w-4 h-4 bg-blue-400 rounded-full opacity-60 animate-ping"></div>
-                <div class="absolute bottom-10 right-10 w-6 h-6 bg-red-400 rounded-full opacity-40 animate-pulse"></div>
-                <div class="absolute top-1/2 right-20 w-3 h-3 bg-white rounded-full opacity-50 animate-bounce"></div>
-                
-                <div class="relative z-10">
-                    <div class="w-24 h-24 mx-auto mb-6 glassmorphism-premium rounded-full flex items-center justify-center morphing-bg">
-                        <i class="fas fa-user-plus text-3xl text-blue-400"></i>
-                    </div>
-                    <h2 class="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-200 via-white to-red-200 bg-clip-text text-transparent">
-                        Rejoins la communauté
-                    </h2>
-                    <p class="text-xl mb-8 text-slate-300 leading-relaxed max-w-2xl mx-auto">
-                        Rends ton profil public et montre-toi à la communauté Signale France !
-                        Connecte-toi avec d'autres membres engagés pour la sécurité.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="profile.php" class="inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-red-500 text-white px-8 py-4 rounded-full font-semibold hover:from-blue-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:-translate-y-2">
-                            <i class="fas fa-user-cog"></i>
-                            Modifier mon profil
-                        </a>
-                        <a href="signal.php" class="inline-flex items-center gap-3 glassmorphism-premium text-white px-8 py-4 rounded-full font-semibold hover:bg-white/20 transition-all duration-300 border border-white/20">
-                            <i class="fas fa-plus"></i>
-                            Créer un signalement
-                        </a>
-                    </div>
-                </div>
-            </div>
-                        </section>
-</main>
+            </section>
+        </div>
+    </main>
 
-<style>
-/* Animations personnalisées pour Tailwind */
-@keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    33% { transform: translateY(-10px) rotate(1deg); }
-    66% { transform: translateY(5px) rotate(-1deg); }
-}
+    <style>
+        /* Enhanced CSS with modern animations and effects */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
-@keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
+        * {
+            font-family: 'Inter', sans-serif;
+        }
 
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-    50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
-}
+        /* Glassmorphism effect */
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(50px) scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
+        /* Floating orbs background */
+        .floating-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.7;
+            animation: float-around 20s infinite ease-in-out;
+        }
 
-@keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.8) rotateY(20deg);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) rotateY(0deg);
-    }
-}
+        .orb-1 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
 
-@keyframes morphing {
-    0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-    50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
-}
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(45deg, #8b5cf6, #5b21b6);
+            top: 50%;
+            right: 10%;
+            animation-delay: 5s;
+        }
 
-.member-card {
-    animation: fadeInScale 0.8s ease-out;
-    perspective: 1000px;
-}
+        .orb-3 {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(45deg, #ec4899, #be185d);
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 10s;
+        }
 
-.member-card:hover {
-    transform: translateY(-15px) rotateX(5deg) rotateY(5deg);
-}
+        .orb-4 {
+            width: 350px;
+            height: 350px;
+            background: linear-gradient(45deg, #06b6d4, #0891b2);
+            top: 30%;
+            left: 50%;
+            animation-delay: 15s;
+        }
 
-.floating-avatar {
-    animation: float 6s ease-in-out infinite;
-}
+        .orb-5 {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            bottom: 10%;
+            right: 30%;
+            animation-delay: 7s;
+        }
 
-.glassmorphism-premium {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(25px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
-}
+        /* Grid background pattern */
+        .bg-grid-pattern {
+            background-image:
+                    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: grid-move 20s linear infinite;
+        }
 
-.france-gradient {
-    background: linear-gradient(135deg, #002395 0%, #FFFFFF 50%, #ED2939 100%);
-}
+        /* Advanced animations */
+        @keyframes float-around {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            25% {
+                transform: translate(30px, -40px) rotate(90deg) scale(1.1);
+            }
+            50% {
+                transform: translate(-20px, 20px) rotate(180deg) scale(0.9);
+            }
+            75% {
+                transform: translate(40px, 30px) rotate(270deg) scale(1.05);
+            }
+        }
 
-.interactive-hover {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
+        @keyframes grid-move {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
 
-.interactive-hover:hover {
-    transform: translateY(-12px) scale(1.03);
-    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.25);
-}
+        @keyframes pulse-slow {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
 
-.morphing-bg {
-    animation: morphing 8s ease-in-out infinite;
-}
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(100px) scale(0.9) rotateX(10deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateX(0deg);
+            }
+        }
 
-.particle {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    opacity: 0.6;
-    animation: float 8s ease-in-out infinite;
-}
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8) rotateY(20deg);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) rotateY(0deg);
+            }
+        }
 
-.stats-counter {
-    transition: all 0.3s ease;
-}
+        @keyframes counter-animation {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
 
-.stats-counter:hover {
-    transform: scale(1.1) rotateY(10deg);
-}
+        /* Member card animations */
+        .member-card {
+            animation: fadeInScale 0.8s ease-out;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
 
-@keyframes fade-in {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+        .member-card:hover {
+            transform: translateY(-10px) rotateX(5deg);
+        }
 
-.animate-fade-in {
-    animation: fade-in 0.6s ease-out;
-}
+        /* Stat card hover effects */
+        .stat-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-/* Effet shimmer pour les dégradés */
-.animate-shimmer {
-    background-size: 200% 200%;
-    animation: shimmer 3s ease-in-out infinite;
-}
+        .stat-card:hover {
+            transform: translateY(-10px) scale(1.05);
+        }
 
-@keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-}
-</style>
-    <?php include_once('../Inc/Components/footers.php'); ?>
-    <?php include_once('../Inc/Components/footer.php'); ?>
+        /* Utility classes */
+        .animate-pulse-slow {
+            animation: pulse-slow 4s ease-in-out infinite;
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Gradient backgrounds */
+        .bg-gradient-radial {
+            background: radial-gradient(circle, var(--tw-gradient-stops));
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .floating-orb {
+                width: 150px !important;
+                height: 150px !important;
+                filter: blur(40px);
+            }
+
+            .member-card:hover {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #2563eb, #7c3aed);
+        }
+
+        /* Enhanced select styles */
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        select option {
+            background-color: #1e293b;
+            color: white;
+        }
+    </style>
 
     <script>
-
-
-function showProfile(memberId) {
-    // Récupérer les données du membre via AJAX
-    fetch(`profile_ajax.php?action=get_member&id=${memberId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                createProfileModal(data.member);
-            } else {
-                console.error('Erreur lors du chargement du profil:', data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Erreur réseau:', error);
+        // Enhanced JavaScript with advanced interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnimations();
+            initializeSearch();
+            initializeCounters();
+            initializeParallax();
+            initializeCardHovers();
         });
-}
 
-function createProfileModal(member) {
- // Créer le modal
- const modal = document.createElement('div');
-    modal.id = 'profileModal';
-    modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black bg-opacity-50 backdrop-blur-sm';
-    modal.style.animation = 'fadeIn 0.3s ease-out';
-const modalContent = `
-    <div class="relative w-full max-w-md bg-gray-800 rounded-lg shadow-2xl transform transition-all duration-300 max-h-[95vh] overflow-y-auto" style="animation: slideUp 0.4s ease-out;">
-        <!-- Header avec bannière style Discord -->
-        <div class="relative h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-lg overflow-hidden">
-            ${member.banner ? 
-                `<img src="../Assets/Images/banners/${member.banner}" alt="Bannière" class="w-full h-full object-cover opacity-80">` :
-                `<div class="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600"></div>`
-            }
-            <div class="absolute top-3 right-3">
-                <button onclick="closeProfileModal()" class="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200">
-                    <i class="fas fa-times text-sm"></i>
-                </button>
-            </div>
-        </div>
-        
-        <!-- Avatar style Discord -->
-        <div class="absolute top-12 left-6">
-            <div class="relative">
-                <div class="w-20 h-20 rounded-full border-6 border-gray-800 overflow-hidden bg-gray-700">
-                    ${member.avatar ? 
-                        `<img src="../Assets/Images/avatars/${member.avatar}" alt="Avatar" class="w-full h-full object-cover">` :
-                        `<div class="w-full h-full bg-gray-600 flex items-center justify-center">
-                            <i class="fas fa-user text-2xl text-gray-400"></i>
-                        </div>`
-                    }
-                </div>
-                ${member.is_active ? 
-                    '<div class="absolute bottom-1 right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-gray-800 flex items-center justify-center"><div class="w-2 h-2 bg-white rounded-full"></div></div>' :
-                    '<div class="absolute bottom-1 right-1 w-6 h-6 bg-gray-500 rounded-full border-4 border-gray-800"></div>'
-                }
-            </div>
-        </div>
-        
-        <!-- Badge de rôle style Discord -->
-        <div class="absolute top-16 right-6">
-            ${getRoleBadgeDiscordStyle(member.role)}
-        </div>
-        
-        <!-- Contenu principal -->
-        <div class="pt-16 p-6 bg-gray-800">
-            <!-- Nom et statut -->
-            <div class="mb-6">
-                <div class="flex items-center gap-2 mb-2">
-                    <h2 class="text-xl font-bold text-white">${member.username}</h2>
-                    ${member.is_verified ? 
-                        '<div class="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center"><i class="fas fa-check text-white text-xs"></i></div>' :
-                        ''
-                    }
-                </div>
-                <p class="text-gray-400 text-sm">${member.is_active ? '🟢 En ligne' : '⚫ Hors ligne'}</p>
-                ${member.organization ? 
-                    `<p class="text-gray-400 text-sm mt-1">${member.organization}</p>` : ''
-                }
-            </div>
-            
-            <!-- Section À propos style Discord -->
-            <div class="mb-6">
-                <h3 class="text-white font-semibold mb-3 text-sm uppercase tracking-wide">À PROPOS DE MOI</h3>
-                <div class="bg-gray-700 rounded-lg p-4">
-                    ${member.bio ? 
-                        `<p class="text-gray-300 text-sm mb-3">${member.bio}</p>` :
-                        `<p class="text-gray-400 text-sm italic mb-3">Aucune description disponible</p>`
-                    }
-                    <div class="space-y-2 text-sm">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-envelope text-gray-400 w-4"></i>
-                            <span class="text-gray-300">${member.email}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-calendar text-gray-400 w-4"></i>
-                            <span class="text-gray-300">Membre depuis ${formatDate(member.created_at)}</span>
-                        </div>
-                        ${member.last_login ? 
-                            `<div class="flex items-center gap-2">
-                                <i class="fas fa-clock text-gray-400 w-4"></i>
-                                <span class="text-gray-300">Dernière activité ${formatDate(member.last_login)}</span>
-                            </div>` : ''
-                        }
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Statistiques style Discord -->
-            <div class="mb-6">
-                <h3 class="text-white font-semibold mb-3 text-sm uppercase tracking-wide">ACTIVITÉ</h3>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-gray-700 rounded-lg p-3 text-center">
-                        <div class="text-2xl font-bold text-white">${member.signals_created || 0}</div>
-                        <div class="text-gray-400 text-xs">Signalements créés</div>
-                    </div>
-                    <div class="bg-gray-700 rounded-lg p-3 text-center">
-                        <div class="text-2xl font-bold text-white">${member.signals_processed || 0}</div>
-                        <div class="text-gray-400 text-xs">Signalements traités</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Liens sociaux style Discord -->
-            ${(member.website || member.github || member.linkedin) ? 
-                `<div class="mb-6">
-                    <h3 class="text-white font-semibold mb-3 text-sm uppercase tracking-wide">LIENS</h3>
-                    <div class="space-y-2">
-                        ${member.website ? 
-                            `<a href="${member.website}" target="_blank" class="flex items-center gap-3 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200">
-                                <i class="fas fa-globe text-blue-400"></i>
-                                <span class="text-white text-sm">Site Web</span>
-                                <i class="fas fa-external-link-alt text-gray-400 text-xs ml-auto"></i>
-                            </a>` : ''
-                        }
-                        ${member.github ? 
-                            `<a href="${member.github}" target="_blank" class="flex items-center gap-3 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200">
-                                <i class="fab fa-github text-gray-300"></i>
-                                <span class="text-white text-sm">GitHub</span>
-                                <i class="fas fa-external-link-alt text-gray-400 text-xs ml-auto"></i>
-                            </a>` : ''
-                        }
-                        ${member.linkedin ? 
-                            `<a href="${member.linkedin}" target="_blank" class="flex items-center gap-3 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200">
-                                <i class="fab fa-linkedin text-blue-400"></i>
-                                <span class="text-white text-sm">LinkedIn</span>
-                                <i class="fas fa-external-link-alt text-gray-400 text-xs ml-auto"></i>
-                            </a>` : ''
-                        }
-                    </div>
-                </div>` : ''
-            }
-            
-            <!-- Contact style Discord -->
-            ${(member.phone || member.address) ? 
-                `<div>
-                    <h3 class="text-white font-semibold mb-3 text-sm uppercase tracking-wide">CONTACT</h3>
-                    <div class="bg-gray-700 rounded-lg p-4 space-y-2">
-                        ${member.phone ? 
-                            `<div class="flex items-center gap-3">
-                                <i class="fas fa-phone text-green-400"></i>
-                                <span class="text-gray-300 text-sm">${member.phone}</span>
-                            </div>` : ''
-                        }
-                        ${member.address ? 
-                            `<div class="flex items-center gap-3">
-                                <i class="fas fa-map-marker-alt text-red-400"></i>
-                                <span class="text-gray-300 text-sm">${member.address}</span>
-                            </div>` : ''
-                        }
-                    </div>
-                </div>` : ''
-            }
-        </div>
-    </div>
-`;
+        function initializeAnimations() {
+            // Intersection Observer for scroll animations
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -100px 0px'
+            };
 
-    
-    modal.innerHTML = modalContent;
-    document.body.appendChild(modal);
-    
-    // Fermer le modal en cliquant à l'extérieur
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeProfileModal();
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationDelay = `${index * 0.1}s`;
+                        entry.target.classList.add('animate-slideInUp');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all member cards
+            document.querySelectorAll('.member-card').forEach(card => {
+                observer.observe(card);
+            });
         }
-    });
-    
-    // Fermer avec Escape
-    document.addEventListener('keydown', handleEscapeKey);
-}
 
+        function initializeSearch() {
+            const searchInput = document.getElementById('searchMembers');
+            const roleFilter = document.getElementById('roleFilter');
+            const sortFilter = document.getElementById('sortFilter');
+            const membersGrid = document.getElementById('membersGrid');
 
-function getRoleBadgeDiscordStyle(role) {
-    const badges = {
-        'admin': '<div class="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">ADMIN</div>',
-        'moderator': '<div class="bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold">MOD</div>',
-        'verified': '<div class="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">VÉRIFIÉ</div>',
-        'member': '<div class="bg-gray-500 text-white px-2 py-1 rounded text-xs font-bold">MEMBRE</div>'
-    };
-    return badges[role] || badges['member'];
-}
+            function filterMembers() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedRole = roleFilter.value;
+                const sortBy = sortFilter.value;
 
-function closeProfileModal() {
-    const modal = document.getElementById('profileModal');
-    if (modal) {
-        modal.style.animation = 'fadeOut 0.3s ease-in';
-        setTimeout(() => {
-            modal.remove();
-            document.removeEventListener('keydown', handleEscapeKey);
-        }, 300);
-    }
-}
+                const cards = Array.from(membersGrid.children);
 
-function handleEscapeKey(e) {
-    if (e.key === 'Escape') {
-        closeProfileModal();
-    }
-}
+                // Filter cards
+                const filteredCards = cards.filter(card => {
+                    const memberData = JSON.parse(card.dataset.member);
+                    const matchesSearch = memberData.username.toLowerCase().includes(searchTerm) ||
+                        memberData.email.toLowerCase().includes(searchTerm) ||
+                        (memberData.organization || '').toLowerCase().includes(searchTerm);
+                    const matchesRole = !selectedRole || memberData.role === selectedRole;
 
-function getRoleBadgeHTML(role) {
-    const badges = {
-        'admin': '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-400/30"><i class="fas fa-crown mr-1"></i>Administrateur</span>',
-        'moderator': '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-500/20 text-orange-300 border border-orange-400/30"><i class="fas fa-shield-alt mr-1"></i>Modérateur</span>',
-        'verified': '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-400/30"><i class="fas fa-check-circle mr-1"></i>Vérifié</span>',
-        'user': '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300 border border-gray-400/30"><i class="fas fa-user mr-1"></i>Utilisateur</span>'
-    };
-    return badges[role] || badges['user'];
-}
+                    return matchesSearch && matchesRole;
+                });
 
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-}
+                // Sort cards
+                filteredCards.sort((a, b) => {
+                    const memberA = JSON.parse(a.dataset.member);
+                    const memberB = JSON.parse(b.dataset.member);
 
-      // Scripts améliorés avec animations premium
-document.addEventListener('DOMContentLoaded', () => {
-    // Intersection Observer pour les animations
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
+                    switch(sortBy) {
+                        case 'name':
+                            return memberA.username.localeCompare(memberB.username);
+                        case 'role':
+                            const roleOrder = { admin: 0, moderator: 1, verified: 2, user: 3 };
+                            return (roleOrder[memberA.role] || 3) - (roleOrder[memberB.role] || 3);
+                        case 'date':
+                            return new Date(memberB.created_at) - new Date(memberA.created_at);
+                        default: // activity
+                            return new Date(memberB.last_activity || 0) - new Date(memberA.last_activity || 0);
+                    }
+                });
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-slideInUp');
-                entry.target.style.opacity = '1';
+                // Hide all cards first
+                cards.forEach(card => {
+                    card.style.display = 'none';
+                    card.style.animation = 'none';
+                });
+
+                // Show filtered cards with stagger animation
+                filteredCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.display = 'block';
+                        card.style.animation = `fadeInScale 0.6s ease-out ${index * 0.1}s both`;
+                    }, 50);
+                });
             }
-        });
-    }, observerOptions);
 
-    // Observer toutes les cartes de membres
-    const memberCards = document.querySelectorAll('.member-card');
-    memberCards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.animationDelay = `${index * 0.1}s`;
-        observer.observe(card);
-    });
+            // Add event listeners
+            searchInput.addEventListener('input', debounce(filterMembers, 300));
+            roleFilter.addEventListener('change', filterMembers);
+            sortFilter.addEventListener('change', filterMembers);
+        }
 
-    // Animation des compteurs avec effet premium
-    const animateCounters = () => {
-        const counters = document.querySelectorAll('.stats-counter');
-        counters.forEach((counter, index) => {
-            const target = parseInt(counter.querySelector('div:nth-child(2)').textContent);
+        function initializeCounters() {
+            const counters = document.querySelectorAll('.counter');
+
+            const counterObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const counter = entry.target;
+                        const target = parseInt(counter.dataset.target);
+                        animateCounter(counter, target);
+                        counterObserver.unobserve(counter);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            counters.forEach(counter => {
+                counterObserver.observe(counter);
+            });
+        }
+
+        function animateCounter(element, target) {
             let current = 0;
-            const increment = target / 50;
+            const increment = target / 60; // 60 frames for smooth animation
+
             const timer = setInterval(() => {
                 current += increment;
                 if (current >= target) {
-                    counter.querySelector('div:nth-child(2)').textContent = target;
+                    element.textContent = target;
                     clearInterval(timer);
                 } else {
-                    counter.querySelector('div:nth-child(2)').textContent = Math.floor(current);
+                    element.textContent = Math.floor(current);
                 }
-            }, 30);
-        });
-    };
+            }, 16); // ~60fps
+        }
 
-    // Observer pour les statistiques
-    const statsSection = document.querySelector('.stats-counter');
-    if (statsSection) {
-        const statsObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    setTimeout(animateCounters, 500);
-                    statsObserver.unobserve(entry.target);
+        function initializeParallax() {
+            let ticking = false;
+
+            function updateParallax() {
+                const scrolled = window.pageYOffset;
+                const orbs = document.querySelectorAll('.floating-orb');
+
+                orbs.forEach((orb, index) => {
+                    const speed = (index + 1) * 0.05;
+                    const yPos = scrolled * speed;
+                    const rotation = scrolled * 0.02;
+
+                    orb.style.transform = `translate3d(0, ${yPos}px, 0) rotate(${rotation}deg)`;
+                });
+
+                ticking = false;
+            }
+
+            function requestTick() {
+                if (!ticking) {
+                    requestAnimationFrame(updateParallax);
+                    ticking = true;
                 }
+            }
+
+            window.addEventListener('scroll', requestTick, { passive: true });
+        }
+
+        function initializeCardHovers() {
+            const cards = document.querySelectorAll('.member-card');
+
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    // Add subtle glow effect to neighboring cards
+                    const siblings = Array.from(this.parentElement.children);
+                    siblings.forEach((sibling, index) => {
+                        if (sibling !== this) {
+                            const distance = Math.abs(siblings.indexOf(this) - index);
+                            if (distance <= 2) {
+                                sibling.style.opacity = '0.7';
+                                sibling.style.transform = 'scale(0.95)';
+                            }
+                        }
+                    });
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    // Reset all cards
+                    const siblings = Array.from(this.parentElement.children);
+                    siblings.forEach(sibling => {
+                        sibling.style.opacity = '1';
+                        sibling.style.transform = 'scale(1)';
+                    });
+                });
+
+                // Advanced 3D hover effect
+                card.addEventListener('mousemove', function(e) {
+                    const rect = this.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const rotateX = (y - centerY) / 20;
+                    const rotateY = (centerX - x) / 20;
+
+                    this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+                });
             });
-        }, { threshold: 0.5 });
-        statsObserver.observe(statsSection);
+        }
+
+        // Profile modal function (enhanced)
+        function showProfile(memberId) {
+            // Find member data
+            const memberCard = document.querySelector(`[data-member*='"id":${memberId}']`);
+            if (!memberCard) return;
+
+            const member = JSON.parse(memberCard.dataset.member);
+            createAdvancedProfileModal(member);
+        }
+
+        function createAdvancedProfileModal(member) {
+            // Create modal with enhanced design
+            const modal = document.createElement('div');
+            modal.id = 'profileModal';
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md';
+            modal.style.animation = 'fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+
+            const modalContent = `
+        <div class="relative w-full max-w-2xl glassmorphism rounded-3xl overflow-hidden border border-white/20 shadow-2xl transform transition-all duration-500 max-h-[90vh] overflow-y-auto">
+            <!-- Enhanced header with parallax effect -->
+            <div class="relative h-48 overflow-hidden">
+                ${member.banner ?
+                `<img src="../Assets/Images/banners/${member.banner}" alt="Bannière" class="w-full h-full object-cover">` :
+                `<div class="w-full h-full bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600"></div>`
+            }
+                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+
+                <!-- Close button -->
+                <button onclick="closeProfileModal()" class="absolute top-6 right-6 w-10 h-10 glassmorphism rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 group">
+                    <i class="fas fa-times group-hover:scale-110 transition-transform"></i>
+                </button>
+
+                <!-- Status indicators -->
+                <div class="absolute top-6 left-6 flex items-center gap-3">
+                    <div class="glassmorphism px-3 py-1 rounded-full flex items-center gap-2">
+                        <div class="w-3 h-3 ${member.is_active ? 'bg-green-500 animate-pulse' : 'bg-gray-400'} rounded-full"></div>
+                        <span class="text-white text-sm font-medium">${member.is_active ? 'En ligne' : 'Hors ligne'}</span>
+                    </div>
+                    ${getRoleIndicator(member.role)}
+                </div>
+            </div>
+
+            <!-- Profile content -->
+            <div class="relative -mt-20 z-10 px-8 pb-8">
+                <!-- Avatar section -->
+                <div class="text-center mb-8">
+                    <div class="relative inline-block">
+                        <div class="w-32 h-32 rounded-full border-4 border-white/30 overflow-hidden shadow-2xl mx-auto bg-gradient-to-br from-blue-500 to-purple-500">
+                            ${member.avatar ?
+                `<img src="../Assets/Images/avatars/${member.avatar}" alt="Avatar" class="w-full h-full object-cover">` :
+                `<div class="w-full h-full flex items-center justify-center text-white text-4xl font-bold">
+                                    ${member.username.charAt(0).toUpperCase()}
+                                </div>`
+            }
+                        </div>
+                        ${member.role === 'verified' || member.role === 'admin' ?
+                '<div class="absolute -bottom-2 -right-2 w-10 h-10 bg-blue-500 rounded-full border-4 border-white/30 flex items-center justify-center"><i class="fas fa-check text-white"></i></div>' : ''
+            }
+                    </div>
+
+                    <h2 class="text-3xl font-bold text-white mt-6 mb-2">${member.username}</h2>
+                    ${member.organization ? `<p class="text-slate-300 mb-4">${member.organization}</p>` : ''}
+                </div>
+
+                <!-- Enhanced content sections -->
+                <div class="space-y-6">
+                    ${member.bio ? `
+                        <div class="glassmorphism rounded-2xl p-6 border border-white/10">
+                            <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+                                <i class="fas fa-quote-left text-blue-400"></i>
+                                À propos
+                            </h3>
+                            <p class="text-slate-300 leading-relaxed">${member.bio}</p>
+                        </div>
+                    ` : ''}
+
+                    <!-- Info grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="glassmorphism rounded-2xl p-6 border border-white/10">
+                            <h4 class="text-white font-semibold mb-4 flex items-center gap-2">
+                                <i class="fas fa-info-circle text-blue-400"></i>
+                                Informations
+                            </h4>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-envelope text-slate-400 w-4"></i>
+                                    <span class="text-slate-300">${member.email}</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-calendar text-slate-400 w-4"></i>
+                                    <span class="text-slate-300">Membre depuis ${formatDate(member.created_at)}</span>
+                                </div>
+                                ${member.last_activity ? `
+                                    <div class="flex items-center gap-3">
+                                        <i class="fas fa-clock text-slate-400 w-4"></i>
+                                        <span class="text-slate-300">Actif ${formatTimeAgo(member.last_activity)}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${(member.website || member.github || member.linkedin) ? `
+                            <div class="glassmorphism rounded-2xl p-6 border border-white/10">
+                                <h4 class="text-white font-semibold mb-4 flex items-center gap-2">
+                                    <i class="fas fa-link text-blue-400"></i>
+                                    Liens
+                                </h4>
+                                <div class="space-y-3">
+                                    ${member.website ? `
+                                        <a href="${member.website}" target="_blank" class="flex items-center gap-3 p-3 glassmorphism rounded-xl hover:bg-white/10 transition-all duration-300 group">
+                                            <i class="fas fa-globe text-blue-400 group-hover:scale-110 transition-transform"></i>
+                                            <span class="text-slate-300 group-hover:text-white transition-colors">Site Web</span>
+                                            <i class="fas fa-external-link-alt text-slate-500 ml-auto text-xs"></i>
+                                        </a>
+                                    ` : ''}
+                                    ${member.github ? `
+                                        <a href="${member.github}" target="_blank" class="flex items-center gap-3 p-3 glassmorphism rounded-xl hover:bg-white/10 transition-all duration-300 group">
+                                            <i class="fab fa-github text-gray-300 group-hover:scale-110 transition-transform"></i>
+                                            <span class="text-slate-300 group-hover:text-white transition-colors">GitHub</span>
+                                            <i class="fas fa-external-link-alt text-slate-500 ml-auto text-xs"></i>
+                                        </a>
+                                    ` : ''}
+                                    ${member.linkedin ? `
+                                        <a href="${member.linkedin}" target="_blank" class="flex items-center gap-3 p-3 glassmorphism rounded-xl hover:bg-white/10 transition-all duration-300 group">
+                                            <i class="fab fa-linkedin text-blue-400 group-hover:scale-110 transition-transform"></i>
+                                            <span class="text-slate-300 group-hover:text-white transition-colors">LinkedIn</span>
+                                            <i class="fas fa-external-link-alt text-slate-500 ml-auto text-xs"></i>
+                                        </a>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+            modal.innerHTML = modalContent;
+            document.body.appendChild(modal);
+
+            // Enhanced event listeners
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeProfileModal();
+            });
+
+            document.addEventListener('keydown', handleEscapeKey);
+        }
+
+        function getRoleIndicator(role) {
+            const indicators = {
+                'admin': '<div class="glassmorphism px-3 py-1 rounded-full bg-red-500/20 border border-red-400/30"><span class="text-red-300 text-sm font-bold flex items-center gap-1"><i class="fas fa-crown"></i>Admin</span></div>',
+                'moderator': '<div class="glassmorphism px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30"><span class="text-blue-300 text-sm font-bold flex items-center gap-1"><i class="fas fa-shield-alt"></i>Modo</span></div>',
+                'verified': '<div class="glassmorphism px-3 py-1 rounded-full bg-green-500/20 border border-green-400/30"><span class="text-green-300 text-sm font-bold flex items-center gap-1"><i class="fas fa-check-circle"></i>Vérifié</span></div>',
+                'user': '<div class="glassmorphism px-3 py-1 rounded-full bg-gray-500/20 border border-gray-400/30"><span class="text-gray-300 text-sm font-bold flex items-center gap-1"><i class="fas fa-user"></i>Membre</span></div>'
+            };
+            return indicators[role] || indicators['user'];
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.style.animation = 'fadeOut 0.3s ease-in';
+                setTimeout(() => {
+                    modal.remove();
+                    document.removeEventListener('keydown', handleEscapeKey);
+                }, 300);
+            }
+        }
+
+        function handleEscapeKey(e) {
+            if (e.key === 'Escape') closeProfileModal();
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function formatTimeAgo(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+
+            if (diffInHours < 1) return 'il y a moins d\'1h';
+            if (diffInHours < 24) return `il y a ${diffInHours}h`;
+            if (diffInHours < 168) return `il y a ${Math.floor(diffInHours / 24)}j`;
+            return `il y a ${Math.floor(diffInHours / 168)} semaine(s)`;
+        }
+
+        // Utility function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Add fadeIn/fadeOut animations
+        const style = document.createElement('style');
+        style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
-
-    // Parallax effect pour les particules
-    window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        const particles = document.querySelectorAll('.particle');
-        particles.forEach((particle, index) => {
-            const speed = (index + 1) * 0.1;
-            particle.style.transform = `translateY(${scrolled * speed}px) rotate(${scrolled * 0.05}deg)`;
-        });
-    });
-
-    // Effet de hover 3D pour les cartes
-    memberCards.forEach(card => {
-        card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const rotateX = (y - centerY) / 10;
-            const rotateY = (centerX - x) / 10;
-            
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
-        });
-        
-        card.addEventListener('mouseleave', () => {
-            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
-        });
-    });
-
-    // Animation des badges au scroll
-    const badges = document.querySelectorAll('[class*="badge"]');
-    badges.forEach(badge => {
-        badge.addEventListener('mouseenter', () => {
-            badge.style.transform = 'scale(1.1) rotate(5deg)';
-        });
-        badge.addEventListener('mouseleave', () => {
-            badge.style.transform = 'scale(1) rotate(0deg)';
-        });
-    });
-});
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+`;
+        document.head.appendChild(style);
     </script>
-</body>
-</html>
+
+<?php include_once('../Inc/Components/footers.php'); ?>
+<?php include_once('../Inc/Components/footer.php'); ?>

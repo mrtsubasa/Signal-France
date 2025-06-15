@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = trim($_POST['message'] ?? '');
     $type_demande = $_POST['type_demande'] ?? '';
     $anonyme = isset($_POST['anonyme']) ? 1 : 0;
-    
+
     // Validation
     if (empty($nom) || empty($sujet) || empty($message) || empty($type_demande)) {
         $error_message = 'Le nom, le sujet, le message et le type de demande sont obligatoires.';
@@ -28,10 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Si anonyme, on masque certaines informations
             $nom_save = $anonyme ? 'Utilisateur anonyme' : $nom;
             $email_save = $anonyme ? null : $email;
-            
+
             $sql = "INSERT INTO messages_contact (nom, email, type_demande, sujet, message, anonyme, ip_address, user_agent) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            
+
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 $nom_save,
@@ -43,12 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SERVER['REMOTE_ADDR'] ?? '',
                 $_SERVER['HTTP_USER_AGENT'] ?? ''
             ]);
-            
+
             $message_sent = true;
-            
+
             // Réinitialiser les variables pour vider le formulaire
             $_POST = [];
-            
+
         } catch (PDOException $e) {
             $error_message = 'Erreur lors de l\'envoi du message. Veuillez réessayer.';
         }
@@ -64,128 +64,307 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Contact - Signale France</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* Animations et styles personnalisés */
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --glassmorphism: rgba(255, 255, 255, 0.85);
+            --glassmorphism-strong: rgba(255, 255, 255, 0.95);
+            --glassmorphism-border: rgba(255, 255, 255, 0.3);
+            --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --text-primary: #1a202c;
+            --text-secondary: #2d3748;
+            --text-muted: #4a5568;
         }
-        
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
+
+        * {
+            font-family: 'Inter', sans-serif;
         }
-        
-        @keyframes gradient-shift {
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        
-        .hero-gradient {
-            /* Option 1: Gradient blanc pur avec nuances subtiles */
-            background: linear-gradient(-45deg, #ffffff, #f8fafc, #f1f5f9, #e2e8f0);
-            background-size: 400% 400%;
-            animation: gradient-shift 15s ease infinite;
+
+        /* Enhanced Glassmorphism avec texte lisible */
+        .glass-morphism {
+            background: var(--glassmorphism);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid var(--glassmorphism-border);
+            box-shadow: var(--shadow-glass);
+            color: var(--text-primary);
         }
-        
-        /* Alternative 1: Gradient blanc avec touches de gris très subtiles */
-        .hero-gradient-alt1 {
-            background: linear-gradient(-45deg, #ffffff, #fefefe, #fdfdfd, #f9f9f9);
-            background-size: 400% 400%;
-            animation: gradient-shift 15s ease infinite;
+
+        .glass-morphism-strong {
+            background: var(--glassmorphism-strong);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
+            color: var(--text-primary);
         }
-        
-        /* Alternative 2: Gradient blanc avec nuances bleutées très légères */
-        .hero-gradient-alt2 {
-            background: linear-gradient(-45deg, #ffffff, #fbfcff, #f6f8ff, #f0f4ff);
-            background-size: 400% 400%;
-            animation: gradient-shift 15s ease infinite;
+
+        /* Cartes colorées avec texte blanc seulement */
+        .glass-colored {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: var(--shadow-glass);
+            color: white;
         }
-        
-        /* Alternative 3: Gradient blanc avec effet nacré */
-        .hero-gradient-alt3 {
-            background: linear-gradient(-45deg, #ffffff, #fefefe, #fcfcfc, #f7f7f7);
-            background-size: 400% 400%;
-            animation: gradient-shift 20s ease infinite;
+
+        /* Floating Elements */
+        .floating-orbs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.7;
+            filter: blur(60px);
+            animation: floatOrb 20s infinite linear;
+        }
+
+        .orb:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.4) 100%);
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .orb:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(240, 147, 251, 0.8) 0%, rgba(245, 87, 108, 0.4) 100%);
+            top: 60%;
+            right: 15%;
+            animation-delay: -5s;
+        }
+
+        .orb:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(67, 233, 123, 0.8) 0%, rgba(56, 249, 215, 0.4) 100%);
+            bottom: 20%;
+            left: 20%;
+            animation-delay: -10s;
+        }
+
+        .orb:nth-child(4) {
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(250, 112, 154, 0.8) 0%, rgba(254, 225, 64, 0.4) 100%);
+            top: 30%;
+            left: 50%;
+            animation-delay: -15s;
+        }
+
+        @keyframes floatOrb {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            25% {
+                transform: translate(50px, -50px) rotate(90deg) scale(1.1);
+            }
+            50% {
+                transform: translate(-30px, 30px) rotate(180deg) scale(0.9);
+            }
+            75% {
+                transform: translate(40px, 60px) rotate(270deg) scale(1.05);
+            }
+        }
+
+        /* Enhanced Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(100px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-100px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes pulse3d {
+            0%, 100% {
+                transform: scale(1) rotateY(0deg);
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            50% {
+                transform: scale(1.05) rotateY(180deg);
+                box-shadow: 0 0 0 20px rgba(102, 126, 234, 0);
+            }
+        }
+
+        @keyframes morphing {
+            0%, 100% {
+                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            }
+            50% {
+                border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+            }
+        }
+
+        /* Enhanced Cards */
+        .contact-card {
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.320, 1);
             position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 1000px;
         }
-        
-        .hero-gradient-alt3::before {
+
+        .contact-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(45deg, 
-                rgba(255,255,255,0.8) 0%, 
-                rgba(248,250,252,0.6) 25%, 
-                rgba(241,245,249,0.4) 50%, 
-                rgba(226,232,240,0.6) 75%, 
-                rgba(255,255,255,0.8) 100%);
-            background-size: 200% 200%;
-            animation: shimmer 8s ease-in-out infinite;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
             pointer-events: none;
         }
-        
-        @keyframes shimmer {
-            0%, 100% { background-position: 0% 0%; }
-            50% { background-position: 100% 100%; }
+
+        .contact-card:hover::before {
+            opacity: 1;
         }
-        
-        /* Alternative 4: Gradient blanc minimaliste premium */
-        .hero-gradient-alt4 {
-            background: linear-gradient(135deg, 
-                #ffffff 0%, 
-                #fafbfc 25%, 
-                #f5f7fa 50%, 
-                #f0f3f7 75%, 
-                #ffffff 100%);
-            background-size: 300% 300%;
-            animation: gradient-shift 25s ease infinite;
-        }
-        
-        .contact-card {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(10px);
-        }
-        
+
         .contact-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transform: translateY(-20px) rotateX(5deg) rotateY(5deg) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
         }
-        
-        .floating-icon {
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        .pulse-animation {
-            animation: pulse 2s infinite;
-        }
-        
-        .form-input {
-            transition: all 0.3s ease;
+
+        /* Enhanced Form Elements avec texte noir */
+        .form-group {
             position: relative;
+            margin-bottom: 2rem;
         }
-        
+
+        .form-input {
+            width: 100%;
+            padding: 1.5rem 1.5rem 1.5rem 3.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            font-size: 1.1rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--text-primary);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
         .form-input:focus {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+            outline: none;
+            border-color: rgba(102, 126, 234, 0.8);
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
         }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+            transition: color 0.3s ease;
+        }
+
+        .form-input:focus::placeholder {
+            color: rgba(74, 85, 104, 0.5);
+        }
+
+        .form-icon {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(102, 126, 234, 0.8);
+            font-size: 1.25rem;
             transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .form-group:focus-within .form-icon {
+            color: #667eea;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        /* Enhanced Labels avec texte noir */
+        .form-label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Enhanced Buttons */
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1.25rem 2.5rem;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-        }
-        
+
         .btn-primary::before {
             content: '';
             position: absolute;
@@ -193,361 +372,640 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
         }
-        
+
         .btn-primary:hover::before {
             left: 100%;
         }
-        
-        .glass-effect {
+
+        .btn-primary:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        /* Enhanced Toggle */
+        .toggle-container {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.4);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 34px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-input:checked + .toggle-slider {
+            background: var(--primary-gradient);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .toggle-input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Enhanced Notifications avec texte noir */
+        .notification {
+            animation: notificationSlide 0.8s cubic-bezier(0.23, 1, 0.320, 1);
+            position: relative;
+            overflow: hidden;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
-        
-        .notification {
-            animation: slideInRight 0.5s ease-out;
+
+        .notification.success {
+            border-left: 4px solid #38a169;
         }
-        
-        @keyframes slideInRight {
+
+        .notification.error {
+            border-left: 4px solid #e53e3e;
+        }
+
+        .notification::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes notificationSlide {
             from {
-                transform: translateX(100%);
                 opacity: 0;
+                transform: translateY(-50px) scale(0.9);
             }
             to {
-                transform: translateX(0);
                 opacity: 1;
+                transform: translateY(0) scale(1);
             }
         }
-        
-        .typing-indicator {
-            opacity: 0;
-            transition: opacity 0.3s ease;
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
-        
-        .typing-indicator.show {
-            opacity: 1;
+
+        /* Enhanced Typography avec texte noir */
+        .hero-title {
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 8px rgba(255, 255, 255, 0.5);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+            filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.8));
         }
-        
-        .social-icon {
+
+        @keyframes titleGlow {
+            from {
+                filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.8));
+            }
+            to {
+                filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 1));
+            }
+        }
+
+        /* Texte noir pour les cartes glassmorphism */
+        .glass-text-dark {
+            color: var(--text-primary);
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .glass-text-secondary {
+            color: var(--text-secondary);
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-text-muted {
+            color: var(--text-muted);
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
+        }
+
+        /* Particle Effect */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: particleFloat 15s infinite linear;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Character Counter avec texte noir */
+        .character-counter {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             transition: all 0.3s ease;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 0 0 16px 16px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary-gradient);
+            transition: width 0.3s ease;
             position: relative;
         }
-        
-        .social-icon:hover {
-            transform: translateY(-3px) rotate(5deg);
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: progressShimmer 1.5s infinite;
         }
-        
+
+        @keyframes progressShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Enhanced FAQ Cards avec texte noir */
         .faq-card {
-            transition: all 0.3s ease;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.320, 1);
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            color: var(--text-primary);
         }
-        
+
         .faq-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            transform: translateY(-10px) rotateX(5deg);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.95);
         }
-        
-        .progress-bar {
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            border-radius: 2px;
-            transition: width 0.3s ease;
+
+        .faq-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
         }
-        
-        .character-counter {
-            font-size: 0.75rem;
-            transition: color 0.3s ease;
+
+        .faq-card:hover::after {
+            opacity: 1;
+            animation: rotateSweep 0.8s ease-out;
+        }
+
+        @keyframes rotateSweep {
+            0% { transform: rotate(45deg) translateX(-100%); }
+            100% { transform: rotate(45deg) translateX(100%); }
+        }
+
+        /* Mobile Enhancements */
+        @media (max-width: 768px) {
+            .contact-card:hover {
+                transform: translateY(-10px) scale(1.02);
+            }
+
+            .form-input {
+                padding: 1.25rem 1.25rem 1.25rem 3rem;
+                font-size: 1rem;
+            }
+
+            .btn-primary {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Accessibility Improvements */
+        .form-input:focus,
+        .btn-primary:focus,
+        .toggle-slider:focus {
+            outline: 3px solid rgba(102, 126, 234, 0.5);
+            outline-offset: 2px;
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <?php include '../Inc/Components/header.php'; ?>
-    <?php include '../Inc/Components/nav.php'; ?>
 
-    <!-- Hero Section avec gradient animé -->
-    <div class="hero-gradient min-h-screen relative overflow-hidden">
-        <!-- Particules flottantes -->
-        <div class="absolute inset-0 overflow-hidden">
-            <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl floating-icon"></div>
-            <div class="absolute top-3/4 right-1/4 w-48 h-48 bg-white opacity-10 rounded-full blur-3xl floating-icon" style="animation-delay: -1s;"></div>
-            <div class="absolute top-1/2 left-3/4 w-32 h-32 bg-white opacity-10 rounded-full blur-3xl floating-icon" style="animation-delay: -2s;"></div>
-        </div>
-        
-        <div class="relative z-10 container mx-auto px-4 py-20">
-            <!-- En-tête amélioré -->
-            <div class="text-center mb-16">
-                <div class="glass-effect rounded-2xl p-10 mx-auto max-w-4xl">
-                    <div class="inline-block mb-6">
-                        <div class="w-20 h-20 bg-gray-800 bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-4 floating-icon">
-                            <i class="fas fa-envelope text-gray-800 text-3xl"></i>
-                        </div>
+<body>
+<?php include '../Inc/Components/header.php'; ?>
+<?php include '../Inc/Components/nav.php'; ?>
+
+<!-- Floating Orbs Background -->
+<div class="floating-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+</div>
+
+<!-- Particles Effect -->
+<div class="particles" id="particles"></div>
+
+<!-- Main Content -->
+<div class="min-h-screen relative overflow-hidden py-20">
+    <div class="container mx-auto px-4">
+        <!-- Enhanced Hero Section avec texte noir -->
+        <div class="text-center mb-20 animate-slideInUp">
+            <div class="glass-morphism-strong rounded-3xl p-12 mx-auto max-w-5xl mb-16">
+                <div class="inline-block mb-8">
+                    <div class="w-24 h-24 glass-morphism rounded-full flex items-center justify-center mx-auto floating-icon animate-pulse3d">
+                        <i class="fas fa-paper-plane text-4xl text-purple-600"></i>
                     </div>
-                    <h1 class="text-5xl md:text-7xl font-bold mb-6 tracking-tight text-gray-800">
-                        Contactez-nous
-                    </h1>
-                    <p class="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-                        Nous sommes là pour vous accompagner. Votre voix compte, votre sécurité nous importe.
-                    </p>
-                    <div class="mt-8">
-                        <div class="inline-flex items-center bg-gray-800 bg-opacity-10 rounded-full px-6 py-3 text-gray-800">
-                            <i class="fas fa-shield-alt mr-2"></i>
-                            <span class="text-sm font-medium">Communication sécurisée et confidentielle</span>
-                        </div>
+                </div>
+                <h1 class="text-black text-6xl md:text-8xl font-black mb-8 tracking-tight">
+                    Contactez-nous
+                </h1>
+                <p class="text-2xl md:text-3xl glass-text-secondary max-w-4xl mx-auto leading-relaxed mb-8">
+                    Nous sommes là pour vous accompagner. Votre voix compte, votre sécurité nous importe.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="glass-morphism rounded-full px-6 py-3 flex items-center">
+                        <i class="fas fa-shield-alt mr-2 text-green-600"></i>
+                        <span class="text-sm font-medium glass-text-dark">Communication sécurisée</span>
+                    </div>
+                    <div class="glass-morphism rounded-full px-6 py-3 flex items-center">
+                        <i class="fas fa-clock mr-2 text-blue-600"></i>
+                        <span class="text-sm font-medium glass-text-dark">Réponse sous 2h</span>
+                    </div>
+                    <div class="glass-morphism rounded-full px-6 py-3 flex items-center">
+                        <i class="fas fa-user-secret mr-2 text-purple-600"></i>
+                        <span class="text-sm font-medium glass-text-dark">Option anonyme</span>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="max-w-7xl mx-auto">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Cartes d'information améliorées -->
-                    <div class="lg:col-span-1 space-y-6">
-                        <!-- Carte Support avec effet glass -->
-                        <div class="contact-card glass-effect rounded-2xl p-8 group">
-                            <div class="flex items-center mb-6">
-                                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
-                                    <i class="fas fa-headset text-white text-2xl"></i>
-                                </div>
-                                <h3 class="text-2xl font-bold text-gray-800">Support Technique</h3>
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <!-- Enhanced Information Cards avec glassmorphism coloré -->
+                <div class="lg:col-span-1 space-y-8">
+                    <!-- Support Card -->
+                    <div class="contact-card glass-colored rounded-3xl p-8 group animate-slideInLeft" style="background: rgba(59, 130, 246, 0.2);">
+                        <div class="flex items-center mb-6">
+                            <div class="w-16 h-16 glass-morphism rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                                <i class="fas fa-headset text-3xl text-blue-600"></i>
                             </div>
-                            <p class="text-gray-600 mb-6 leading-relaxed">Notre équipe d'experts est disponible pour résoudre tous vos problèmes techniques.</p>
-                            <div class="space-y-3">
-                                <div class="flex items-center text-gray-700 group-hover:text-blue-600 transition-colors">
-                                    <i class="fas fa-envelope mr-3 text-blue-500"></i>
-                                    <span class="font-medium">support@signale-france.fr</span>
+                            <h3 class="text-2xl font-bold text-white">Support Technique</h3>
+                        </div>
+                        <p class="text-white/90 mb-6 leading-relaxed">Notre équipe d'experts est disponible pour résoudre tous vos problèmes techniques.</p>
+                        <div class="space-y-4">
+                            <div class="flex items-center text-white group-hover:text-blue-100 transition-colors">
+                                <div class="w-10 h-10 glass-morphism rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-envelope text-blue-600"></i>
                                 </div>
-                                <div class="flex items-center text-gray-700 group-hover:text-blue-600 transition-colors">
-                                    <i class="fas fa-clock mr-3 text-blue-500"></i>
+                                <span class="font-medium">support@signale-france.fr</span>
+                                </div>
+                                <div class="flex items-center text-white group-hover:text-blue-100 transition-colors">
+                                    <div class="w-10 h-10 glass-morphism rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-clock text-green-600"></i>
+                                    </div>
                                     <span>Lun-Ven: 9h-18h</span>
                                 </div>
-                                <div class="flex items-center text-gray-700 group-hover:text-blue-600 transition-colors">
-                                    <i class="fas fa-bolt mr-3 text-blue-500"></i>
-                                    <span>Réponse sous 2h en moyenne</span>
+                                <div class="flex items-center text-white group-hover:text-blue-100 transition-colors">
+                                    <div class="w-10 h-10 glass-morphism rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-bolt text-yellow-500"></i>
+                                    </div>
+                                    <span>Réponse sous 2h</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Carte Urgence améliorée -->
-                        <div class="contact-card bg-gradient-to-br from-red-500 via-red-600 to-red-700 rounded-2xl p-8 text-white group relative overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
-                            <div class="relative z-10">
-                                <div class="flex items-center mb-6">
-                                    <div class="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mr-4">
-                                        <i class="fas fa-exclamation-triangle text-white text-2xl pulse-animation"></i>
-                                    </div>
-                                    <h3 class="text-2xl font-bold">Urgence</h3>
-                                </div>
-                                <p class="mb-6 opacity-95 leading-relaxed">Pour les situations critiques nécessitant une intervention immédiate des services d'urgence.</p>
-                                <div class="space-y-3">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-phone mr-3"></i>
-                                        <span class="font-medium">📞 15 (SAMU) - 17 (Police) - 18 (Pompiers)</span>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <i class="fas fa-mobile-alt mr-3"></i>
-                                        <span class="font-medium">📱 112 (Numéro d'urgence européen)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Carte Anonymat améliorée -->
-                        <div class="contact-card bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 rounded-2xl p-8 text-white group">
+                        <!-- Emergency Card -->
+                        <div class="contact-card glass-colored rounded-3xl p-8 group animate-slideInLeft" style="animation-delay: 0.2s; background: rgba(239, 68, 68, 0.2);">
                             <div class="flex items-center mb-6">
-                                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mr-4 group-hover:rotate-12 transition-transform duration-300">
-                                    <i class="fas fa-user-secret text-white text-2xl"></i>
+                                <div class="w-16 h-16 glass-morphism rounded-2xl flex items-center justify-center mr-4">
+                                    <i class="fas fa-exclamation-triangle text-3xl text-red-500 animate-pulse"></i>
                                 </div>
-                                <h3 class="text-2xl font-bold">Contact Anonyme</h3>
+                                <h3 class="text-2xl font-bold text-white">Urgence</h3>
                             </div>
-                            <p class="mb-6 opacity-95 leading-relaxed">Votre confidentialité est notre priorité. Contactez-nous en toute sécurité.</p>
-                            <div class="space-y-3">
-                                <div class="flex items-center">
-                                    <i class="fas fa-check mr-3 text-green-300"></i>
-                                    <span>Aucune donnée personnelle conservée</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-check mr-3 text-green-300"></i>
-                                    <span>Chiffrement de bout en bout</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-check mr-3 text-green-300"></i>
-                                    <span>Confidentialité garantie</span>
+                            <p class="text-white/90 mb-6 leading-relaxed">Pour les situations critiques nécessitant une intervention immédiate.</p>
+                            <div class="glass-morphism rounded-lg p-4">
+                                <div class="text-sm space-y-2 glass-text-dark">
+                                    <div><strong>📞 15</strong> - SAMU</div>
+                                    <div><strong>📞 17</strong> - Police</div>
+                                    <div><strong>📞 18</strong> - Pompiers</div>
+                                    <div><strong>📱 112</strong> - Urgence européen</div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Réseaux sociaux améliorés -->
-                        <div class="contact-card glass-effect rounded-2xl p-8">
-                            <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                        <!-- Anonymous Card -->
+                        <div class="contact-card glass-colored rounded-3xl p-8 group animate-slideInLeft" style="animation-delay: 0.4s; background: rgba(139, 92, 246, 0.2);">
+                            <div class="flex items-center mb-6">
+                                <div class="w-16 h-16 glass-morphism rounded-2xl flex items-center justify-center mr-4 group-hover:rotate-12 transition-transform duration-300">
+                                    <i class="fas fa-user-secret text-3xl text-purple-600"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-white">Contact Anonyme</h3>
+                            </div>
+                            <p class="text-white/90 mb-6 leading-relaxed">Votre confidentialité est notre priorité absolue.</p>
+                            <div class="space-y-3">
+                                <div class="flex items-center text-white">
+                                    <i class="fas fa-check mr-3 text-green-400"></i>
+                                    <span>Aucune donnée conservée</span>
+                                </div>
+                                <div class="flex items-center text-white">
+                                    <i class="fas fa-check mr-3 text-green-400"></i>
+                                    <span>Chiffrement sécurisé</span>
+                                </div>
+                                <div class="flex items-center text-white">
+                                    <i class="fas fa-check mr-3 text-green-400"></i>
+                                    <span>Protection garantie</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Social Networks -->
+                        <div class="contact-card glass-morphism-strong rounded-3xl p-8 animate-slideInLeft" style="animation-delay: 0.6s;">
+                            <h3 class="text-xl font-bold glass-text-dark mb-6 flex items-center">
                                 <i class="fas fa-share-alt mr-3 text-purple-600"></i>
                                 Suivez-nous
                             </h3>
                             <div class="flex space-x-4">
-                                <a href="#" class="social-icon w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center text-white hover:shadow-lg">
-                                    <i class="fab fa-facebook-f"></i>
+                                <a href="#" class="w-12 h-12 glass-morphism rounded-xl flex items-center justify-center hover:scale-110 transition-transform duration-300">
+                                    <i class="fab fa-facebook-f text-blue-600"></i>
                                 </a>
-                                <a href="#" class="social-icon w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center text-white hover:shadow-lg">
-                                    <i class="fab fa-twitter"></i>
+                                <a href="#" class="w-12 h-12 glass-morphism rounded-xl flex items-center justify-center hover:scale-110 transition-transform duration-300">
+                                    <i class="fab fa-twitter text-blue-400"></i>
                                 </a>
-                                <a href="#" class="social-icon w-12 h-12 bg-gradient-to-br from-blue-800 to-blue-900 rounded-xl flex items-center justify-center text-white hover:shadow-lg">
-                                    <i class="fab fa-linkedin-in"></i>
+                                <a href="#" class="w-12 h-12 glass-morphism rounded-xl flex items-center justify-center hover:scale-110 transition-transform duration-300">
+                                    <i class="fab fa-linkedin-in text-blue-700"></i>
                                 </a>
-                                <a href="#" class="social-icon w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center text-white hover:shadow-lg">
-                                    <i class="fab fa-youtube"></i>
+                                <a href="#" class="w-12 h-12 glass-morphism rounded-xl flex items-center justify-center hover:scale-110 transition-transform duration-300">
+                                    <i class="fab fa-youtube text-red-600"></i>
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Formulaire de contact amélioré -->
-                    <div class="lg:col-span-2">
-                        <div class="glass-effect rounded-2xl p-10">
+                    <!-- Enhanced Contact Form avec texte noir -->
+                    <div class="lg:col-span-2 animate-slideInRight">
+                        <div class="glass-morphism-strong rounded-3xl p-10">
                             <div class="mb-10">
-                                <h2 class="text-3xl font-bold text-gray-800 mb-4 flex items-center">
+                                <h2 class="text-4xl font-bold glass-text-dark mb-4 flex items-center">
                                     <i class="fas fa-paper-plane text-blue-600 mr-4"></i>
                                     Envoyez-nous un message
                                 </h2>
-                                <p class="text-gray-600 text-lg leading-relaxed">Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais. Votre message est important pour nous.</p>
+                                <p class="glass-text-secondary text-lg leading-relaxed">Remplissez le formulaire ci-dessous et nous vous répondrons rapidement.</p>
                             </div>
 
-                            <!-- Messages de notification améliorés -->
+                            <!-- Enhanced Notifications avec texte noir -->
                             <?php if ($message_sent): ?>
-                                <div class="notification bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 mb-8">
+                                <div class="notification success">
                                     <div class="flex items-center">
                                         <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
                                             <i class="fas fa-check-circle text-green-600 text-xl"></i>
                                         </div>
                                         <div>
-                                            <h4 class="text-green-800 font-bold text-lg">Message envoyé avec succès !</h4>
-                                            <p class="text-green-700">Nous avons bien reçu votre message et vous répondrons dans les plus brefs délais.</p>
+                                            <h4 class="glass-text-dark font-bold text-lg">Message envoyé avec succès !</h4>
+                                            <p class="glass-text-secondary">Nous avons reçu votre message et vous répondrons rapidement.</p>
                                         </div>
                                     </div>
                                 </div>
                             <?php endif; ?>
 
                             <?php if ($error_message): ?>
-                                <div class="notification bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-6 mb-8">
+                                <div class="notification error">
                                     <div class="flex items-center">
                                         <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
                                             <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
                                         </div>
                                         <div>
-                                            <h4 class="text-red-800 font-bold text-lg">Erreur</h4>
-                                            <p class="text-red-700"><?php echo htmlspecialchars($error_message); ?></p>
+                                            <h4 class="glass-text-dark font-bold text-lg">Erreur</h4>
+                                            <p class="glass-text-secondary"><?php echo htmlspecialchars($error_message); ?></p>
                                         </div>
                                     </div>
                                 </div>
                             <?php endif; ?>
 
                             <form method="POST" class="space-y-8" id="contactForm">
-                                <!-- Option anonyme améliorée -->
-                                <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6">
-                                    <div class="flex items-center">
-                                        <div class="relative">
-                                            <input type="checkbox" name="anonyme" id="anonyme" class="sr-only" <?php echo (isset($_POST['anonyme']) && $_POST['anonyme']) ? 'checked' : ''; ?>>
-                                            <div class="toggle-bg w-12 h-6 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 cursor-pointer"></div>
-                                            <div class="toggle-dot absolute w-5 h-5 bg-white rounded-full shadow top-0.5 left-0.5 transition-transform duration-300"></div>
+                                <!-- Enhanced Anonymous Option avec texte noir -->
+                                <div class="glass-morphism rounded-2xl p-6 border border-purple-400/30">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-user-secret text-purple-600 text-2xl mr-4"></i>
+                                            <div>
+                                                <label for="anonyme" class="glass-text-dark font-semibold text-lg cursor-pointer">
+                                                    Envoyer anonymement
+                                                </label>
+                                                <p class="glass-text-muted text-sm">Votre identité sera protégée</p>
+                                            </div>
                                         </div>
-                                        <label for="anonyme" class="ml-4 text-purple-800 font-semibold cursor-pointer flex items-center">
-                                            <i class="fas fa-user-secret mr-2"></i>
-                                            Envoyer ce message de manière anonyme
-                                        </label>
-                                    </div>
-                                    <div class="anonyme-notice mt-4 text-sm text-purple-700 bg-white bg-opacity-50 rounded-lg p-3">
-                                        <i class="fas fa-info-circle mr-2"></i>
-                                        En mode anonyme, votre identité sera protégée et vos données personnelles ne seront pas conservées.
+                                        <div class="toggle-container">
+                                            <input type="checkbox" name="anonyme" id="anonyme" class="toggle-input sr-only" <?php echo (isset($_POST['anonyme']) && $_POST['anonyme']) ? 'checked' : ''; ?>>
+                                            <span class="toggle-slider"></span>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <!-- Type de demande -->
-                                <div class="space-y-2">
-                                    <label for="type_demande" class="block text-sm font-bold text-gray-700 mb-3">
-                                        <i class="fas fa-tag mr-2 text-blue-600"></i>
-                                        Type de demande *
+                                <div class="form-group">
+                                    <label for="type_demande" class="form-label">
+                                        <i class="fas fa-tag mr-2 text-blue-600"></i>Type de demande *
                                     </label>
-                                    <select name="type_demande" id="type_demande" required class="form-input w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 text-lg">
-                                        <option value="">Sélectionnez le type de demande</option>
-                                        <option value="support_technique" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'support_technique') ? 'selected' : ''; ?>>🔧 Support technique</option>
-                                        <option value="question_generale" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'question_generale') ? 'selected' : ''; ?>>❓ Question générale</option>
-                                        <option value="suggestion" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'suggestion') ? 'selected' : ''; ?>>💡 Suggestion d'amélioration</option>
-                                        <option value="signalement_probleme" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'signalement_probleme') ? 'selected' : ''; ?>>⚠️ Signaler un problème</option>
-                                        <option value="partenariat" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'partenariat') ? 'selected' : ''; ?>>🤝 Partenariat</option>
-                                        <option value="autre" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'autre') ? 'selected' : ''; ?>>📝 Autre</option>
-                                    </select>
+                                    <div class="relative">
+                                        <i class="form-icon fas fa-tags"></i>
+                                        <select name="type_demande" id="type_demande" required class="form-input">
+                                            <option value="">Sélectionnez le type de demande</option>
+                                            <option value="support_technique" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'support_technique') ? 'selected' : ''; ?>>🔧 Support technique</option>
+                                            <option value="question_generale" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'question_generale') ? 'selected' : ''; ?>>❓ Question générale</option>
+                                            <option value="suggestion" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'suggestion') ? 'selected' : ''; ?>>💡 Suggestion</option>
+                                            <option value="signalement_probleme" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'signalement_probleme') ? 'selected' : ''; ?>>⚠️ Problème</option>
+                                            <option value="partenariat" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'partenariat') ? 'selected' : ''; ?>>🤝 Partenariat</option>
+                                            <option value="autre" <?php echo (isset($_POST['type_demande']) && $_POST['type_demande'] === 'autre') ? 'selected' : ''; ?>>📝 Autre</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <!-- Nom et Email -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div class="space-y-2">
-                                        <label for="nom" class="block text-sm font-bold text-gray-700 mb-3">
-                                            <i class="fas fa-user mr-2 text-blue-600"></i>
-                                            Nom complet *
+                                    <div class="form-group">
+                                        <label for="nom" class="form-label">
+                                            <i class="fas fa-user mr-2 text-blue-600"></i>Nom complet *
                                         </label>
-                                        <input type="text" name="nom" id="nom" required 
-                                               value="<?php echo htmlspecialchars($_POST['nom'] ?? ''); ?>"
-                                               class="form-input w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 text-lg" 
-                                               placeholder="Votre nom complet">
-                                        <p class="text-sm text-gray-500 mt-2 nom-notice">Ce nom sera masqué si vous choisissez l'option anonyme</p>
+                                        <div class="relative">
+                                            <i class="form-icon fas fa-user"></i>
+                                            <input type="text" name="nom" id="nom" required 
+                                                   value="<?php echo htmlspecialchars($_POST['nom'] ?? ''); ?>"
+                                                   class="form-input" 
+                                                   placeholder="Votre nom complet">
+                                        </div>
                                     </div>
-                                    <div class="space-y-2">
-                                        <label for="email" class="block text-sm font-bold text-gray-700 mb-3">
-                                            <i class="fas fa-envelope mr-2 text-blue-600"></i>
-                                            Adresse email <span class="text-gray-500 font-normal">(facultatif)</span>
+                                    <div class="form-group">
+                                        <label for="email" class="form-label">
+                                            <i class="fas fa-envelope mr-2 text-blue-600"></i>Email (facultatif)
                                         </label>
-                                        <input type="email" name="email" id="email" 
-                                               value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
-                                               class="form-input w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 text-lg" 
-                                               placeholder="votre@email.com">
-                                        <p class="text-sm text-gray-500 mt-2 email-notice">Nécessaire uniquement si vous souhaitez une réponse</p>
+                                        <div class="relative">
+                                            <i class="form-icon fas fa-envelope"></i>
+                                            <input type="email" name="email" id="email" 
+                                                   value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
+                                                   class="form-input" 
+                                                   placeholder="votre@email.com">
+                                        </div>
                                     </div>
                                 </div>
 
                                 <!-- Sujet -->
-                                <div class="space-y-2">
-                                    <label for="sujet" class="block text-sm font-bold text-gray-700 mb-3">
-                                        <i class="fas fa-heading mr-2 text-blue-600"></i>
-                                        Sujet *
+                                <div class="form-group">
+                                    <label for="sujet" class="form-label">
+                                        <i class="fas fa-heading mr-2 text-blue-600"></i>Sujet *
                                     </label>
-                                    <input type="text" name="sujet" id="sujet" required 
-                                           value="<?php echo htmlspecialchars($_POST['sujet'] ?? ''); ?>"
-                                           class="form-input w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 text-lg" 
-                                           placeholder="Résumé de votre demande">
+                                    <div class="relative">
+                                        <i class="form-icon fas fa-heading"></i>
+                                        <input type="text" name="sujet" id="sujet" required 
+                                               value="<?php echo htmlspecialchars($_POST['sujet'] ?? ''); ?>"
+                                               class="form-input" 
+                                               placeholder="Résumé de votre demande">
+                                    </div>
                                 </div>
 
                                 <!-- Message -->
-                                <div class="space-y-2">
-                                    <label for="message" class="block text-sm font-bold text-gray-700 mb-3">
-                                        <i class="fas fa-comment-alt mr-2 text-blue-600"></i>
-                                        Message *
+                                <div class="form-group">
+                                    <label for="message" class="form-label">
+                                        <i class="fas fa-comment-alt mr-2 text-blue-600"></i>Message *
                                     </label>
                                     <div class="relative">
+                                        <i class="form-icon fas fa-comment-alt" style="top: 1.5rem;"></i>
                                         <textarea name="message" id="message" rows="8" required 
-                                                  class="form-input w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 resize-none text-lg" 
+                                                  class="form-input resize-none" 
                                                   placeholder="Décrivez votre demande en détail..."><?php echo htmlspecialchars($_POST['message'] ?? ''); ?></textarea>
-                                        <div class="absolute bottom-4 right-4">
-                                            <div class="typing-indicator bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-medium">
-                                                <i class="fas fa-keyboard mr-1"></i>
-                                                <span id="typingText">En cours de frappe...</span>
-                                            </div>
+                                        <div class="character-counter" id="charCounter">
+                                            Minimum 10 caractères
                                         </div>
-                                    </div>
-                                    <div class="flex justify-between items-center mt-3">
-                                        <p class="text-sm text-gray-500 character-counter" id="charCounter">Minimum 10 caractères</p>
-                                        <div class="w-32 bg-gray-200 rounded-full h-2">
-                                            <div class="progress-bar h-2 rounded-full" id="progressBar" style="width: 0%"></div>
+                                        <div class="progress-container">
+                                            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Bouton d'envoi amélioré -->
-                                <div class="flex items-center justify-between pt-6">
-                                    <p class="text-sm text-gray-600 flex items-center">
-                                        <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                                <!-- Enhanced Submit Button -->
+                                <div class="flex items-center justify-between pt-8">
+                                    <p class="glass-text-muted text-sm flex items-center">
+                                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>
                                         Les champs marqués d'un * sont obligatoires
                                     </p>
-                                    <button type="submit" class="btn-primary text-white px-10 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-blue-300">
+                                    <button type="submit" class="btn-primary">
                                         <i class="fas fa-paper-plane mr-3"></i>
                                         Envoyer le message
                                     </button>
@@ -557,69 +1015,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- Section FAQ améliorée -->
-                <div class="mt-20">
-                    <div class="glass-effect rounded-2xl p-10">
-                        <div class="text-center mb-12">
-                            <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                <!-- Enhanced FAQ Section avec texte noir -->
+                <div class="mt-24">
+                    <div class="glass-morphism-strong rounded-3xl p-12">
+                        <div class="text-center mb-16">
+                            <h2 class="text-5xl font-bold glass-text-dark mb-6">
                                 <i class="fas fa-question-circle text-blue-600 mr-4"></i>
                                 Questions fréquentes
                             </h2>
-                            <p class="text-xl text-gray-600 leading-relaxed">Trouvez rapidement des réponses aux questions les plus courantes</p>
+                            <p class="text-xl glass-text-secondary leading-relaxed max-w-2xl mx-auto">
+                                Trouvez rapidement des réponses aux questions les plus courantes
+                            </p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            <div class="faq-card bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8 border border-blue-200">
-                                <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center mb-6 mx-auto">
-                                    <i class="fas fa-plus-circle text-white text-2xl"></i>
+                            <div class="faq-card rounded-2xl p-8 text-center hover:scale-105 transition-transform duration-300">
+                                <div class="w-16 h-16 glass-morphism rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                                    <i class="fas fa-plus-circle text-3xl text-blue-600"></i>
                                 </div>
-                                <h3 class="font-bold text-blue-800 mb-4 text-xl text-center">
+                                <h3 class="font-bold glass-text-dark mb-4 text-xl">
                                     Comment créer un signalement ?
                                 </h3>
-                                <p class="text-blue-700 mb-6 leading-relaxed text-center">Cliquez sur "Créer un signalement" et remplissez le formulaire avec tous les détails nécessaires.</p>
-                                <div class="text-center">
-                                    <a href="guides.php" class="inline-flex items-center text-blue-600 font-bold hover:text-blue-800 transition-colors">
-                                        Voir le guide complet
-                                        <i class="fas fa-arrow-right ml-2"></i>
-                                    </a>
-                                </div>
+                                <p class="glass-text-secondary mb-6 leading-relaxed">
+                                    Cliquez sur "Créer un signalement" et remplissez le formulaire détaillé.
+                                </p>
+                                <a href="guides.php" class="inline-flex items-center text-blue-600 font-bold hover:text-blue-700 transition-colors">
+                                    Voir le guide
+                                    <i class="fas fa-arrow-right ml-2"></i>
+                                </a>
                             </div>
 
-                            <div class="faq-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-8 border border-green-200">
-                                <div class="w-16 h-16 bg-green-500 rounded-xl flex items-center justify-center mb-6 mx-auto">
-                                    <i class="fas fa-clock text-white text-2xl"></i>
+                            <div class="faq-card rounded-2xl p-8 text-center hover:scale-105 transition-transform duration-300">
+                                <div class="w-16 h-16 glass-morphism rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                                    <i class="fas fa-clock text-3xl text-green-600"></i>
                                 </div>
-                                <h3 class="font-bold text-green-800 mb-4 text-xl text-center">
+                                <h3 class="font-bold glass-text-dark mb-4 text-xl">
                                     Délai de traitement ?
                                 </h3>
-                                <p class="text-green-700 mb-6 leading-relaxed text-center">Les signalements sont généralement traités sous 24-48h selon leur priorité et leur complexité.</p>
-                                <div class="text-center">
-                                    <a href="faq.php" class="inline-flex items-center text-green-600 font-bold hover:text-green-800 transition-colors">
-                                        En savoir plus
-                                        <i class="fas fa-arrow-right ml-2"></i>
-                                    </a>
-                                </div>
+                                <p class="glass-text-secondary mb-6 leading-relaxed">
+                                    Les signalements sont traités sous 24-48h selon leur priorité.
+                                </p>
+                                <a href="faq.php" class="inline-flex items-center text-green-600 font-bold hover:text-green-700 transition-colors">
+                                    En savoir plus
+                                    <i class="fas fa-arrow-right ml-2"></i>
+                                </a>
                             </div>
 
-                            <div class="faq-card bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-8 border border-purple-200">
-                                <div class="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center mb-6 mx-auto">
-                                    <i class="fas fa-eye-slash text-white text-2xl"></i>
+                            <div class="faq-card rounded-2xl p-8 text-center hover:scale-105 transition-transform duration-300">
+                                <div class="w-16 h-16 glass-morphism rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                                    <i class="fas fa-eye-slash text-3xl text-purple-600"></i>
                                 </div>
-                                <h3 class="font-bold text-purple-800 mb-4 text-xl text-center">
+                                <h3 class="font-bold glass-text-dark mb-4 text-xl">
                                     Contact anonyme ?
                                 </h3>
-                                <p class="text-purple-700 mb-6 leading-relaxed text-center">Oui, vous pouvez nous contacter de manière totalement anonyme en cochant l'option correspondante.</p>
-                                <div class="text-center">
-                                    <a href="faq.php" class="inline-flex items-center text-purple-600 font-bold hover:text-purple-800 transition-colors">
-                                        Plus d'infos
-                                        <i class="fas fa-arrow-right ml-2"></i>
-                                    </a>
-                                </div>
+                                <p class="glass-text-secondary mb-6 leading-relaxed">
+                                    Oui, contactez-nous anonymement en cochant l'option dédiée.
+                                </p>
+                                <a href="faq.php" class="inline-flex items-center text-purple-600 font-bold hover:text-purple-700 transition-colors">
+                                    Plus d'infos
+                                    <i class="fas fa-arrow-right ml-2"></i>
+                                </a>
                             </div>
                         </div>
 
                         <div class="text-center mt-12">
-                            <a href="faq.php" class="inline-flex items-center bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-8 py-4 rounded-xl font-bold text-lg hover:from-gray-200 hover:to-gray-300 transition-all duration-300 transform hover:scale-105">
+                            <a href="faq.php" class="btn-primary">
                                 <i class="fas fa-list mr-3"></i>
                                 Voir toutes les FAQ
                             </a>
@@ -629,347 +1089,256 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
-
-    <?php include '../Inc/Components/footer.php'; ?>
-
     <script>
-        // Gestion du toggle anonyme amélioré
-        const anonymeCheckbox = document.getElementById('anonyme');
-        const toggleBg = document.querySelector('.toggle-bg');
-        const toggleDot = document.querySelector('.toggle-dot');
-        const anonymeNotice = document.querySelector('.anonyme-notice');
-        const nomNotice = document.querySelector('.nom-notice');
-        const emailNotice = document.querySelector('.email-notice');
-        const emailInput = document.getElementById('email');
-        
-        function updateToggleVisual() {
-            if (anonymeCheckbox.checked) {
-                toggleBg.classList.add('bg-purple-500');
-                toggleBg.classList.remove('bg-gray-300');
-                toggleDot.style.transform = 'translateX(24px)';
-            } else {
-                toggleBg.classList.remove('bg-purple-500');
-                toggleBg.classList.add('bg-gray-300');
-                toggleDot.style.transform = 'translateX(0)';
-            }
-        }
-        
-        function toggleAnonymeMode() {
-            updateToggleVisual();
-            
-            if (anonymeCheckbox.checked) {
-                anonymeNotice.classList.add('show');
-                nomNotice.textContent = 'Ce nom sera remplacé par "Utilisateur anonyme"';
-                nomNotice.className = 'text-sm text-purple-600 mt-2 nom-notice font-medium';
-                emailNotice.textContent = 'Cet email ne sera pas conservé en mode anonyme';
-                emailNotice.className = 'text-sm text-purple-600 mt-2 email-notice font-medium';
-                emailInput.placeholder = 'Ne sera pas conservé (mode anonyme)';
-            } else {
-                anonymeNotice.classList.remove('show');
-                nomNotice.textContent = 'Ce nom sera visible par les administrateurs';
-                nomNotice.className = 'text-sm text-gray-500 mt-2 nom-notice';
-                emailNotice.textContent = 'Nécessaire uniquement si vous souhaitez une réponse';
-                emailNotice.className = 'text-sm text-gray-500 mt-2 email-notice';
-                emailInput.placeholder = 'votre@email.com';
-            }
-        }
-        
-        // Event listeners pour le toggle
-        toggleBg.addEventListener('click', () => {
-            anonymeCheckbox.checked = !anonymeCheckbox.checked;
-            toggleAnonymeMode();
+        // Enhanced JavaScript with modern features
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeParticles();
+            initializeFormEnhancements();
+            initializeAnimations();
+            initializeToggle();
         });
-        
-        anonymeCheckbox.addEventListener('change', toggleAnonymeMode);
-        
-        // Initialiser l'état au chargement
-        updateToggleVisual();
-        toggleAnonymeMode();
 
-        // Animation au scroll améliorée
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+        // Particle System
+        function initializeParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry, index) => {
-                if (entry.isIntersecting) {
-                    setTimeout(() => {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0) scale(1)';
-                    }, index * 100);
+            for (let i = 0; i < particleCount; i++) {
+                createParticle(particlesContainer);
+            }
+
+            setInterval(() => {
+                if (particlesContainer.children.length < particleCount) {
+                    createParticle(particlesContainer);
+                }
+            }, 3000);
+        }
+
+        function createParticle(container) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+
+            const size = Math.random() * 4 + 2;
+            const x = Math.random() * 100;
+            const duration = Math.random() * 10 + 10;
+
+            particle.style.cssText = `
+                width: ${size}px;
+                height: ${size}px;
+                left: ${x}%;
+                animation-duration: ${duration}s;
+                animation-delay: ${Math.random() * 5}s;
+            `;
+
+            container.appendChild(particle);
+
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.remove();
+                }
+            }, duration * 1000);
+        }
+
+        // Enhanced Form Features
+        function initializeFormEnhancements() {
+            const messageTextarea = document.getElementById('message');
+            const charCounter = document.getElementById('charCounter');
+            const progressBar = document.getElementById('progressBar');
+
+            messageTextarea.addEventListener('input', function() {
+                const minLength = 10;
+                const maxLength = 1000;
+                const currentLength = this.value.length;
+                const percentage = Math.min((currentLength / minLength) * 100, 100);
+
+                progressBar.style.width = `${percentage}%`;
+
+                if (currentLength < minLength) {
+                    charCounter.textContent = `${currentLength}/${minLength} caractères minimum`;
+                    charCounter.style.color = '#e53e3e';
+                    progressBar.style.background = 'linear-gradient(90deg, #e53e3e, #fc8181)';
+                } else if (currentLength <= maxLength) {
+                    charCounter.textContent = `${currentLength} caractères`;
+                    charCounter.style.color = '#38a169';
+                    progressBar.style.background = 'var(--primary-gradient)';
+                } else {
+                    charCounter.textContent = `${currentLength}/${maxLength} - Trop long`;
+                    charCounter.style.color = '#ed8936';
+                    progressBar.style.background = 'linear-gradient(90deg, #ed8936, #f6ad55)';
                 }
             });
-        }, observerOptions);
 
-        // Observer tous les éléments avec animation
-        document.querySelectorAll('.contact-card, .faq-card').forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px) scale(0.95)';
-            card.style.transition = `opacity 0.8s ease ${index * 0.1}s, transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${index * 0.1}s`;
-            observer.observe(card);
-        });
+            // Trigger initial update
+            messageTextarea.dispatchEvent(new Event('input'));
+        }
 
-        // Validation en temps réel améliorée
-        const messageTextarea = document.getElementById('message');
-        const charCounter = document.getElementById('charCounter');
-        const progressBar = document.getElementById('progressBar');
-        const typingIndicator = document.querySelector('.typing-indicator');
-        const typingText = document.getElementById('typingText');
-        
-        let typingTimer;
-        
-        messageTextarea.addEventListener('input', function() {
-            const minLength = 10;
-            const maxLength = 1000;
-            const currentLength = this.value.length;
-            
-            // Afficher l'indicateur de frappe
-            typingIndicator.classList.add('show');
-            clearTimeout(typingTimer);
-            
-            // Masquer l'indicateur après 1 seconde d'inactivité
-            typingTimer = setTimeout(() => {
-                typingIndicator.classList.remove('show');
-            }, 1000);
-            
-            // Mettre à jour le compteur
-            if (currentLength < minLength) {
-                charCounter.textContent = `Minimum 10 caractères (${currentLength}/${minLength})`;
-                charCounter.className = 'text-sm text-red-500 character-counter font-medium';
-                progressBar.style.width = `${(currentLength / minLength) * 100}%`;
-                progressBar.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
-            } else if (currentLength <= maxLength) {
-                charCounter.textContent = `${currentLength} caractères`;
-                charCounter.className = 'text-sm text-green-500 character-counter font-medium';
-                progressBar.style.width = '100%';
-                progressBar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
-            } else {
-                charCounter.textContent = `Trop long (${currentLength}/${maxLength})`;
-                charCounter.className = 'text-sm text-orange-500 character-counter font-medium';
-                progressBar.style.width = '100%';
-                progressBar.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
-            }
-        });
-        
-        // Messages de frappe aléatoires
-        const typingMessages = [
-            'En cours de frappe...',
-            'Réflexion en cours...',
-            'Formulation du message...',
-            'Rédaction en cours...'
-        ];
-        
-        messageTextarea.addEventListener('keydown', function() {
-            const randomMessage = typingMessages[Math.floor(Math.random() * typingMessages.length)];
-            typingText.textContent = randomMessage;
-        });
-        
-        // Animation des cartes FAQ au clic
-        document.querySelectorAll('.faq-card').forEach(card => {
-            card.addEventListener('click', function() {
-                this.style.transform = 'scale(0.98)';
-                setTimeout(() => {
-                    this.style.transform = 'translateY(-5px) scale(1)';
-                }, 150);
+        // Enhanced Toggle
+        function initializeToggle() {
+            const toggleInput = document.getElementById('anonyme');
+            const formInputs = document.querySelectorAll('.form-input');
+
+            toggleInput.addEventListener('change', function() {
+                const isAnonymous = this.checked;
+
+                // Update placeholders for anonymous mode
+                const nomInput = document.getElementById('nom');
+                const emailInput = document.getElementById('email');
+
+                if (isAnonymous) {
+                    nomInput.placeholder = 'Sera remplacé par "Utilisateur anonyme"';
+                    emailInput.placeholder = 'Non conservé en mode anonyme';
+                } else {
+                    nomInput.placeholder = 'Votre nom complet';
+                    emailInput.placeholder = 'votre@email.com';
+                }
             });
-        });
-        
-        // Validation du formulaire avant soumission
+        }
+
+        // Enhanced Animations
+        function initializeAnimations() {
+            // Intersection Observer for scroll animations
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0) scale(1)';
+                        }, index * 100);
+                    }
+                });
+            }, observerOptions);
+
+            // Observe animated elements
+            document.querySelectorAll('.contact-card, .faq-card').forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(50px) scale(0.9)';
+                card.style.transition = `all 0.8s cubic-bezier(0.23, 1, 0.320, 1) ${index * 0.1}s`;
+                observer.observe(card);
+            });
+
+            // Parallax effect for orbs
+            window.addEventListener('scroll', () => {
+                const scrolled = window.pageYOffset;
+                const orbs = document.querySelectorAll('.orb');
+
+                orbs.forEach((orb, index) => {
+                    const speed = (index + 1) * 0.1;
+                    orb.style.transform = `translateY(${scrolled * speed}px) scale(${1 + scrolled * 0.0001})`;
+                });
+            });
+        }
+
+        // Enhanced Form Submission
         document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
             const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            
-            // Animation du bouton de soumission
+            const originalContent = submitBtn.innerHTML;
+
+            // Add loading state
+            submitBtn.classList.add('loading');
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Envoi en cours...';
             submitBtn.disabled = true;
-            
-            // Simuler un délai (sera remplacé par la vraie soumission)
-            setTimeout(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }, 2000);
-        });
-        
-        // Effet de parallaxe léger sur les particules
-        window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
-            const parallax = document.querySelectorAll('.floating-icon');
-            
-            parallax.forEach((element, index) => {
-                const speed = 0.5 + (index * 0.1);
-                element.style.transform = `translateY(${scrolled * speed}px)`;
-            });
+
+            // Create confirmation modal
+            createConfirmationModal();
         });
 
-// Fonction pour fermer les messages
-function closeMessage(messageId) {
-    const message = document.getElementById(messageId);
-    if (message) {
-        message.classList.add('closing');
-        setTimeout(() => {
-            message.style.display = 'none';
-        }, 500);
-    }
-}
+        function createConfirmationModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+            modal.style.animation = 'fadeIn 0.4s ease-out';
 
-// Fonction de confirmation avant envoi
-function confirmSendMessage(event) {
-    event.preventDefault(); // Empêcher l'envoi immédiat
-    
-    // Récupérer les données du formulaire
-    const form = document.getElementById('contactForm');
-    const formData = new FormData(form);
-    const nom = formData.get('nom');
-    const sujet = formData.get('sujet');
-    const typedemande = formData.get('type_demande');
-    const anonyme = formData.get('anonyme') ? 'en mode anonyme' : '';
-    
-    // Créer le modal de confirmation
-    const confirmModal = document.createElement('div');
-    confirmModal.id = 'confirmModal';
-    confirmModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm';
-    confirmModal.style.animation = 'fadeIn 0.3s ease-out';
-    
-    confirmModal.innerHTML = `
-        <div class="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl transform" style="animation: slideInScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-paper-plane text-blue-600 text-2xl"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Confirmer l'envoi</h3>
-                <p class="text-gray-600">Êtes-vous sûr de vouloir envoyer ce message ?</p>
-            </div>
-            
-            <div class="bg-gray-50 rounded-xl p-4 mb-6 text-sm">
-                <div class="flex items-center mb-2">
-                    <i class="fas fa-user text-blue-600 mr-2"></i>
-                    <span class="font-semibold">Nom:</span>
-                    <span class="ml-2 text-gray-700">${nom} ${anonyme}</span>
-                </div>
-                <div class="flex items-center mb-2">
-                    <i class="fas fa-tag text-blue-600 mr-2"></i>
-                    <span class="font-semibold">Type:</span>
-                    <span class="ml-2 text-gray-700">${getTypeLabel(typedemande)}</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-envelope text-blue-600 mr-2"></i>
-                    <span class="font-semibold">Sujet:</span>
-                    <span class="ml-2 text-gray-700">${sujet}</span>
-                </div>
-            </div>
-            
-            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                <div class="flex items-center">
-                    <i class="fas fa-clock text-yellow-600 mr-2"></i>
-                    <span class="text-sm text-yellow-800">
-                        <strong>Rappel:</strong> Vous ne pourrez envoyer un nouveau message que dans 30 minutes après celui-ci.
-                    </span>
-                </div>
-            </div>
-            
-            <div class="flex space-x-4">
-                <button onclick="cancelSend()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:scale-105">
-                    <i class="fas fa-times mr-2"></i>
-                    Annuler
-                </button>
-                <button onclick="proceedSend()" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg">
-                    <i class="fas fa-paper-plane mr-2"></i>
-                    Envoyer
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(confirmModal);
-    
-    // Empêcher le scroll du body
-    document.body.style.overflow = 'hidden';
-}
+            modal.innerHTML = `
+                <div class="glass-morphism-strong rounded-3xl p-8 max-w-md w-full" style="animation: slideInUp 0.5s cubic-bezier(0.23, 1, 0.320, 1);">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 glass-morphism rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-paper-plane text-3xl text-purple-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold glass-text-dark mb-2">Confirmer l'envoi</h3>
+                        <p class="glass-text-secondary">Êtes-vous sûr de vouloir envoyer ce message ?</p>
+                    </div>
 
-// Fonction pour obtenir le label du type de demande
-function getTypeLabel(type) {
-    const types = {
-        'support_technique': '🔧 Support technique',
-        'question_generale': '❓ Question générale',
-        'suggestion': '💡 Suggestion d\'amélioration',
-        'signalement_probleme': '⚠️ Signaler un problème',
-        'partenariat': '🤝 Partenariat',
-        'autre': '📝 Autre'
-    };
-    return types[type] || type;
-}
+                    <div class="flex space-x-4">
+                        <button onclick="cancelSend()" class="flex-1 glass-morphism glass-text-dark font-semibold py-3 px-6 rounded-xl hover:bg-white/50 transition-all duration-300">
+                            <i class="fas fa-times mr-2"></i>Annuler
+                        </button>
+                        <button onclick="confirmSend()" class="flex-1 btn-primary">
+                            <i class="fas fa-check mr-2"></i>Confirmer
+                        </button>
+                    </div>
+                </div>
+            `;
 
-// Fonction pour annuler l'envoi
-function cancelSend() {
-    const modal = document.getElementById('confirmModal');
-    if (modal) {
-        modal.style.animation = 'fadeOut 0.3s ease-out';
-        setTimeout(() => {
-            modal.remove();
-            document.body.style.overflow = 'auto';
-        }, 300);
-    }
-}
-
-// Fonction pour procéder à l'envoi
-function proceedSend() {
-    const modal = document.getElementById('confirmModal');
-    const form = document.getElementById('contactForm');
-    
-    // Afficher un loader dans le modal
-    modal.querySelector('.bg-white').innerHTML = `
-        <div class="text-center py-8">
-            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-spinner fa-spin text-blue-600 text-2xl"></i>
-            </div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Envoi en cours...</h3>
-            <p class="text-gray-600">Veuillez patienter</p>
-        </div>
-    `;
-    
-    // Envoyer le formulaire après un court délai
-    setTimeout(() => {
-        form.submit();
-    }, 1000);
-}
-
-// Auto-fermeture avec délais plus longs
-document.addEventListener('DOMContentLoaded', function() {
-    // Ajouter l'événement de confirmation au formulaire
-    const contactForm = document.getElementById('contactForm');
-    if (contactForm) {
-        contactForm.addEventListener('submit', confirmSendMessage);
-    }
-    
-    // Message de succès : 15 secondes
-    const successMessage = document.getElementById('successMessage');
-    if (successMessage) {
-        setTimeout(() => {
-            closeMessage('successMessage');
-        }, 15000);
-    }
-    
-    // Message d'erreur : 12 secondes
-    const errorMessage = document.getElementById('errorMessage');
-    if (errorMessage) {
-        setTimeout(() => {
-            closeMessage('errorMessage');
-        }, 12000);
-    }
-    
-    // Fermeture avec la touche Escape
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeMessage('successMessage');
-            closeMessage('errorMessage');
-            cancelSend(); // Fermer aussi le modal de confirmation
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
         }
-    });
-});
+
+        function cancelSend() {
+            const modal = document.querySelector('.fixed.inset-0');
+            if (modal) {
+                modal.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    modal.remove();
+                    document.body.style.overflow = 'auto';
+
+                    // Reset submit button
+                    const submitBtn = document.querySelector('button[type="submit"]');
+                    submitBtn.classList.remove('loading');
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-3"></i>Envoyer le message';
+                    submitBtn.disabled = false;
+                }, 300);
+            }
+        }
+
+        function confirmSend() {
+            const modal = document.querySelector('.fixed.inset-0');
+            const form = document.getElementById('contactForm');
+
+            // Show loading in modal
+            modal.querySelector('.glass-morphism-strong').innerHTML = `
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 glass-morphism rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-spinner fa-spin text-2xl text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold glass-text-dark mb-2">Envoi en cours...</h3>
+                    <p class="glass-text-secondary">Veuillez patienter</p>
+                </div>
+            `;
+
+            // Submit form after delay
+            setTimeout(() => {
+                form.submit();
+            }, 1500);
+        }
+
+        // CSS Animation Keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            @keyframes slideInUp {
+                from { opacity: 0; transform: translateY(50px) scale(0.9); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            .animate-slideInUp { animation: slideInUp 0.8s ease-out; }
+            .animate-slideInLeft { animation: slideInLeft 0.8s ease-out; }
+            .animate-slideInRight { animation: slideInRight 0.8s ease-out; }
+            .animate-pulse3d { animation: pulse3d 3s ease-in-out infinite; }
+        `;
+        document.head.appendChild(style);
     </script>
-    
-    <?php include_once('../Inc/Components/footer.php'); ?>
+
+<?php include_once('../Inc/Components/footer.php'); ?>
 <?php include_once('../Inc/Components/footers.php'); ?>
-<?php include('../Inc/Traitement/create_log.php'); ?>
