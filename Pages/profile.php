@@ -120,486 +120,1127 @@ function getRoleBadge($role) {
 
 
 <style>
-/* Animations personnalisées */
-@keyframes profileFloat {
+
+<style>
+/* Enhanced CSS with modern design patterns */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+* {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Background Effects */
+.bg-gradient-mesh {
+    background:
+        radial-gradient(at 40% 20%, hsla(228, 100%, 74%, 0.3) 0px, transparent 25%),
+        radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.3) 0px, transparent 25%),
+        radial-gradient(at 0% 50%, hsla(355, 100%, 93%, 0.3) 0px, transparent 25%),
+        radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 0.3) 0px, transparent 25%),
+        radial-gradient(at 0% 100%, hsla(22, 100%, 77%, 0.3) 0px, transparent 25%),
+        radial-gradient(at 80% 100%, hsla(242, 100%, 70%, 0.3) 0px, transparent 25%),
+        radial-gradient(at 0% 0%, hsla(343, 100%, 76%, 0.3) 0px, transparent 25%);
+    animation: mesh-animation 20s ease-in-out infinite;
+}
+
+@keyframes mesh-animation {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(2deg); }
+}
+
+/* Floating Orbs System */
+.floating-orb-system {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.floating-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.7;
+    animation: float-complex 25s infinite ease-in-out;
+}
+
+.orb-1 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+    top: 10%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.orb-2 {
+    width: 300px;
+    height: 300px;
+    background: linear-gradient(45deg, #8b5cf6, #5b21b6);
+    top: 60%;
+    right: 15%;
+    animation-delay: 5s;
+}
+
+.orb-3 {
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(45deg, #ec4899, #be185d);
+    bottom: 20%;
+    left: 30%;
+    animation-delay: 10s;
+}
+
+.orb-4 {
+    width: 250px;
+    height: 250px;
+    background: linear-gradient(45deg, #06b6d4, #0891b2);
+    top: 30%;
+    left: 60%;
+    animation-delay: 15s;
+}
+
+.orb-5 {
+    width: 350px;
+    height: 350px;
+    background: linear-gradient(45deg, #f59e0b, #d97706);
+    bottom: 40%;
+    right: 30%;
+    animation-delay: 7s;
+}
+
+.orb-6 {
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(45deg, #10b981, #059669);
+    top: 80%;
+    left: 80%;
+    animation-delay: 12s;
+}
+
+@keyframes float-complex {
+    0%, 100% {
+        transform: translate(0, 0) rotate(0deg) scale(1);
+    }
+    25% {
+        transform: translate(50px, -60px) rotate(90deg) scale(1.1);
+    }
+    50% {
+        transform: translate(-30px, 40px) rotate(180deg) scale(0.9);
+    }
+    75% {
+        transform: translate(70px, 80px) rotate(270deg) scale(1.05);
+    }
+}
+
+/* Particle System */
+.particle-system .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: particle-float var(--duration) infinite ease-in-out;
+    animation-delay: var(--delay);
+}
+
+@keyframes particle-float {
+    0%, 100% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+    }
+    10%, 90% {
+        opacity: 0.6;
+    }
+    50% {
+        transform: translateY(-100vh) translateX(50px);
+        opacity: 0.8;
+    }
+}
+
+/* Grid Pattern */
+.bg-grid-pattern {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 100px 100px;
+    animation: grid-drift 30s linear infinite;
+}
+
+@keyframes grid-drift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(100px, 100px); }
+}
+
+/* Glassmorphism Premium */
+.glassmorphism-premium {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 25px 50px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.glassmorphism-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Profile Card Premium */
+.profile-card-premium {
+    animation: profile-entrance 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+@keyframes profile-entrance {
+    0% {
+        opacity: 0;
+        transform: translateY(100px) rotateX(20deg) scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) rotateX(0deg) scale(1);
+    }
+}
+
+.profile-card-premium:hover {
+    transform: translateY(-15px) rotateX(2deg) rotateY(2deg);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Avatar Container */
+.profile-avatar-container {
+    animation: avatar-float 6s ease-in-out infinite;
+}
+
+@keyframes avatar-float {
     0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-10px) rotate(1deg); }
+    50% { transform: translateY(-15px) rotate(2deg); }
 }
 
-@keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+/* Section Titles */
+.section-title {
+    display: flex;
+    align-items: center;
+    space-x: 12px;
+    margin-bottom: 24px;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
 }
 
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-    50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+.section-title-large {
+    display: flex;
+    align-items: center;
+    space-x: 16px;
+    margin-bottom: 32px;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
 }
 
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.section-icon, .section-icon-large {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-@keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+.section-icon-large {
+    width: 40px;
+    height: 40px;
+    border-radius: 16px;
+    margin-right: 16px;
 }
 
-.profile-card {
-    animation: fadeInScale 0.6s ease-out;
-}
-
-.stat-card {
-    animation: slideInUp 0.8s ease-out;
-}
-
-.action-button {
+/* Info Cards */
+.info-card {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
 
-.action-button::before {
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.info-card:hover::before {
+    opacity: 1;
+}
+
+.info-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.info-card-link:hover {
+    transform: translateY(-8px) scale(1.02);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.info-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    font-size: 20px;
+    position: relative;
+}
+
+.status-active .info-card-icon {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border: 2px solid rgba(16, 185, 129, 0.4);
+    border-radius: 50%;
+    animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+    }
+}
+
+.info-card-content {
+    flex: 1;
+}
+
+.info-card-label {
+    font-size: 14px;
+    color: rgb(148, 163, 184);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.info-card-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+}
+
+/* Contact Items */
+.contact-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.contact-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(8px);
+}
+
+.contact-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    font-size: 16px;
+}
+
+.contact-text {
+    color: rgb(203, 213, 225);
+    font-weight: 500;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+    padding-left: 32px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, rgba(59, 130, 246, 0.5), rgba(16, 185, 129, 0.5));
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -24px;
+    top: 4px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid rgba(15, 23, 42, 1);
+    font-size: 12px;
+}
+
+.timeline-content {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.timeline-title {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.timeline-time {
+    color: rgb(148, 163, 184);
+    font-size: 14px;
+}
+
+/* Stats */
+.stat-card-modern {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card-modern:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    color: rgb(148, 163, 184);
+    font-size: 14px;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.stat-value {
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'Inter', monospace;
+}
+
+.stat-badge {
+    background: rgba(147, 51, 234, 0.2);
+    color: rgb(196, 181, 253);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Action Buttons */
+.action-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.action-btn::before {
     content: '';
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.6s ease;
 }
 
-.action-button:hover::before {
+.action-btn:hover::before {
     left: 100%;
 }
 
-.glassmorphism-enhanced {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+.action-btn:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-.profile-avatar {
-    animation: profileFloat 6s ease-in-out infinite;
+.action-btn-orange:hover {
+    background: rgba(249, 115, 22, 0.1);
+    border-color: rgba(249, 115, 22, 0.3);
 }
 
-.shimmer-effect {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
+.action-btn-blue:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
-.france-gradient {
-    background: linear-gradient(135deg, #002395 0%, #FFFFFF 50%, #ED2939 100%);
+.action-btn-red:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
-.interactive-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.action-btn-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    font-size: 18px;
+    color: white;
+    transition: all 0.3s ease;
 }
 
-.interactive-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+.action-btn:hover .action-btn-icon {
+    transform: scale(1.1) rotate(12deg);
 }
 
-.status-indicator {
-    position: relative;
+.action-btn-content {
+    flex: 1;
 }
 
-.status-indicator::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 12px;
-    height: 12px;
-    background: #10B981;
+.action-btn-title {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.action-btn-subtitle {
+    color: rgb(148, 163, 184);
+    font-size: 14px;
+}
+
+.action-btn-arrow {
+    color: rgb(148, 163, 184);
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover .action-btn-arrow {
+    transform: translateX(8px);
+    color: white;
+}
+
+/* Buttons */
+.btn-primary-sm {
+    background: linear-gradient(135deg, rgb(59, 130, 246), rgb(37, 99, 235));
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-primary-sm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 32px 16px;
+}
+
+.empty-state-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 50%;
-    border: 2px solid white;
-    animation: pulse-glow 2s infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
 }
 
-.profile-section {
-    animation: slideInUp 0.6s ease-out;
-    animation-fill-mode: both;
+/* Pattern Background */
+.bg-pattern-dots {
+    background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0);
+    background-size: 20px 20px;
+    animation: pattern-drift 20s linear infinite;
 }
 
-.profile-section:nth-child(1) { animation-delay: 0.1s; }
-.profile-section:nth-child(2) { animation-delay: 0.2s; }
-.profile-section:nth-child(3) { animation-delay: 0.3s; }
+@keyframes pattern-drift {
+    0% { background-position: 0 0; }
+    100% { background-position: 20px 20px; }
+}
+
+/* Verified Badge */
+.verified-badge {
+    animation: verified-glow 3s ease-in-out infinite;
+}
+
+@keyframes verified-glow {
+    0%, 100% { filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5)); }
+    50% { filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.8)); }
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+    .floating-orb {
+        width: 200px !important;
+        height: 200px !important;
+        filter: blur(40px);
+    }
+
+    .profile-card-premium:hover {
+        transform: translateY(-8px);
+    }
+
+    .section-title, .section-title-large {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .floating-orb {
+        width: 150px !important;
+        height: 150px !important;
+        filter: blur(30px);
+    }
+
+    .action-btn {
+        padding: 16px;
+    }
+
+    .info-card {
+        padding: 16px;
+    }
+
+    .stat-card-modern {
+        padding: 16px;
+    }
+}
 </style>
 
+
 <!-- Background amélioré avec particules animées -->
-<div class="min-h-screen relative overflow-hidden">
-    <!-- Fond avec gradient France et particules -->
-    <div class="absolute inset-0 bg-gradient-to-br from-blue-900 via-white to-red-900 opacity-10"></div>
-    <div class="absolute inset-0">
-        <div class="absolute top-10 left-10 w-32 h-32 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div class="absolute top-40 right-20 w-24 h-24 bg-red-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
-        <div class="absolute bottom-20 left-20 w-28 h-28 bg-white rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse animation-delay-4000"></div>
-        <div class="absolute bottom-40 right-10 w-20 h-20 bg-blue-600 rounded-full mix-blend-multiply filter blur-xl opacity-25 animate-pulse animation-delay-1000"></div>
-    </div>
-    
-    <div class="relative z-10 container mx-auto px-4 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Profil principal avec design premium -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- En-tête du profil avec glassmorphism avancé -->
-                <div class="profile-card glassmorphism-enhanced rounded-3xl overflow-hidden interactive-card">
-                    <!-- Bannière avec overlay gradient -->
-                    <div class="relative h-48 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-                        <?php if ($banner): ?>
-                            <img src="../Assets/Images/banners/<?= htmlspecialchars($banner)?>" alt="Bannière" class="w-full h-full object-cover">
-                        <?php endif; ?>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                        
-                        <!-- Bouton d'édition flottant -->
-                        <button onclick="openEditProfileModal()" 
-                                class="absolute top-4 right-4 bg-white/20 backdrop-blur-md text-white p-3 rounded-full hover:bg-white/30 transition-all duration-300 group">
-                            <i class="fas fa-edit group-hover:rotate-12 transition-transform duration-300"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Contenu du profil -->
-                    <div class="relative p-8">
-                        <!-- Avatar avec effet de flottement -->
-                        <div class="absolute -top-16 left-8">
-                            <div class="profile-avatar status-indicator">
-                                <?php if ($avatar): ?>
-                                    <img src="../Assets/Images/avatars/<?= htmlspecialchars($avatar)?>" alt="Avatar" 
-                                         class="w-32 h-32 rounded-full border-4 border-white shadow-2xl object-cover">
-                                <?php else: ?>
-                                    <div class="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full border-4 border-white shadow-2xl flex items-center justify-center">
-                                        <i class="fas fa-user text-white text-4xl"></i>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        
-                        <!-- Informations utilisateur -->
-                        <div class="pt-20">
-                            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                                <div>
-                                    <div class="flex items-center space-x-3 mb-2">
-                                        <h1 class="text-3xl font-bold text-gray-900"><?= htmlspecialchars($username) ?></h1>
-                                        <?php if ($verified): ?>
-                                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center space-x-1 shadow-lg">
-                                                <i class="fas fa-check-circle"></i>
-                                                <span>CERTIFIÉ</span>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <div class="flex items-center space-x-4 text-gray-600 mb-4">
-                                        <div class="flex items-center space-x-2">
-                                            <i class="fas fa-envelope text-blue-500"></i>
-                                            <span><?= htmlspecialchars($email) ?></span>
-                                        </div>
-                                        <?php if ($organization): ?>
-                                            <div class="flex items-center space-x-2">
-                                                <i class="fas fa-building text-purple-500"></i>
-                                                <span><?= htmlspecialchars($organization) ?></span>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <!-- Badge de rôle avec design amélioré -->
-                                    <div class="mb-4">
-                                        <?= getRoleBadge($user['access_level'] ?? 'basic') ?>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Section À propos avec design moderne -->
-                            <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 mb-6">
-                                <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                                    <div class="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
-                                        <i class="fas fa-user text-white text-xs"></i>
-                                    </div>
-                                    À propos
-                                </h3>
-                                <?php if ($bio): ?>
-                                    <p class="text-gray-700 leading-relaxed"><?= nl2br(htmlspecialchars($bio)) ?></p>
-                                <?php else: ?>
-                                    <div class="text-center py-6">
-                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <i class="fas fa-plus text-gray-400 text-xl"></i>
-                                        </div>
-                                        <p class="text-gray-500 italic mb-3">Aucune biographie ajoutée.</p>
-                                        <button onclick="openEditProfileModal()" 
-                                                class="text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                                            Ajouter une biographie
-                                        </button>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <!-- Activité récente avec timeline -->
-                            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6">
-                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                    <div class="w-6 h-6 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-2">
-                                        <i class="fas fa-clock text-white text-xs"></i>
-                                    </div>
-                                    Activité récente
-                                </h3>
-                                <div class="space-y-4">
-                                    <div class="flex items-center space-x-3 p-3 bg-white/60 rounded-lg">
-                                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-sign-in-alt text-white text-sm"></i>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-500 text-sm">Dernière connexion</span>
-                                            <div class="text-gray-800 font-medium"><?= $last_activity ? date('d/m/Y à H:i', strtotime($last_activity)) : 'Jamais' ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-3 p-3 bg-white/60 rounded-lg">
-                                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-calendar-plus text-white text-sm"></i>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-500 text-sm">Membre depuis</span>
-                                            <div class="text-gray-800 font-medium"><?= date('d/m/Y', strtotime($created_at)) ?></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Informations détaillées avec cartes interactives -->
-                <div class="profile-section glassmorphism-enhanced rounded-3xl p-8 interactive-card">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                            <i class="fas fa-info-circle text-white text-sm"></i>
-                        </div>
-                        Informations détaillées
-                    </h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Statut avec indicateur animé -->
-                        <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl hover:from-emerald-100 hover:to-green-100 transition-all duration-300">
-                            <div class="relative">
-                                <i class="fas <?= $active ? 'fa-check-circle text-emerald-600' : 'fa-times-circle text-red-600' ?> text-2xl"></i>
-                                <?php if ($active): ?>
-                                    <div class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-ping"></div>
-                                <?php endif; ?>
-                            </div>
-                            <div>
-                                <span class="text-gray-500 text-sm font-medium">Statut du compte</span>
-                                <div class="<?= $is_active ? 'text-emerald-700' : 'text-red-700' ?> font-bold text-lg">
-                                    <?= $active ? 'Actif' : 'Inactif' ?>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Visibilité -->
-                        <?php if ($is_public): ?>
-                            <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-all duration-300">
-                                <i class="fas fa-globe text-purple-600 text-2xl"></i>
-                                <div>
-                                    <span class="text-gray-500 text-sm font-medium">Visibilité</span>
-                                    <div class="text-purple-700 font-bold text-lg">
-                                        <?= $is_public == 1 ? 'Public' : 'Privé' ?>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <!-- Liens sociaux avec hover effects -->
-                        <?php if ($github): ?>
-                            <a href="<?= htmlspecialchars($github) ?>" target="_blank" 
-                               class="flex items-center space-x-3 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl hover:from-gray-100 hover:to-slate-100 transition-all duration-300 group">
-                                <i class="fab fa-github text-gray-700 text-2xl group-hover:scale-110 transition-transform"></i>
-                                <div>
-                                    <span class="text-gray-500 text-sm font-medium">GitHub</span>
-                                    <div class="text-gray-700 font-bold truncate"><?= htmlspecialchars($github) ?></div>
-                                </div>
-                            </a>
-                        <?php endif; ?>
-                        
-                        <?php if ($linkedin): ?>
-                            <a href="<?= htmlspecialchars($linkedin) ?>" target="_blank" 
-                               class="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 group">
-                                <i class="fab fa-linkedin text-blue-600 text-2xl group-hover:scale-110 transition-transform"></i>
-                                <div>
-                                    <span class="text-gray-500 text-sm font-medium">LinkedIn</span>
-                                    <div class="text-blue-700 font-bold truncate"><?= htmlspecialchars($linkedin) ?></div>
-                                </div>
-                            </a>
-                        <?php endif; ?>
-                        
-                        <?php if ($website): ?>
-                            <a href="<?= htmlspecialchars($website) ?>" target="_blank" 
-                               class="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl hover:from-green-100 hover:to-emerald-100 transition-all duration-300 group">
-                                <i class="fas fa-globe text-green-600 text-2xl group-hover:scale-110 transition-transform"></i>
-                                <div>
-                                    <span class="text-gray-500 text-sm font-medium">Site web</span>
-                                    <div class="text-green-700 font-bold truncate"><?= htmlspecialchars($website) ?></div>
-                                </div>
-                            </a>
-                        <?php endif; ?>
-                    </div>
-                </div>
+    <div class="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950">
+        <!-- Background Elements Enhanced -->
+        <div class="absolute inset-0">
+            <!-- Animated mesh gradient -->
+            <div class="absolute inset-0 opacity-30">
+                <div class="absolute inset-0 bg-gradient-mesh"></div>
             </div>
-            
-            <!-- Sidebar avec design premium -->
-            <div class="space-y-8">
-                <!-- Informations de contact avec animations -->
-                <div class="profile-section glassmorphism-enhanced rounded-3xl p-6 interactive-card">
-                    <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                            <i class="fas fa-address-card text-white text-sm"></i>
-                        </div>
-                        Contact
-                    </h3>
-                    <div class="space-y-4">
-                        <?php if ($phone): ?>
-                            <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl hover:from-orange-100 hover:to-red-100 transition-all duration-300 group">
-                                <i class="fas fa-phone text-orange-500 text-lg group-hover:rotate-12 transition-transform"></i>
-                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($phone) ?></span>
+
+            <!-- Dynamic floating orbs -->
+            <div class="floating-orb-system">
+                <div class="floating-orb orb-1"></div>
+                <div class="floating-orb orb-2"></div>
+                <div class="floating-orb orb-3"></div>
+                <div class="floating-orb orb-4"></div>
+                <div class="floating-orb orb-5"></div>
+                <div class="floating-orb orb-6"></div>
+            </div>
+
+            <!-- Particle system -->
+            <div class="particle-system">
+                <div class="particle" style="--delay: 0s; --duration: 15s;"></div>
+                <div class="particle" style="--delay: 3s; --duration: 20s;"></div>
+                <div class="particle" style="--delay: 6s; --duration: 18s;"></div>
+                <div class="particle" style="--delay: 9s; --duration: 22s;"></div>
+            </div>
+
+            <!-- Grid overlay -->
+            <div class="absolute inset-0 bg-grid-pattern opacity-20"></div>
+
+            <!-- Gradient overlays -->
+            <div class="absolute inset-0 bg-gradient-radial from-blue-500/10 via-transparent to-purple-500/10"></div>
+        </div>
+
+        <div class="relative z-10 container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Main Profile Section -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Enhanced Profile Header -->
+                    <div class="profile-card-premium glassmorphism-premium rounded-3xl overflow-hidden group">
+                        <!-- Banner Section with parallax effect -->
+                        <div class="relative h-64 overflow-hidden">
+                            <?php if ($banner): ?>
+                                <img src="../Assets/Images/banners/<?= htmlspecialchars($banner)?>"
+                                     alt="Bannière"
+                                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                            <?php else: ?>
+                                <div class="w-full h-full bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 group-hover:from-blue-700 group-hover:via-purple-700 group-hover:to-indigo-800 transition-all duration-700"></div>
+                            <?php endif; ?>
+
+                            <!-- Overlay with animated pattern -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                            <div class="absolute inset-0 opacity-20">
+                                <div class="absolute inset-0 bg-pattern-dots"></div>
                             </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($address): ?>
-                            <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 group">
-                                <i class="fas fa-map-marker-alt text-blue-500 text-lg group-hover:bounce transition-transform"></i>
-                                <span class="text-gray-700 font-medium">
+
+                            <!-- Floating edit button -->
+                            <button onclick="openEditProfileModal()"
+                                    class="absolute top-6 right-6 w-14 h-14 glassmorphism-premium rounded-2xl flex items-center justify-center text-white hover:scale-110 hover:rotate-12 transition-all duration-300 group/btn">
+                                <i class="fas fa-edit text-lg group-hover/btn:scale-110 transition-transform"></i>
+                                <div class="absolute inset-0 rounded-2xl bg-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                            </button>
+
+                            <!-- Status indicators -->
+                            <div class="absolute top-6 left-6 flex space-x-3">
+                                <div class="glassmorphism-premium px-4 py-2 rounded-full flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                                    <span class="text-white text-sm font-medium">En ligne</span>
+                                </div>
+                                <?php if ($verified): ?>
+                                    <div class="glassmorphism-premium px-4 py-2 rounded-full flex items-center space-x-2">
+                                        <i class="fas fa-check-circle text-blue-400"></i>
+                                        <span class="text-white text-sm font-medium">Vérifié</span>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Profile Content -->
+                        <div class="relative p-8">
+                            <!-- Floating Avatar -->
+                            <div class="absolute -top-20 left-8">
+                                <div class="profile-avatar-container group/avatar">
+                                    <div class="relative">
+                                        <div class="w-40 h-40 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/30 backdrop-blur-sm transition-all duration-500 group-hover/avatar:border-white/50 group-hover/avatar:scale-105">
+                                            <?php if ($avatar): ?>
+                                                <img src="../Assets/Images/avatars/<?= htmlspecialchars($avatar)?>"
+                                                     alt="Avatar"
+                                                     class="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110">
+                                            <?php else: ?>
+                                                <div class="w-full h-full bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 flex items-center justify-center">
+                                                    <i class="fas fa-user text-white text-5xl"></i>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Avatar glow effect -->
+                                        <div class="absolute inset-0 rounded-3xl bg-gradient-to-r from-blue-500/30 to-purple-500/30 blur-xl opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-500 -z-10"></div>
+
+                                        <!-- Online indicator -->
+                                        <div class="absolute -bottom-2 -right-2 w-12 h-12 glassmorphism-premium rounded-2xl flex items-center justify-center border-4 border-white/30">
+                                            <i class="fas fa-crown text-yellow-400 text-lg animate-pulse"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- User Information -->
+                            <div class="pt-24">
+                                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8">
+                                    <div class="space-y-4">
+                                        <!-- Name and title -->
+                                        <div class="space-y-3">
+                                            <div class="flex items-center space-x-4">
+                                                <h1 class="text-4xl lg:text-5xl font-black text-white leading-tight">
+                                                    <?= htmlspecialchars($username) ?>
+                                                </h1>
+                                                <?php if ($verified): ?>
+                                                    <div class="verified-badge">
+                                                        <i class="fas fa-check-circle text-blue-400 text-2xl"></i>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- User meta -->
+                                            <div class="flex flex-wrap items-center gap-4 text-slate-300">
+                                                <div class="flex items-center space-x-2">
+                                                    <i class="fas fa-envelope text-blue-400"></i>
+                                                    <span class="font-medium"><?= htmlspecialchars($email) ?></span>
+                                                </div>
+                                                <?php if ($organization): ?>
+                                                    <div class="w-px h-6 bg-slate-600"></div>
+                                                    <div class="flex items-center space-x-2">
+                                                        <i class="fas fa-building text-purple-400"></i>
+                                                        <span class="font-medium"><?= htmlspecialchars($organization) ?></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Role badge enhanced -->
+                                            <div class="inline-flex">
+                                                <?= getRolebadge($user['access_level'] ?? 'basic') ?>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick stats -->
+                                    <div class="mt-6 lg:mt-0 flex space-x-6">
+                                        <div class="text-center">
+                                            <div class="text-3xl font-bold text-white mb-1">0</div>
+                                            <div class="text-sm text-slate-400">Signalements</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-3xl font-bold text-white mb-1">0</div>
+                                            <div class="text-sm text-slate-400">Traités</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bio Section Enhanced -->
+                                <div class="bio-section glassmorphism-card rounded-2xl p-6 mb-8">
+                                    <h3 class="section-title">
+                                        <div class="section-icon bg-gradient-to-br from-blue-500 to-indigo-600">
+                                            <i class="fas fa-user-circle text-white"></i>
+                                        </div>
+                                        <span>À propos</span>
+                                    </h3>
+
+                                    <?php if ($bio): ?>
+                                        <div class="prose prose-invert max-w-none">
+                                            <p class="text-slate-300 leading-relaxed text-lg"><?= nl2br(htmlspecialchars($bio)) ?></p>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">
+                                                <i class="fas fa-plus text-slate-400"></i>
+                                            </div>
+                                            <p class="text-slate-400 mb-4">Aucune biographie ajoutée.</p>
+                                            <button onclick="openEditProfileModal()" class="btn-primary-sm">
+                                                <i class="fas fa-edit mr-2"></i>
+                                                Ajouter une biographie
+                                            </button>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Activity Timeline -->
+                                <div class="activity-section glassmorphism-card rounded-2xl p-6">
+                                    <h3 class="section-title">
+                                        <div class="section-icon bg-gradient-to-br from-green-500 to-emerald-600">
+                                            <i class="fas fa-clock text-white"></i>
+                                        </div>
+                                        <span>Activité récente</span>
+                                    </h3>
+
+                                    <div class="timeline">
+                                        <div class="timeline-item">
+                                            <div class="timeline-marker bg-green-500">
+                                                <i class="fas fa-sign-in-alt text-white"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <div class="timeline-title">Dernière connexion</div>
+                                                <div class="timeline-time"><?= $last_activity ? date('d/m/Y à H:i', strtotime($last_activity)) : 'Jamais' ?></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="timeline-item">
+                                            <div class="timeline-marker bg-blue-500">
+                                                <i class="fas fa-calendar-plus text-white"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <div class="timeline-title">Membre depuis</div>
+                                                <div class="timeline-time"><?= date('d/m/Y', strtotime($created_at)) ?></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Information Section -->
+                    <div class="details-section glassmorphism-premium rounded-3xl p-8">
+                        <h3 class="section-title-large">
+                            <div class="section-icon-large bg-gradient-to-br from-purple-500 to-pink-600">
+                                <i class="fas fa-info-circle text-white"></i>
+                            </div>
+                            <span>Informations détaillées</span>
+                        </h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Enhanced Info Cards -->
+                            <div class="info-card status-active">
+                                <div class="info-card-icon">
+                                    <i class="fas fa-check-circle text-emerald-400"></i>
+                                    <div class="pulse-ring"></div>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="info-card-label">Statut du compte</div>
+                                    <div class="info-card-value text-emerald-400"><?= $active ? 'Actif' : 'Inactif' ?></div>
+                                </div>
+                            </div>
+
+                            <?php if ($is_public): ?>
+                                <div class="info-card">
+                                    <div class="info-card-icon">
+                                        <i class="fas fa-globe text-purple-400"></i>
+                                    </div>
+                                    <div class="info-card-content">
+                                        <div class="info-card-label">Visibilité</div>
+                                        <div class="info-card-value text-purple-400"><?= $is_public == 1 ? 'Public' : 'Privé' ?></div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Social Links Enhanced -->
+                            <?php if ($github): ?>
+                                <a href="<?= htmlspecialchars($github) ?>" target="_blank" class="info-card info-card-link group">
+                                    <div class="info-card-icon">
+                                        <i class="fab fa-github text-gray-300 group-hover:text-white transition-colors"></i>
+                                    </div>
+                                    <div class="info-card-content">
+                                        <div class="info-card-label">GitHub</div>
+                                        <div class="info-card-value text-gray-300 truncate group-hover:text-white transition-colors"><?= htmlspecialchars($github) ?></div>
+                                    </div>
+                                    <i class="fas fa-external-link-alt text-slate-500 group-hover:text-white transition-colors"></i>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php if ($linkedin): ?>
+                                <a href="<?= htmlspecialchars($linkedin) ?>" target="_blank" class="info-card info-card-link group">
+                                    <div class="info-card-icon">
+                                        <i class="fab fa-linkedin text-blue-400 group-hover:text-blue-300 transition-colors"></i>
+                                    </div>
+                                    <div class="info-card-content">
+                                        <div class="info-card-label">LinkedIn</div>
+                                        <div class="info-card-value text-blue-400 truncate group-hover:text-blue-300 transition-colors"><?= htmlspecialchars($linkedin) ?></div>
+                                    </div>
+                                    <i class="fas fa-external-link-alt text-slate-500 group-hover:text-blue-300 transition-colors"></i>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php if ($website): ?>
+                                <a href="<?= htmlspecialchars($website) ?>" target="_blank" class="info-card info-card-link group">
+                                    <div class="info-card-icon">
+                                        <i class="fas fa-globe text-green-400 group-hover:text-green-300 transition-colors"></i>
+                                    </div>
+                                    <div class="info-card-content">
+                                        <div class="info-card-label">Site web</div>
+                                        <div class="info-card-value text-green-400 truncate group-hover:text-green-300 transition-colors"><?= htmlspecialchars($website) ?></div>
+                                    </div>
+                                    <i class="fas fa-external-link-alt text-slate-500 group-hover:text-green-300 transition-colors"></i>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Sidebar -->
+                <div class="space-y-8">
+                    <!-- Contact Information -->
+                    <div class="contact-section glassmorphism-premium rounded-3xl p-6">
+                        <h3 class="section-title">
+                            <div class="section-icon bg-gradient-to-br from-orange-500 to-red-600">
+                                <i class="fas fa-address-card text-white"></i>
+                            </div>
+                            <span>Contact</span>
+                        </h3>
+
+                        <div class="space-y-4">
+                            <?php if ($phone): ?>
+                                <div class="contact-item">
+                                    <div class="contact-icon">
+                                        <i class="fas fa-phone text-orange-400"></i>
+                                    </div>
+                                    <span class="contact-text"><?= htmlspecialchars($phone) ?></span>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if ($address): ?>
+                                <div class="contact-item">
+                                    <div class="contact-icon">
+                                        <i class="fas fa-map-marker-alt text-blue-400"></i>
+                                    </div>
+                                    <span class="contact-text">
                                     <?= htmlspecialchars($address) ?>
                                     <?= $city ? ', ' . htmlspecialchars($city) : '' ?>
                                 </span>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($accreditation): ?>
-                            <div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-all duration-300 group">
-                                <i class="fas fa-certificate text-purple-500 text-lg group-hover:rotate-12 transition-transform"></i>
-                                <span class="text-gray-700 font-medium"><?= htmlspecialchars($accreditation) ?></span>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!$phone && !$address && !$accreditation): ?>
-                            <div class="text-center py-6">
-                                <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-                                    <i class="fas fa-plus text-gray-400 text-xl"></i>
                                 </div>
-                                <p class="text-gray-500 text-sm italic mb-4">Aucune information de contact.</p>
-                                <button onclick="openEditProfileModal()" 
-                                        class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                                    Ajouter des informations
-                                </button>
-                            </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
+
+                            <?php if ($accreditation): ?>
+                                <div class="contact-item">
+                                    <div class="contact-icon">
+                                        <i class="fas fa-certificate text-purple-400"></i>
+                                    </div>
+                                    <span class="contact-text"><?= htmlspecialchars($accreditation) ?></span>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!$phone && !$address && !$accreditation): ?>
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">
+                                        <i class="fas fa-plus text-slate-400"></i>
+                                    </div>
+                                    <p class="text-slate-400 mb-4">Aucune information de contact.</p>
+                                    <button onclick="openEditProfileModal()" class="btn-primary-sm">
+                                        <i class="fas fa-plus mr-2"></i>
+                                        Ajouter des informations
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Statistiques avec graphiques visuels améliorés -->
-                <div class="profile-section glassmorphism-enhanced rounded-3xl p-6 interactive-card">
-                    <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                            <i class="fas fa-chart-bar text-white text-sm"></i>
-                        </div>
-                        Statistiques
-                    </h3>
-                    <div class="space-y-4">
-                        <div class="stat-card p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 group">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-                                        <i class="fas fa-plus text-white text-sm"></i>
-                                    </div>
-                                    <span class="text-gray-700 font-medium">Signalements créés</span>
-                                </div>
-                                <span class="text-3xl font-bold text-blue-600 group-hover:scale-110 transition-transform">0</span>
+
+                    <!-- Enhanced Statistics -->
+                    <div class="stats-section glassmorphism-premium rounded-3xl p-6">
+                        <h3 class="section-title">
+                            <div class="section-icon bg-gradient-to-br from-indigo-500 to-purple-600">
+                                <i class="fas fa-chart-bar text-white"></i>
                             </div>
-                        </div>
-                        
-                        <div class="stat-card p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl hover:from-emerald-100 hover:to-green-100 transition-all duration-300 group">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg">
-                                        <i class="fas fa-check text-white text-sm"></i>
-                                    </div>
-                                    <span class="text-gray-700 font-medium">Signalements traités</span>
+                            <span>Statistiques</span>
+                        </h3>
+
+                        <div class="space-y-4">
+                            <div class="stat-card-modern">
+                                <div class="stat-icon bg-gradient-to-br from-blue-500 to-indigo-600">
+                                    <i class="fas fa-plus text-white"></i>
                                 </div>
-                                <span class="text-3xl font-bold text-emerald-600 group-hover:scale-110 transition-transform">0</span>
+                                <div class="stat-content">
+                                    <div class="stat-label">Signalements créés</div>
+                                    <div class="stat-value">0</div>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="stat-card p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-all duration-300 group">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center shadow-lg">
-                                        <i class="fas fa-shield-alt text-white text-sm"></i>
-                                    </div>
-                                    <span class="text-gray-700 font-medium">Niveau d'accès</span>
+
+                            <div class="stat-card-modern">
+                                <div class="stat-icon bg-gradient-to-br from-emerald-500 to-green-600">
+                                    <i class="fas fa-check text-white"></i>
                                 </div>
-                                <span class="text-sm font-bold text-purple-600 bg-purple-100 px-3 py-1 rounded-full group-hover:scale-105 transition-transform">
-                                    <?= ucfirst($user['access_level'] ?? 'basic') ?>
-                                </span>
+                                <div class="stat-content">
+                                    <div class="stat-label">Signalements traités</div>
+                                    <div class="stat-value">0</div>
+                                </div>
+                            </div>
+
+                            <div class="stat-card-modern">
+                                <div class="stat-icon bg-gradient-to-br from-purple-500 to-pink-600">
+                                    <i class="fas fa-shield-alt text-white"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Niveau d'accès</div>
+                                    <div class="stat-badge"><?= ucfirst($user['access_level'] ?? 'basic') ?></div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Actions rapides avec design premium et effets -->
-                <div class="profile-section glassmorphism-enhanced rounded-3xl p-6 interactive-card">
-                    <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <div class="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                            <i class="fas fa-bolt text-white text-sm"></i>
+
+                    <!-- Enhanced Quick Actions -->
+                    <div class="actions-section glassmorphism-premium rounded-3xl p-6">
+                        <h3 class="section-title">
+                            <div class="section-icon bg-gradient-to-br from-yellow-500 to-orange-600">
+                                <i class="fas fa-bolt text-white"></i>
+                            </div>
+                            <span>Actions rapides</span>
+                        </h3>
+
+                        <div class="space-y-4">
+                            <button onclick="openChangePasswordModal()" class="action-btn action-btn-orange">
+                                <div class="action-btn-icon">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <div class="action-btn-content">
+                                    <div class="action-btn-title">Changer le mot de passe</div>
+                                    <div class="action-btn-subtitle">Sécurisez votre compte</div>
+                                </div>
+                                <i class="fas fa-chevron-right action-btn-arrow"></i>
+                            </button>
+
+                            <button onClick="fetchUserAccount()" class="action-btn action-btn-blue">
+                                <div class="action-btn-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                                <div class="action-btn-content">
+                                    <div class="action-btn-title">Exporter mes données</div>
+                                    <div class="action-btn-subtitle">Télécharger vos informations</div>
+                                </div>
+                                <i class="fas fa-chevron-right action-btn-arrow"></i>
+                            </button>
+
+                            <button onClick="deleteAccount()" class="action-btn action-btn-red">
+                                <div class="action-btn-icon">
+                                    <i class="fas fa-trash"></i>
+                                </div>
+                                <div class="action-btn-content">
+                                    <div class="action-btn-title">Supprimer mon compte</div>
+                                    <div class="action-btn-subtitle">Action irréversible</div>
+                                </div>
+                                <i class="fas fa-chevron-right action-btn-arrow"></i>
+                            </button>
                         </div>
-                        Actions rapides
-                    </h3>
-                    <div class="space-y-4">
-                        <button onclick="openChangePasswordModal()" 
-                                class="action-button group w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-6 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-2xl transform hover:-translate-y-2">
-                            <div class="flex items-center justify-center space-x-3">
-                                <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                </svg>
-                                <span>Changer le mot de passe</span>
-                            </div>
-                        </button>
-                        
-                        <button onClick="fetchUserAccount()" 
-                                class="action-button group w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 px-6 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 font-semibold shadow-lg hover:shadow-2xl transform hover:-translate-y-2">
-                            <div class="flex items-center justify-center space-x-3">
-                                <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                <span>Exporter mes données</span>
-                            </div>
-                        </button>
-                        
-                        <button onClick="deleteAccount()" 
-                                class="action-button group w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 px-6 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-2xl transform hover:-translate-y-2">
-                            <div class="flex items-center justify-center space-x-3">
-                                <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                                <span>Supprimer mon compte</span>
-                            </div>
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
 
 
@@ -724,7 +1365,7 @@ function getRoleBadge($role) {
                                     </div>
                                     <p class="text-sm text-gray-700 text-center font-medium">
                                         <span class="text-purple-600">Choisir une nouvelle bannière</span><br>
-                                        <span class="text-xs text-gray-500">PNG, JPG ou JPEG (MAX. 2MB)</span>
+                                        <span class="text-xs text-gray-500">PNG, JPG ou JPEG (MAX. 10MB)</span>
                                     </p>
                                 </div>
                                 <input id="bannerFile" type="file" class="hidden" accept="image/*" onchange="previewBanner(this)">
@@ -1047,6 +1688,223 @@ function getRoleBadge($role) {
 
 
 <script>
+    // Enhanced JavaScript for modern interactions
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeProfileAnimations();
+        initializeIntersectionObserver();
+        initializeParallaxEffects();
+        initializeInteractiveElements();
+    });
+
+    function initializeProfileAnimations() {
+        // Stagger animation for cards
+        const cards = document.querySelectorAll('.glassmorphism-premium, .glassmorphism-card');
+        cards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.2}s`;
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(50px)';
+
+            setTimeout(() => {
+                card.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 200);
+        });
+    }
+
+    function initializeIntersectionObserver() {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+
+                    // Special handling for stat cards
+                    if (entry.target.classList.contains('stat-card-modern')) {
+                        animateCounter(entry.target);
+                    }
+
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all animated elements
+        document.querySelectorAll('.stat-card-modern, .info-card, .action-btn').forEach(el => {
+            observer.observe(el);
+        });
+    }
+
+    function animateCounter(statCard) {
+        const valueElement = statCard.querySelector('.stat-value');
+        const targetValue = parseInt(valueElement.textContent) || 0;
+        let currentValue = 0;
+        const duration = 2000;
+        const step = targetValue / (duration / 16);
+
+        const counter = setInterval(() => {
+            currentValue += step;
+            if (currentValue >= targetValue) {
+                valueElement.textContent = targetValue;
+                clearInterval(counter);
+            } else {
+                valueElement.textContent = Math.floor(currentValue);
+            }
+        }, 16);
+    }
+
+    function initializeParallaxEffects() {
+        let ticking = false;
+
+        function updateParallax() {
+            const scrolled = window.pageYOffset;
+
+            // Parallax for floating orbs
+            const orbs = document.querySelectorAll('.floating-orb');
+            orbs.forEach((orb, index) => {
+                const speed = 0.5 + (index * 0.1);
+                const yPos = scrolled * speed;
+                const rotation = scrolled * 0.02;
+                orb.style.transform = `translate3d(0, ${yPos}px, 0) rotate(${rotation}deg)`;
+            });
+
+            // Parallax for background patterns
+            const patterns = document.querySelectorAll('.bg-pattern-dots');
+            patterns.forEach(pattern => {
+                const yPos = scrolled * 0.3;
+                pattern.style.transform = `translateY(${yPos}px)`;
+            });
+
+            ticking = false;
+        }
+
+        function requestTick() {
+            if (!ticking) {
+                requestAnimationFrame(updateParallax);
+                ticking = true;
+            }
+        }
+
+        window.addEventListener('scroll', requestTick, { passive: true });
+    }
+
+    function initializeInteractiveElements() {
+        // Enhanced hover effects for info cards
+        const infoCards = document.querySelectorAll('.info-card');
+        infoCards.forEach(card => {
+            card.addEventListener('mouseenter', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                this.style.setProperty('--mouse-x', `${x}px`);
+                this.style.setProperty('--mouse-y', `${y}px`);
+            });
+
+            card.addEventListener('mousemove', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+                this.style.background = `
+                radial-gradient(circle at ${x}% ${y}%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 100%)
+            `;
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.08)';
+            });
+        });
+
+        // 3D tilt effect for action buttons
+        const actionBtns = document.querySelectorAll('.action-btn');
+        actionBtns.forEach(btn => {
+            btn.addEventListener('mousemove', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+
+                this.style.transform = `
+                perspective(1000px)
+                rotateX(${rotateX}deg)
+                rotateY(${rotateY}deg)
+                translateY(-6px)
+                scale(1.02)
+            `;
+            });
+
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0) scale(1)';
+            });
+        });
+
+        // Ripple effect for buttons
+        document.querySelectorAll('.btn-primary-sm, .action-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const ripple = document.createElement('div');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+
+                ripple.style.cssText = `
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                left: ${x}px;
+                top: ${y}px;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                pointer-events: none;
+                transform: scale(0);
+                animation: ripple 0.6s ease-out;
+                z-index: 1;
+            `;
+
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+    }
+
+    // Add ripple animation to CSS
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes ripple {
+        to {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+
+    .animate-in {
+        animation: slideInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(50px) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+`;
+    document.head.appendChild(style);
 // Fonctions pour le modal unifié
 function openEditProfileModal() {
     document.getElementById('editProfileModal').classList.remove('hidden');
