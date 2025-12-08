@@ -1,12 +1,6 @@
 <?php
 include_once('../Inc/Components/header.php');
 include_once('../Inc/Components/nav.php');
-if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
-    $_SESSION['notification'] = [
-        'message' => 'Votre session a expiré après 30 minutes d\'inactivité. Veuillez vous reconnecter.',
-        'type' => 'warning'
-    ];
-}
 ?>
 
 <!-- Fond avec gradient aux couleurs E Conscience -->
@@ -35,15 +29,15 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
                     class="mx-auto h-20 w-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl flex items-center justify-center mb-6 shadow-2xl transform hover:scale-110 transition-all duration-300 hover:rotate-3">
                     <svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z">
                         </path>
                     </svg>
                 </div>
                 <h2
                     class="text-4xl font-bold text-white mb-3 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                    E Conscience
+                    Rejoindre E Conscience
                 </h2>
-                <p class="text-blue-100 text-lg font-medium">Plateforme Officielle de Signalement</p>
+                <p class="text-blue-100 text-lg font-medium">Créer votre compte sécurisé</p>
                 <div class="mt-4 flex justify-center space-x-2">
                     <div class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
                     <div class="w-2 h-2 bg-white rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
@@ -51,7 +45,7 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
                 </div>
             </div>
 
-            <!-- Formulaire de connexion avec glassmorphism -->
+            <!-- Formulaire d'inscription avec glassmorphism -->
             <div
                 class="backdrop-blur-xl bg-white/10 rounded-3xl shadow-2xl border border-white/20 overflow-hidden transform transition-all duration-700 ease-out hover:scale-105">
                 <!-- Header du formulaire -->
@@ -59,22 +53,35 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
                     <h3 class="text-xl font-semibold text-white text-center flex items-center justify-center">
                         <svg class="w-5 h-5 mr-2 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
                             </path>
                         </svg>
-                        Connexion Sécurisée
+                        Inscription
                     </h3>
                 </div>
 
                 <div class="px-8 py-8">
-                    <form class="space-y-6" method="POST" action="../Inc/Traitement/traitement_co.php">
+                    <form class="space-y-6" method="POST" action="../Inc/Traitement/register.php">
+                        <div class="space-y-1">
+                            <label for="username" class="block text-sm font-medium text-white/90 mb-2">
+                                <i class="fas fa-user mr-2 text-blue-300"></i>Nom d'utilisateur
+                            </label>
+                            <div class="relative group">
+                                <input type="text" id="username" name="username" required placeholder="Votre pseudo"
+                                    class="w-full px-4 py-4 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-300 backdrop-blur-sm group-hover:bg-white/15">
+                                <div
+                                    class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600/20 to-blue-700/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="space-y-1">
                             <label for="email" class="block text-sm font-medium text-white/90 mb-2">
-                                <i class="fas fa-envelope mr-2 text-blue-300"></i>Adresse email professionnelle
+                                <i class="fas fa-envelope mr-2 text-blue-300"></i>Adresse email
                             </label>
                             <div class="relative group">
                                 <input type="email" id="email" name="email" required
-                                    placeholder="votre.email@entreprise.com"
+                                    placeholder="votre.email@exemple.com"
                                     class="w-full px-4 py-4 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-300 backdrop-blur-sm group-hover:bg-white/15">
                                 <div
                                     class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600/20 to-blue-700/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
@@ -89,7 +96,7 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
                             <div class="relative group">
                                 <input type="password" id="password" name="password" required placeholder="••••••••••••"
                                     class="w-full px-4 py-4 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-300 backdrop-blur-sm group-hover:bg-white/15">
-                                <button type="button" onclick="togglePassword()"
+                                <button type="button" onclick="togglePassword('password', 'toggleIcon')"
                                     class="absolute inset-y-0 right-0 pr-4 flex items-center text-white/60 hover:text-white transition-colors duration-200">
                                     <i id="toggleIcon" class="fas fa-eye"></i>
                                 </button>
@@ -99,66 +106,45 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
                             </div>
                         </div>
 
-                        <!-- Options supplémentaires -->
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <input id="remember-me" name="remember-me" type="checkbox"
-                                    class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-white/30 rounded bg-white/10 backdrop-blur-sm">
-                                <label for="remember-me" class="ml-2 block text-sm text-white/80">
-                                    Se souvenir de moi
-                                </label>
+                        <div class="space-y-1">
+                            <label for="confirm_password" class="block text-sm font-medium text-white/90 mb-2">
+                                <i class="fas fa-lock mr-2 text-blue-400"></i>Confirmer le mot de passe
+                            </label>
+                            <div class="relative group">
+                                <input type="password" id="confirm_password" name="confirm_password" required
+                                    placeholder="••••••••••••"
+                                    class="w-full px-4 py-4 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-300 backdrop-blur-sm group-hover:bg-white/15">
+                                <button type="button" onclick="togglePassword('confirm_password', 'toggleConfirmIcon')"
+                                    class="absolute inset-y-0 right-0 pr-4 flex items-center text-white/60 hover:text-white transition-colors duration-200">
+                                    <i id="toggleConfirmIcon" class="fas fa-eye"></i>
+                                </button>
+                                <div
+                                    class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600/20 to-blue-700/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                </div>
                             </div>
-                            <div class="text-sm">
-                                <a href="#"
-                                    class="text-blue-300 hover:text-blue-100 transition-colors duration-200 hover:underline">
-                                    Mot de passe oublié ?
-                                </a>
-                            </div>
+                        </div>
+
+                        <div class="text-sm text-center">
+                            <span class="text-white/80">Déjà inscrit ?</span>
+                            <a href="login.php"
+                                class="ml-1 text-blue-300 hover:text-blue-100 transition-colors duration-200 hover:underline font-medium">
+                                Connectez-vous ici
+                            </a>
                         </div>
 
                         <button type="submit"
                             class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1">
                             <span class="absolute left-0 inset-y-0 flex items-center pl-4">
-                                <i
-                                    class="fas fa-sign-in-alt group-hover:rotate-12 transition-transform duration-300"></i>
+                                <i class="fas fa-user-plus group-hover:rotate-12 transition-transform duration-300"></i>
                             </span>
                             <span class="relative">
-                                Accéder à E Conscience
+                                Créer mon compte
                                 <div
                                     class="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 </div>
                             </span>
                         </button>
-
-                        <div class="text-sm text-center mt-6">
-                            <span class="text-white/80">Pas encore de compte ?</span>
-                            <a href="register.php"
-                                class="ml-1 text-blue-300 hover:text-blue-100 transition-colors duration-200 hover:underline font-medium">
-                                Inscrivez-vous
-                            </a>
-                        </div>
                     </form>
-                </div>
-
-                <!-- Informations de sécurité aux couleurs officielles -->
-                <div class="px-8 py-6 bg-gradient-to-r from-blue-600/10 to-blue-700/5 border-t border-white/20">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-white/80">
-                        <div
-                            class="flex items-center justify-center space-x-2 p-2 rounded-lg bg-white/10 backdrop-blur-sm">
-                            <i class="fas fa-shield-alt text-green-400"></i>
-                            <span>Connexion sécurisée</span>
-                        </div>
-                        <div
-                            class="flex items-center justify-center space-x-2 p-2 rounded-lg bg-white/10 backdrop-blur-sm">
-                            <i class="fas fa-clock text-blue-400"></i>
-                            <span>Session 8h</span>
-                        </div>
-                        <div
-                            class="flex items-center justify-center space-x-2 p-2 rounded-lg bg-white/10 backdrop-blur-sm">
-                            <i class="fas fa-flag text-red-400"></i>
-                            <span>Service public</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -168,27 +154,14 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
                     <div class="flex items-center justify-center mb-3">
                         <div
                             class="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mr-3">
-                            <i class="fas fa-info-circle text-white text-sm"></i>
+                            <i class="fas fa-shield-alt text-white text-sm"></i>
                         </div>
-                        <h4 class="text-white font-semibold">Plateforme Officielle</h4>
+                        <h4 class="text-white font-semibold">Inscription sécurisée</h4>
                     </div>
                     <p class="text-white/80 text-sm leading-relaxed">
-                        E Conscience - Service public de signalement d'incidents.
-                        <br>
-                        Accès réservé aux professionnels autorisés.
+                        En créant un compte, vous acceptez nos <a href="cgu.php"
+                            class="text-blue-300 hover:underline">Conditions Générales d'Utilisation</a>.
                     </p>
-
-                    <!-- Statistiques en temps réel -->
-                    <div class="mt-4 grid grid-cols-2 gap-4 text-xs">
-                        <div class="text-center p-2 rounded-lg bg-blue-600/20">
-                            <div class="text-blue-300 font-bold text-lg">99.9%</div>
-                            <div class="text-white/60">Disponibilité</div>
-                        </div>
-                        <div class="text-center p-2 rounded-lg bg-green-600/20">
-                            <div class="text-green-300 font-bold text-lg">24/7</div>
-                            <div class="text-white/60">Support</div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -263,28 +236,6 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
         animation: float-slow 10s ease-in-out infinite;
     }
 
-    /* Effet de ripple pour le bouton */
-    .group:active::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        animation: ripple 0.6s ease-out;
-    }
-
-    @keyframes ripple {
-        to {
-            width: 300px;
-            height: 300px;
-            opacity: 0;
-        }
-    }
-
     /* Animation d'entrée en cascade */
     .space-y-8>* {
         opacity: 0;
@@ -314,9 +265,9 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
 
 <!-- JavaScript pour les interactions -->
 <script>
-    function togglePassword() {
-        const passwordInput = document.getElementById('password');
-        const toggleIcon = document.getElementById('toggleIcon');
+    function togglePassword(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleIcon = document.getElementById(iconId);
 
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
@@ -334,45 +285,13 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
         const form = document.querySelector('form');
         form.style.opacity = '0';
         form.style.transform = 'translateY(20px)';
-
         setTimeout(() => {
             form.style.transition = 'all 0.8s ease-out';
             form.style.opacity = '1';
             form.style.transform = 'translateY(0)';
         }, 200);
     });
-    //  fonction pour : se souvenir de moi
-    function rememberMe() {
-        var rememberMeCheckbox = document.getElementById("remember-me");
-        var rememberMeValue = rememberMeCheckbox.checked ? "1" : "0";
-        localStorage.setItem("rememberMe", rememberMeValue);
-        // Vérifier si le cookie existe
-        if (document.cookie.indexOf("rememberMe=") !== -1) {
-            // Si le cookie existe, le supprimer
-            document.cookie = "rememberMe=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        }
-        // Ajouter le cookie avec la valeur de "rememberMe"
-        document.cookie = "rememberMe=" + rememberMeValue + "; path=/;";
-        // Enregistrer les données de connexion
-        localStorage.setItem("email", document.getElementById("email").value);
-        localStorage.setItem("password", document.getElementById("password").value);
-        // Vérifier si le cookie "rememberMe" existe
-        if (document.cookie.indexOf("rememberMe=") !== -1) {
-            // Si le cookie existe, récupérer les données de connexion
-            var email = localStorage.getItem("email");
-            var password = localStorage.getItem("password");
-            // Remplir les champs de formulaire avec les données de connexion
-            document.getElementById("email").value = email;
-            document.getElementById("password").value = password;
-            // Cocher la case "Se souvenir de moi"
-            document.getElementById("remember-me").checked = true;
-        } else {
-            // Si le cookie n'existe pas, décocher la case "Se souvenir de moi"
-            document.getElementById("remember-me").checked = false;
-        }
-    }
 </script>
 
 <?php include_once('../Inc/Components/footer.php'); ?>
 <?php include_once('../Inc/Components/footers.php'); ?>
-<?php include('../Inc/Traitement/create_log.php'); ?>

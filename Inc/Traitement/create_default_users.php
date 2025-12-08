@@ -1,10 +1,11 @@
 <?php
 require_once("../Constants/db.php");
 
-function createDefaultUsers() {
+function createDefaultUsers()
+{
     try {
         $db = connect_db();
-       
+
         // Définition des rôles disponibles avec niveaux d'accès
         $availableRoles = [
             // Rôles système
@@ -14,7 +15,7 @@ function createDefaultUsers() {
                 'description' => 'Accès complet au système'
             ],
             'moderator' => [
-                'name' => 'Modérateur', 
+                'name' => 'Modérateur',
                 'access_level' => 'full',
                 'description' => 'Modération et gestion des contenus'
             ],
@@ -33,7 +34,7 @@ function createDefaultUsers() {
                 'access_level' => 'limited',
                 'description' => 'Accès limité en lecture'
             ],
-            
+
             // Rôles professionnels judiciaires
             'opj' => [
                 'name' => 'Officier de Police Judiciaire',
@@ -71,7 +72,7 @@ function createDefaultUsers() {
                 'description' => 'Accès technique uniquement - Logs et anonymisation'
             ]
         ];
-        
+
         // Create table if not exists (SQLite syntax)
         $db->exec("CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -113,20 +114,20 @@ function createDefaultUsers() {
         $users = [
             [
                 'username' => 'tsubasa',
-                'password'=> password_hash('MikkyMyLove091002*', PASSWORD_DEFAULT),
+                'password' => password_hash('MikkyMyLove091002*', PASSWORD_DEFAULT),
                 'email' => 'mr.tsubasa@vk.com',
                 'role' => 'admin',
-                'organization' => 'Signale France Dev Team'
+                'organization' => 'E Conscience Dev Team'
             ],
             [
                 'username' => 'malisou',
-                'password'=> password_hash('Signalefrance2025', PASSWORD_DEFAULT),
-                'email'=> 'malisou@signalefrance.fr',
+                'password' => password_hash('Signalefrance2025', PASSWORD_DEFAULT),
+                'email' => 'malisou@signalefrance.fr',
                 'role' => 'admin',
-                'organization' => 'Signale France'
+                'organization' => 'E Conscience'
             ]
         ];
-        
+
         $createdUsers = [];
         $existingUsers = [];
         $invalidRoles = [];
@@ -141,7 +142,7 @@ function createDefaultUsers() {
                 ];
                 continue;
             }
-            
+
             // Vérifier si l'utilisateur existe déjà
             $checkSmt = $db->prepare('SELECT username FROM users WHERE username = :username OR email = :email');
             $checkSmt->execute(['username' => $user['username'], 'email' => $user['email']]);
@@ -156,15 +157,17 @@ function createDefaultUsers() {
             } else {
                 // Insérer le nouvel utilisateur avec les nouvelles données
                 $insertSmt = $db->prepare('INSERT INTO users (username, password, email, role, access_level, organization, accreditation) VALUES (:username, :password, :email, :role, :access_level, :organization, :accreditation)');
-                if ($insertSmt->execute([
-                    'username' => $user['username'], 
-                    'password' => $user['password'], 
-                    'email' => $user['email'], 
-                    'role' => $user['role'],
-                    'access_level' => $availableRoles[$user['role']]['access_level'],
-                    'organization' => $user['organization'] ?? null,
-                    'accreditation' => $user['accreditation'] ?? null
-                ])) {
+                if (
+                    $insertSmt->execute([
+                        'username' => $user['username'],
+                        'password' => $user['password'],
+                        'email' => $user['email'],
+                        'role' => $user['role'],
+                        'access_level' => $availableRoles[$user['role']]['access_level'],
+                        'organization' => $user['organization'] ?? null,
+                        'accreditation' => $user['accreditation'] ?? null
+                    ])
+                ) {
                     $createdUsers[] = [
                         'username' => $user['username'],
                         'role' => $availableRoles[$user['role']]['name'],
@@ -174,7 +177,7 @@ function createDefaultUsers() {
                 }
             }
         }
-        
+
         return [
             'status' => 'success',
             'message' => 'Traitement terminé avec succès.',
@@ -199,7 +202,8 @@ function createDefaultUsers() {
 }
 
 // Fonction utilitaire pour obtenir les rôles disponibles
-function getAvailableRoles() {
+function getAvailableRoles()
+{
     return [
         // Rôles système
         'admin' => ['name' => 'Administrateur', 'access_level' => 'full'],
@@ -207,7 +211,7 @@ function getAvailableRoles() {
         'developer' => ['name' => 'Développeur', 'access_level' => 'technical'],
         'user' => ['name' => 'Utilisateur', 'access_level' => 'basic'],
         'guest' => ['name' => 'Invité', 'access_level' => 'limited'],
-        
+
         // Rôles professionnels
         'opj' => ['name' => 'Officier de Police Judiciaire', 'access_level' => 'full'],
         'avocat' => ['name' => 'Avocat / Juriste Accrédité', 'access_level' => 'full_on_request'],
@@ -220,13 +224,15 @@ function getAvailableRoles() {
 }
 
 // Fonction pour valider un rôle
-function isValidRole($role) {
+function isValidRole($role)
+{
     $availableRoles = getAvailableRoles();
     return array_key_exists($role, $availableRoles);
 }
 
 // Fonction pour obtenir le niveau d'accès d'un rôle
-function getRoleAccessLevel($role) {
+function getRoleAccessLevel($role)
+{
     $availableRoles = getAvailableRoles();
     return $availableRoles[$role]['access_level'] ?? 'basic';
 }
@@ -234,15 +240,15 @@ function getRoleAccessLevel($role) {
 // Exécution si appelé directement
 if (basename(__FILE__) == basename($_SERVER['SCRIPT_NAME'])) {
     session_start();
-    
+
     $result = createDefaultUsers();
-    
+
     if ($result['status'] === 'success') {
         $message = $result['message'] . ' Créés: ' . $result['total_created'] . ', Existants: ' . $result['total_existing'];
         if ($result['total_invalid'] > 0) {
             $message .= ', Rôles invalides: ' . $result['total_invalid'];
         }
-        
+
         $_SESSION['notification'] = [
             'message' => $message,
             'type' => 'success'
