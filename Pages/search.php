@@ -1,1127 +1,737 @@
 <?php
 session_start();
-include("../Inc/Constants/db.php");
-require_once '../Inc/Components/header.php';
-require_once '../Inc/Components/nav.php';
+require_once '../Inc/Constants/db.php';
+$currentPath = $_SERVER['REQUEST_URI'];
+$isInSubfolder = (strpos($currentPath, '/Src/') !== false || strpos($currentPath, '/Pages/') !== false);
+$basePath = $isInSubfolder ? '../' : './';
+
+// Vérification de la connexion utilisateur
+$isLoggedIn = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+
+// Variables d'initialisation
+$searchResults = [];
+$searchPerformed = false;
+$searchQuery = '';
+$searchType = 'all';
+$sortBy = 'date_signalement';
+$sortOrder = 'DESC';
+$statusFilter = '';
+$priorityFilter = '';
+$typeFilter = '';
+$error = '';
+$totalResults = 0;
+
+// Traitement de la recherche
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search'])) {
+    $searchQuery = trim($_POST['search_query'] ?? '');
+    $searchType = $_POST['search_type'] ?? 'all';
+    $sortBy = $_POST['sort_by'] ?? 'date_signalement';
+    $sortOrder = $_POST['sort_order'] ?? 'DESC';
+    $statusFilter = $_POST['status_filter'] ?? '';
+    $priorityFilter = $_POST['priority_filter'] ?? '';
+    $typeFilter = $_POST['type_filter'] ?? '';
+    $searchPerformed = true;
+    
+    try {
+        $pdo = connect_db();
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        // Construction de la requête SQL - CORRECTION: Supprimer le filtre statut = 'resolu'
+        $sql = "SELECT s.*, 
+                u.username, u.email,
+                CASE 
+                    WHEN s.anonyme = 1 THEN 'Anonyme'
+                    WHEN u.username IS NOT NULL THEN u.username
+                    ELSE 'Utilisateur supprimé'
+                END as auteur_complet
+                FROM signalements s 
+                LEFT JOIN users u ON s.user_id = u.id 
+                WHERE 1=1";
+        $params = [];
+        
+        // Filtres de recherche par texte
+        if (!empty($searchQuery)) {
+            switch ($searchType) {
+                case 'nom_prenom':
+                    $sql .= " AND (s.nom LIKE ? OR s.prenom LIKE ? OR CONCAT(s.nom, ' ', s.prenom) LIKE ? OR CONCAT(s.prenom, ' ', s.nom) LIKE ?)";
+                    $params[] = "%$searchQuery%";
+                    $params[] = "%$searchQuery%";
+                    $params[] = "%$searchQuery%";
+                    $params[] = "%$searchQuery%";
+                    break;
+                case 'description':
+                    $sql .= " AND s.description LIKE ?";
+                    $params[] = "%$searchQuery%";
+                    break;
+                case 'localisation':
+                    $sql .= " AND (s.localisation LIKE ? OR s.lieu LIKE ?)";
+                    $params[] = "%$searchQuery%";
+                    $params[] = "%$searchQuery%";
+                    break;
+                case 'type_incident':
+                    $sql .= " AND s.type_incident LIKE ?";
+                    $params[] = "%$searchQuery%";
+                    break;
+                case 'plateforme':
+                    $sql .= " AND s.plateforme LIKE ?";
+                    $params[] = "%$searchQuery%";
+                    break;
+                case 'auteur':
+                    $sql .= " AND (s.auteur LIKE ? OR u.username LIKE ? OR u.email LIKE ?)";
+                    $params[] = "%$searchQuery%";
+                    $params[] = "%$searchQuery%";
+                    $params[] = "%$searchQuery%";
+                    break;
+                default: // 'all'
+                    $sql .= " AND (s.nom LIKE ? OR s.prenom LIKE ? OR CONCAT(s.nom, ' ', s.prenom) LIKE ? OR s.description LIKE ? OR s.localisation LIKE ? OR s.lieu LIKE ? OR s.type_incident LIKE ? OR s.plateforme LIKE ? OR s.auteur LIKE ? OR u.username LIKE ? OR u.email LIKE ?)";
+                    $searchTerm = "%$searchQuery%";
+                    $params = array_fill(0, 11, $searchTerm);
+                    break;
+            }
+        }
+        
+        // Filtres supplémentaires
+        if (!empty($statusFilter)) {
+            $sql .= " AND s.statut = ?";
+            $params[] = $statusFilter;
+        }
+        
+        if (!empty($priorityFilter)) {
+            $sql .= " AND s.priorite = ?";
+            $params[] = $priorityFilter;
+        }
+        
+        if (!empty($typeFilter)) {
+            $sql .= " AND s.type_incident = ?";
+            $params[] = $typeFilter;
+        }
+        
+        // Tri sécurisé
+        $allowedSortFields = ['date_signalement', 'nom', 'prenom', 'statut', 'priorite', 'type_incident', 'created_at', 'updated_at'];
+        $allowedSortOrders = ['ASC', 'DESC'];
+        
+        if (in_array($sortBy, $allowedSortFields) && in_array($sortOrder, $allowedSortOrders)) {
+            $sql .= " ORDER BY s.$sortBy $sortOrder";
+        } else {
+            $sql .= " ORDER BY s.date_signalement DESC";
+        }
+        
+        // Exécution de la requête
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $searchResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $totalResults = count($searchResults);
+        
+    } catch (PDOException $e) {
+        $error = "Erreur lors de la recherche: " . $e->getMessage();
+    }
+}
+
+// Récupération des options pour les filtres
+try {
+    $pdo = connect_db();
+    
+    // Statuts disponibles
+    $stmt = $pdo->query("SELECT DISTINCT statut FROM signalements WHERE statut IS NOT NULL AND statut != '' ORDER BY statut");
+    $availableStatuses = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    // Priorités disponibles
+    $stmt = $pdo->query("SELECT DISTINCT priorite FROM signalements WHERE priorite IS NOT NULL AND priorite != '' ORDER BY priorite");
+    $availablePriorities = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    // Types d'incidents disponibles
+    $stmt = $pdo->query("SELECT DISTINCT type_incident FROM signalements WHERE type_incident IS NOT NULL AND type_incident != '' ORDER BY type_incident");
+    $availableTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+} catch (PDOException $e) {
+    $availableStatuses = [];
+    $availablePriorities = [];
+    $availableTypes = [];
+}
+
+// Fonction pour obtenir la classe CSS du statut
+function getStatusClass($status) {
+    switch (strtolower($status)) {
+        case 'en_attente': return 'bg-amber-100 text-amber-800 border-amber-200';
+        case 'en_cours': return 'bg-blue-100 text-blue-800 border-blue-200';
+        case 'resolu': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+        case 'rejete': return 'bg-red-100 text-red-800 border-red-200';
+        default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+}
+
+// Fonction pour obtenir la classe CSS de la priorité
+function getPriorityClass($priority) {
+    switch (strtolower($priority)) {
+        case 'faible': return 'bg-green-100 text-green-800 border-green-200';
+        case 'normale': return 'bg-blue-100 text-blue-800 border-blue-200';
+        case 'elevee': return 'bg-orange-100 text-orange-800 border-orange-200';
+        case 'critique': return 'bg-red-100 text-red-800 border-red-200';
+        default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+}
+
+// Fonction pour obtenir l'icône du statut
+function getStatusIcon($status) {
+    switch (strtolower($status)) {
+        case 'en_attente': return 'fas fa-clock';
+        case 'en_cours': return 'fas fa-spinner';
+        case 'resolu': return 'fas fa-check-circle';
+        case 'rejete': return 'fas fa-times-circle';
+        default: return 'fas fa-question-circle';
+    }
+}
+
+// Fonction pour obtenir l'icône de la priorité
+function getPriorityIcon($priority) {
+    switch (strtolower($priority)) {
+        case 'faible': return 'fas fa-arrow-down';
+        case 'normale': return 'fas fa-minus';
+        case 'elevee': return 'fas fa-arrow-up';
+        case 'critique': return 'fas fa-exclamation-triangle';
+        default: return 'fas fa-question';
+    }
+}
 ?>
 
-<div class="min-h-screen bg-gray-50">
-    <!-- Header de recherche -->
-    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div class="container mx-auto px-4 py-8">
-            <div class="max-w-4xl mx-auto">
-                <h1 class="text-3xl font-bold text-center mb-8">
-                    <i class="fas fa-search mr-2"></i>
-                    Recherche de Signalements
-                </h1>
+<?php include '../Inc/Components/header.php'; ?>
+<?php include '../Inc/Components/nav.php'; ?>
 
-                <!-- Barre de recherche principale -->
-                <div class="relative">
-                    <div class="flex bg-white rounded-lg shadow-lg overflow-hidden">
-                        <div class="flex items-center px-4 text-gray-400">
-                            <i class="fas fa-search"></i>
-                        </div>
-                        <input type="text"
-                               id="main-search"
-                               class="flex-1 px-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none text-lg"
-                               placeholder="Rechercher par nom, prénom, titre, type d'incident..."
-                               autocomplete="off">
-                        <button class="px-4 text-gray-400 hover:text-gray-600" type="button" id="clear-search">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-
-                    <!-- Suggestions d'autocomplétion -->
-                    <div id="autocomplete-suggestions"
-                         class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-lg shadow-lg max-h-80 overflow-y-auto z-50 hidden">
+<main>
+    <!-- En-tête avec animation -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 min-h-[60vh]">
+        <!-- Particules animées en arrière-plan -->
+        <div class="absolute inset-0">
+            <div class="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400 rounded-full animate-pulse opacity-60"></div>
+            <div class="absolute top-1/3 right-1/3 w-1 h-1 bg-white rounded-full animate-ping opacity-40"></div>
+            <div class="absolute bottom-1/4 left-1/3 w-3 h-3 bg-indigo-400 rounded-full animate-bounce opacity-50"></div>
+            <div class="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse opacity-70"></div>
+        </div>
+        
+        <!-- Mesh gradient overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-transparent to-purple-600/20"></div>
+        
+        <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex items-center min-h-[60vh]">
+            <div class="w-full">
+                <!-- Badge de statut -->
+                <div class="flex justify-center mb-8">
+                    <div class="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                        Base de données active
                     </div>
                 </div>
-
-                <!-- Boutons de recherche rapide -->
-                <div class="flex flex-wrap justify-center gap-4 mt-6">
-                    <button onclick="loadStats()"
-                            class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors">
-                        <i class="fas fa-chart-bar mr-2"></i>Statistiques
-                    </button>
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <button onclick="showAdvancedSearch()"
-                                class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors">
-                            <i class="fas fa-filter mr-2"></i>Recherche avancée
-                        </button>
-                        <button onclick="loadRecentReports()"
-                                class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors">
-                            <i class="fas fa-clock mr-2"></i>Récents
-                        </button>
-                    <?php endif; ?>
+                
+                <div class="text-center">
+                    <h1 class="text-6xl md:text-7xl font-black text-white mb-6 tracking-tight">
+                        <span class="bg-white bg-clip-text text-transparent">
+                            Recherche
+                        </span>
+                        <br>
+                        <span class="text-white">Intelligente</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl text-white/80 max-w-4xl mx-auto leading-relaxed mb-12">
+                        Explorez notre base de données avec des outils de recherche 
+                        <span class="text-blue-300 font-semibold">puissants</span> et 
+                        <span class="text-purple-300 font-semibold">intuitifs</span>
+                    </p>
+                    
+                    <!-- Stats cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                            <div class="text-3xl font-bold text-blue-300 mb-2"><?php echo $totalResults > 0 ? $totalResults : '∞'; ?></div>
+                            <div class="text-white/80 text-sm font-medium">Signalements disponibles</div>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                            <div class="text-3xl font-bold text-purple-300 mb-2">< 1s</div>
+                            <div class="text-white/80 text-sm font-medium">Temps de recherche</div>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                            <div class="text-3xl font-bold text-cyan-300 mb-2">24/7</div>
+                            <div class="text-white/80 text-sm font-medium">Disponibilité</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Vague en bas -->
+        <div class="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="rgb(249 250 251)"/>
+            </svg>
+        </div>
     </div>
 
-    <div class="container mx-auto px-4 py-8">
-        <!-- Message pour utilisateurs non connectés -->
-        <?php if (!isset($_SESSION['user_id'])): ?>
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div class="flex items-center">
-                    <i class="fas fa-info-circle text-blue-500 mr-3"></i>
-                    <div>
-                        <p class="text-blue-800 font-medium">Recherche limitée</p>
-                        <p class="text-blue-600 text-sm">En tant qu'utilisateur non connecté, vous ne verrez que si un signalement existe ou non. <a href="../login.php" class="underline">Connectez-vous</a> pour voir les détails complets.</p>
-                    </div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-30 relative z-20">
+        <!-- Formulaire de recherche moderne -->
+        <form method="POST" class="bg-white rounded-3xl shadow-2xl p-8 mb-12 border border-gray-100 backdrop-blur-sm">
+            <!-- Barre de recherche principale -->
+            <div class="mb-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Que recherchez-vous ?</h2>
+                    <p class="text-gray-600">Utilisez notre moteur de recherche intelligent</p>
                 </div>
-            </div>
-        <?php endif; ?>
-
-        <!-- Filtres avancés (uniquement pour utilisateurs connectés) -->
-        <?php if (isset($_SESSION['user_id'])): ?>
-            <div id="advanced-filters" class="bg-white rounded-lg shadow-lg p-6 mb-8 hidden">
-                <h3 class="text-lg font-semibold mb-4">
-                    <i class="fas fa-filter mr-2 text-blue-600"></i>
-                    Filtres avancés
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Recherche par personne -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
-                        <input type="text" id="filter-nom"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Nom de famille">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
-                        <input type="text" id="filter-prenom"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Prénom">
-                    </div>
-
-                    <!-- Statut -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-                        <select id="filter-statut"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Tous les statuts</option>
-                            <option value="en_attente">En attente</option>
-                            <option value="en_cours">En cours</option>
-                            <option value="resolu">Résolu</option>
-                            <option value="ferme">Fermé</option>
-                        </select>
-                    </div>
-
-                    <!-- Priorité -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
-                        <select id="filter-priorite"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Toutes les priorités</option>
-                            <option value="basse">Basse</option>
-                            <option value="normale">Normale</option>
-                            <option value="haute">Haute</option>
-                            <option value="critique">Critique</option>
-                        </select>
-                    </div>
-
-                    <!-- Type d'incident -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Type d'incident</label>
-                        <input type="text" id="filter-type"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Type d'incident">
-                    </div>
-
-                    <!-- Contexte -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Contexte</label>
-                        <select id="filter-context"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Tous les contextes</option>
-                            <option value="irl">IRL</option>
-                            <option value="online">En ligne</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap gap-4 mt-6">
-                    <button onclick="applyAdvancedFilters()"
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
-                        <i class="fas fa-search mr-2"></i>Rechercher
-                    </button>
-                    <button onclick="clearAdvancedFilters()"
-                            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
-                        <i class="fas fa-eraser mr-2"></i>Effacer
-                    </button>
-                    <button onclick="hideAdvancedSearch()"
-                            class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors">
-                        <i class="fas fa-times mr-2"></i>Fermer
-                    </button>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <!-- Zone de résultats -->
-        <div id="search-results-container">
-            <!-- Message de bienvenue -->
-            <div id="welcome-message" class="text-center py-12">
-                <div class="bg-white rounded-lg shadow-lg p-8 max-w-2xl mx-auto">
-                    <div class="text-6xl text-blue-600 mb-4">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Recherche de Signalements</h2>
-                    <p class="text-gray-600 mb-6">
-                        Utilisez la barre de recherche ci-dessus pour trouver des signalements par nom, prénom,
-                        titre, type d'incident ou toute autre information.
-                    </p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <i class="fas fa-user text-blue-600 mb-2 text-lg"></i>
-                            <p><strong>Recherche par personne</strong><br>Tapez un nom ou prénom</p>
+                
+                <div class="relative w-full max-w-4xl mx-auto px-4 sm:px-0">
+                    <!-- Version Desktop/Tablet -->
+                    <div class="hidden sm:block relative">
+                        <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                            <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
                         </div>
-                        <div class="bg-green-50 p-4 rounded-lg">
-                            <i class="fas fa-tags text-green-600 mb-2 text-lg"></i>
-                            <p><strong>Par type d'incident</strong><br>Recherchez par catégorie</p>
-                        </div>
-                        <div class="bg-purple-50 p-4 rounded-lg">
-                            <i class="fas fa-filter text-purple-600 mb-2 text-lg"></i>
-                            <p><strong>Filtres avancés</strong><br><?php echo isset($_SESSION['user_id']) ? 'Affinez votre recherche' : 'Connectez-vous pour plus d\'options'; ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Spinner de chargement -->
-            <div id="loading-spinner" class="hidden text-center py-12">
-                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                <p class="mt-4 text-gray-600">Recherche en cours...</p>
-            </div>
-
-            <!-- Résultats de recherche -->
-            <div id="search-results" class="hidden">
-                <div id="results-header" class="bg-white rounded-lg shadow p-4 mb-6">
-                    <div class="flex flex-wrap items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800">Résultats de recherche</h3>
-                            <p id="results-count" class="text-gray-600"></p>
-                        </div>
-                        <div class="flex gap-2 mt-2 sm:mt-0">
-                            <button onclick="exportResults()" class="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">
-                                <i class="fas fa-download mr-1"></i>Exporter
+                        <input type="text" name="search_query" id="search_query" 
+                               value="<?php echo htmlspecialchars($searchQuery); ?>"
+                               placeholder="Rechercher par nom, description, localisation..." 
+                               class="w-full pl-14 pr-32 py-6 text-lg rounded-2xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 bg-gray-50 focus:bg-white shadow-sm hover:shadow-md">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-2">
+                            <button type="submit" name="search" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                <span class="flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    Rechercher
+                                </span>
                             </button>
-                            <button onclick="clearResults()" class="text-sm bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded">
-                                <i class="fas fa-times mr-1"></i>Effacer
+                        </div>
+                    </div>
+
+                    <!-- Version Mobile -->
+                    <div class="block sm:hidden space-y-4">
+                        <!-- Champ de recherche mobile -->
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <input type="text" name="search_query" id="search_query_mobile" 
+                                   value="<?php echo htmlspecialchars($searchQuery); ?>"
+                                   placeholder="Que recherchez-vous ?" 
+                                   class="w-full pl-12 pr-4 py-4 text-base rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-3 focus:ring-blue-500/20 transition-all duration-300 bg-gray-50 focus:bg-white shadow-sm">
+                        </div>
+                        
+                        <!-- Bouton de recherche mobile -->
+                        <button type="submit" name="search" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg active:scale-95">
+                            <span class="flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                Rechercher
+                            </span>
+                        </button>
+                        
+                        <!-- Suggestions rapides mobile -->
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <span class="text-xs text-gray-500 font-medium">Suggestions :</span>
+                            <button type="button" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200" onclick="document.getElementById('search_query_mobile').value = 'accident'; this.form.submit();">
+                                Accident
+                            </button>
+                            <button type="button" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors duration-200" onclick="document.getElementById('search_query_mobile').value = 'vol'; this.form.submit();">
+                                Vol
+                            </button>
+                            <button type="button" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors duration-200" onclick="document.getElementById('search_query_mobile').value = 'urgence'; this.form.submit();">
+                                Urgence
                             </button>
                         </div>
                     </div>
                 </div>
-
-                <div id="results-list" class="space-y-4">
-                    <!-- Les résultats seront injectés ici par JavaScript -->
-                </div>
-
-                <div id="load-more-container" class="text-center mt-8 hidden">
-                    <button onclick="loadMoreResults()"
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
-                        <i class="fas fa-plus mr-2"></i>Charger plus de résultats
-                    </button>
+            </div>
+            
+           
                 </div>
             </div>
+        </form>
 
-            <!-- Statistiques -->
-            <div id="stats-container" class="hidden">
-                <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-                    <h3 class="text-xl font-bold mb-6">
-                        <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
-                        Statistiques des Signalements
-                    </h3>
-
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                        <div class="bg-blue-50 p-4 rounded-lg text-center">
-                            <div class="text-2xl font-bold text-blue-600" id="total-count">-</div>
-                            <div class="text-sm text-gray-600">Total</div>
+        <!-- Section des résultats de recherche -->
+        <?php if ($searchPerformed): ?>
+            <div class="container mx-auto px-4 py-8">
+                <?php if (!empty($error)): ?>
+                    <!-- Message d'erreur -->
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                            <span class="text-red-700"><?php echo htmlspecialchars($error); ?></span>
                         </div>
-                        <div class="bg-green-50 p-4 rounded-lg text-center">
-                            <div class="text-2xl font-bold text-green-600" id="recent-count">-</div>
-                            <div class="text-sm text-gray-600">Récents (24h)</div>
-                        </div>
-                        <div class="bg-purple-50 p-4 rounded-lg text-center">
-                            <div class="text-2xl font-bold text-purple-600" id="with-names-count">-</div>
-                            <div class="text-sm text-gray-600">Avec nom/prénom</div>
-                        </div>
-                        <div class="bg-orange-50 p-4 rounded-lg text-center">
-                            <div class="text-2xl font-bold text-orange-600" id="with-title-count">-</div>
-                            <div class="text-sm text-gray-600">Avec titre seulement</div>
+                    </div>
+                <?php elseif (!empty($searchResults)): ?>
+                    <!-- En-tête des résultats -->
+                    <div class="mb-8">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                                    Résultats de recherche
+                                </h2>
+                                <p class="text-gray-600">
+                                    <?php echo $totalResults; ?> signalement<?php echo $totalResults > 1 ? 's' : ''; ?> trouvé<?php echo $totalResults > 1 ? 's' : ''; ?>
+                                    <?php if (!empty($searchQuery)): ?>
+                                        pour "<span class="font-semibold text-blue-600"><?php echo htmlspecialchars($searchQuery); ?></span>"
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                            
+                            <!-- Options de tri -->
+                            <div class="flex items-center space-x-4 mt-4 sm:mt-0">
+                                <form method="POST" class="flex items-center space-x-2">
+                                    <input type="hidden" name="search" value="1">
+                                    <input type="hidden" name="search_query" value="<?php echo htmlspecialchars($searchQuery); ?>">
+                                    <input type="hidden" name="search_type" value="<?php echo htmlspecialchars($searchType); ?>">
+                                    <input type="hidden" name="status_filter" value="<?php echo htmlspecialchars($statusFilter); ?>">
+                                    <input type="hidden" name="priority_filter" value="<?php echo htmlspecialchars($priorityFilter); ?>">
+                                    <input type="hidden" name="type_filter" value="<?php echo htmlspecialchars($typeFilter); ?>">
+                                    
+                                    <select name="sort_by" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="date_signalement" <?php echo $sortBy === 'date_signalement' ? 'selected' : ''; ?>>Date</option>
+                                        <option value="nom" <?php echo $sortBy === 'nom' ? 'selected' : ''; ?>>Nom</option>
+                                        <option value="statut" <?php echo $sortBy === 'statut' ? 'selected' : ''; ?>>Statut</option>
+                                        <option value="priorite" <?php echo $sortBy === 'priorite' ? 'selected' : ''; ?>>Priorité</option>
+                                    </select>
+                                    <select name="sort_order" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="DESC" <?php echo $sortOrder === 'DESC' ? 'selected' : ''; ?>>Décroissant</option>
+                                        <option value="ASC" <?php echo $sortOrder === 'ASC' ? 'selected' : ''; ?>>Croissant</option>
+                                    </select>
+                                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                        <i class="fas fa-sort mr-1"></i>Trier
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Statistiques par statut -->
-                        <div>
-                            <h4 class="font-semibold mb-4">Par Statut</h4>
-                            <div id="stats-by-status" class="space-y-2">
-                                <!-- Sera rempli par JavaScript -->
+                    <!-- Grille des résultats -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <?php foreach ($searchResults as $index => $signalement): ?>
+                            <div class="group relative bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                                
+                                <?php if ($isLoggedIn): ?>
+                                    <!-- AFFICHAGE COMPLET POUR UTILISATEURS CONNECTÉS -->
+                                    <!-- Image du signalement -->
+                                    <div class="relative h-48 overflow-hidden rounded-t-xl">
+                                        <img src="<?php echo !empty($signalement['photo']) ? htmlspecialchars($signalement['photo']) : '../Assets/Images/IMG_5652.jpg'; ?>" 
+                                             alt="Photo du signalement" 
+                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                        
+                                    </div>
+                                    
+                                    <!-- Contenu de la carte -->
+                                    <div class="p-6">
+                                        <!-- Titre et ID -->
+                                        <div class="mb-4">
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
+                                                <?php echo htmlspecialchars($signalement['nom'] . ' ' . $signalement['prenom']); ?>
+                                            </h3>
+                                            <p class="text-sm text-gray-500">
+                                                Signalement #<?php echo $signalement['id']; ?>
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Informations principales -->
+                                        <div class="space-y-2 mb-4">
+                                            <div class="flex items-center text-sm text-gray-600">
+                                                <i class="fas fa-calendar mr-2 text-gray-400"></i>
+                                                <span><?php echo date('d/m/Y à H:i', strtotime($signalement['date_signalement'])); ?></span>
+                                            </div>
+                                            
+                                            <?php if (!empty($signalement['localisation'])): ?>
+                                                <div class="flex items-center text-sm text-gray-600">
+                                                    <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                                                    <span class="truncate"><?php echo htmlspecialchars($signalement['localisation']); ?></span>
+                                                </div>
+                                            <?php endif; ?>
+                                            
+                                            <?php if (!empty($signalement['type_incident'])): ?>
+                                                <div class="flex items-center text-sm text-gray-600">
+                                                    <i class="fas fa-exclamation-triangle mr-2 text-gray-400"></i>
+                                                    <span><?php echo htmlspecialchars($signalement['type_incident']); ?></span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <!-- Description -->
+                                        <div class="mb-4">
+                                            <p class="text-sm text-gray-700 line-clamp-3">
+                                                <?php echo htmlspecialchars(substr($signalement['description'], 0, 150)) . (strlen($signalement['description']) > 150 ? '...' : ''); ?>
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Bouton d'action -->
+                                        <div class="flex justify-between items-center">
+                                            <button onclick="showSignalementDetails(<?php echo $signalement['id']; ?>)" 
+                                                    class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
+                                                <i class="fas fa-eye mr-2"></i>Voir détails
+                                            </button>
+                                            
+                                            <div class="text-xs text-gray-500">
+                                                <?php if (!empty($signalement['updated_at']) && $signalement['updated_at'] !== $signalement['created_at']): ?>
+                                                    Modifié le <?php echo date('d/m/Y', strtotime($signalement['updated_at'])); ?>
+                                                <?php else: ?>
+                                                    Créé le <?php echo date('d/m/Y', strtotime($signalement['created_at'])); ?>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                <?php else: ?>
+                                    <!-- AFFICHAGE SIMPLIFIÉ POUR UTILISATEURS NON CONNECTÉS -->
+                                    <div class="p-8 text-center">
+                                        <!-- Icône de confirmation -->
+                                        <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                                            <i class="fas fa-check text-white text-2xl"></i>
+                                        </div>
+                                        
+                                        <!-- Message de confirmation -->
+                                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Résultat trouvé</h3>
+                                        <p class="text-lg font-bold text-green-600 mb-3">OUI</p>
+                                        <p class="text-sm text-gray-600 mb-4">
+                                            Un signalement correspond à votre recherche.
+                                        </p>
+                                        
+                                        <!-- Informations limitées -->
+                                        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                            <div class="text-sm text-gray-600 space-y-1">
+                                                <p><strong>ID:</strong> #<?php echo $signalement['id']; ?></p>
+                                                <p><strong>Date:</strong> <?php echo date('d/m/Y', strtotime($signalement['date_signalement'])); ?></p>
+                                                <?php if (!empty($signalement['type_incident'])): ?>
+                                                    <p><strong>Type:</strong> <?php echo htmlspecialchars($signalement['type_incident']); ?></p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Bouton de connexion -->
+                                        <div class="space-y-2">
+                                            <p class="text-sm text-gray-600">Pour voir les détails complets :</p>
+                                            <a href="login.php" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">
+                                                <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                                            </a>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                                
                             </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                <?php else: ?>
+                    <!-- Message d'erreur -->
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-red-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                            <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
                         </div>
 
-                        <!-- Statistiques par priorité -->
-                        <div>
-                            <h4 class="font-semibold mb-4">Par Priorité</h4>
-                            <div id="stats-by-priority" class="space-y-2">
-                                <!-- Sera rempli par JavaScript -->
-                            </div>
-                        </div>
-
-                        <!-- Types d'incidents les plus fréquents -->
-                        <div>
-                            <h4 class="font-semibold mb-4">Types d'incidents les plus fréquents</h4>
-                            <div id="stats-by-type" class="space-y-2">
-                                <!-- Sera rempli par JavaScript -->
-                            </div>
-                        </div>
-
-                        <!-- Personnes les plus signalées -->
-                        <div>
-                            <h4 class="font-semibold mb-4">Personnes les plus signalées</h4>
-                            <div id="stats-most-reported" class="space-y-2">
-                                <!-- Sera rempli par JavaScript -->
-                            </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun résultat trouvé</h3>
+                        <p class="text-lg font-bold text-red-600 mb-3">NON</p>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Aucun signalement ne correspond à votre recherche.
+                        </p>
+                        
+                        <!-- Suggestions -->
+                        <div class="bg-gray-50 rounded-lg p-6 max-w-md mx-auto">
+                            <h4 class="font-semibold text-gray-900 mb-3">Suggestions :</h4>
+                            <ul class="text-sm text-gray-600 space-y-1 text-left">
+                                <li>• Vérifiez l'orthographe des mots-clés</li>
+                                <li>• Essayez des termes plus généraux</li>
+                                <li>• Utilisez moins de filtres</li>
+                                <li>• Essayez une recherche dans "Tout"</li>
+                            </ul>
                         </div>
                     </div>
-                </div>
+                <?php endif; ?>
+
+
+                
+                            <?php if (!$isLoggedIn): ?>
+                    <!-- Bouton pour afficher/masquer le message -->
+                    <div class="text-center mt-8 mb-4">
+                        <button id="toggleInfoBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            Afficher les informations de connexion
+                        </button>
+                    </div>
+                    
+                    <!-- Message d'information (initialement caché) -->
+                    <div id="infoMessage" class="relative mx-auto mt-8 mb-8 max-w-4xl overflow-hidden hidden">
+                    <div class="relative mx-4 mb-8 overflow-hidden">
+                        <!-- Fond avec gradient et effet glassmorphism -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 rounded-2xl opacity-80"></div>
+                        <div class="absolute inset-0 bg-white/30 backdrop-blur-sm rounded-2xl border border-amber-200/50"></div>
+                        
+                        <!-- Contenu du message -->
+                        <div class="relative p-6 rounded-2xl">
+                            <div class="flex items-start space-x-4">
+                                <!-- Icône avec animation -->
+                                <div class="flex-shrink-0">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+
+
+                             
+                                
+                                <!-- Contenu textuel -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h3 class="text-lg font-semibold text-gray-800">Information importante</h3>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                            Accès limité
+                                        </span>
+                                    </div>
+                                    
+                                    <p class="text-gray-700 leading-relaxed mb-4">
+                                        Vous pouvez effectuer des recherches et consulter les résultats, mais une connexion est requise pour accéder aux détails complets des signalements.
+                                    </p>
+                                    
+                                    <!-- Bouton de connexion stylisé -->
+                                    <div class="flex items-center space-x-3">
+                                        <a href="login.php" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium rounded-lg hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1"></path>
+                                            </svg>
+                                            Se connecter
+                                        </a>
+                                        
+                                        <span class="text-sm text-gray-500">ou</span>
+                                        
+                                        <a href="#" class="text-sm text-amber-600 hover:text-amber-700 font-medium hover:underline transition-colors duration-200">
+                                            Créer un compte
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Décoration subtile -->
+                            <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-200/20 to-orange-200/20 rounded-full -translate-y-10 translate-x-10"></div>
+                            <div class="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-yellow-200/20 to-amber-200/20 rounded-full translate-y-8 -translate-x-8"></div>
+                        </div>
+                    </div>
+                    </div>
+                    
+                    <script>
+                        document.getElementById('toggleInfoBtn').addEventListener('click', function() {
+                            const message = document.getElementById('infoMessage');
+                            const btn = this;
+                            
+                            if (message.classList.contains('hidden')) {
+                                message.classList.remove('hidden');
+                                message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                btn.textContent = 'Masquer les informations';
+                            } else {
+                                message.classList.add('hidden');
+                                btn.textContent = 'Afficher les informations de connexion';
+                            }
+                        });
+                    </script>
+                <?php endif; ?>
             </div>
 
-            <!-- Message aucun résultat -->
-            <div id="no-results" class="hidden text-center py-12">
-                <div class="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
-                    <div class="text-4xl text-gray-400 mb-4">
-                        <i class="fas fa-search-minus"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Aucun résultat trouvé</h3>
-                    <p class="text-gray-600 mb-4">Essayez avec d'autres termes de recherche ou utilisez les filtres avancés.</p>
-                    <button onclick="clearSearch()"
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-                        <i class="fas fa-redo mr-2"></i>Nouvelle recherche
-                    </button>
-                </div>
+        <?php endif;?>
+    </div>
+</main>
+
+<!-- Modal pour les détails -->
+<div id="signalementModal" class="fixed inset-0 modal-backdrop hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div id="modalContent">
+                <!-- Le contenu sera chargé ici via AJAX -->
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal de détails (pour utilisateurs connectés) -->
-<?php if (isset($_SESSION['user_id'])): ?>
-    <div id="signalement-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onclick="closeModal()"></div>
-
-            <div class="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold text-gray-900">Détails du Signalement</h3>
-                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-
-                <div id="modal-content">
-                    <!-- Le contenu sera injecté par JavaScript -->
-                </div>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
-
 <script>
-    // Variables globales
-    let currentQuery = '';
-    let currentResults = [];
-    let isLoggedIn = <?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>;
-    let debounceTimer;
-
-    // Configuration AJAX
-    const AJAX_URL = 'search_ajax.php';
-
-    // Initialisation
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeSearch();
-    });
-
-    function initializeSearch() {
-        const searchInput = document.getElementById('main-search');
-        const clearButton = document.getElementById('clear-search');
-
-        // Événements de recherche
-        searchInput.addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                handleSearch(this.value);
-            }, 300);
-        });
-
-        // Gestion de l'autocomplétion
-        searchInput.addEventListener('keydown', function(e) {
-            handleAutocompleteNavigation(e);
-        });
-
-        // Bouton effacer
-        clearButton.addEventListener('click', function() {
-            clearSearch();
-        });
-
-        // Cacher les suggestions quand on clique ailleurs
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('#main-search') && !e.target.closest('#autocomplete-suggestions')) {
-                hideAutocompleteSuggestions();
-            }
-        });
-    }
-
-    function handleSearch(query) {
-        query = query.trim();
-        currentQuery = query;
-
-        if (query.length < 2) {
-            hideAutocompleteSuggestions();
-            showWelcomeMessage();
-            return;
-        }
-
-        showLoading();
-
-        // Recherche avec autocomplétion
-        fetch(AJAX_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `action=quick_search&query=${encodeURIComponent(query)}&limit=20`
-        })
-            .then(response => response.json())
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    currentResults = data.suggestions;
-                    displayResults(data.suggestions, data.query);
-
-                    // Afficher autocomplétion si peu de résultats
-                    if (data.suggestions.length < 5) {
-                        showAutocompleteSuggestions(query);
-                    }
-                } else {
-                    showError(data.error || 'Erreur lors de la recherche');
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                showError('Erreur de connexion');
-                console.error('Erreur:', error);
-            });
-    }
-
-    function showAutocompleteSuggestions(query) {
-        fetch(AJAX_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `action=autocomplete_nom_prenom&query=${encodeURIComponent(query)}&limit=8`
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.suggestions && data.suggestions.length > 0) {
-                    displayAutocompleteSuggestions(data.suggestions);
-                }
-            })
-            .catch(error => console.error('Erreur autocomplétion:', error));
-    }
-
-    function displayAutocompleteSuggestions(suggestions) {
-        const container = document.getElementById('autocomplete-suggestions');
-
-        if (suggestions.length === 0) {
-            hideAutocompleteSuggestions();
-            return;
-        }
-
-        let html = '';
-        suggestions.forEach(suggestion => {
-            const statusClass = getStatusClass(suggestion.statut);
-            html += `
-            <div class="autocomplete-item flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                 onclick="selectSuggestion('${suggestion.nom_complet}')">
-                <div class="flex-1">
-                    <div class="font-medium text-gray-900">${suggestion.nom_complet}</div>
-                    <div class="text-sm text-gray-600">${suggestion.type_incident}</div>
+// Fonction pour afficher les détails d'un signalement
+function showSignalementDetails(id) {
+    const modal = document.getElementById('signalementModal');
+    const modalContent = document.getElementById('modalContent');
+    
+    // Afficher le modal avec un loader
+    modalContent.innerHTML = `
+        <div class="p-8 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Chargement des détails...</p>
+        </div>
+    `;
+    modal.classList.remove('hidden');
+    
+    // Charger les détails via AJAX
+    fetch('search_ajax.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=get_details&id=' + id
+    })
+    .then(response => response.text())
+    .then(data => {
+        modalContent.innerHTML = data;
+    })
+    .catch(error => {
+        modalContent.innerHTML = `
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
                 </div>
-                <div class="text-right">
-                    <span class="inline-block px-2 py-1 text-xs rounded-full ${statusClass}">
-                        ${getStatusLabel(suggestion.statut)}
-                    </span>
-                    <div class="text-xs text-gray-500 mt-1">
-                        ${formatDate(suggestion.date_signalement)}
-                    </div>
-                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Erreur</h3>
+                <p class="text-gray-600">Impossible de charger les détails du signalement.</p>
+                <button onclick="closeModal()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    Fermer
+                </button>
             </div>
         `;
-        });
+    });
+}
 
-        container.innerHTML = html;
-        container.classList.remove('hidden');
+// Fonction pour fermer le modal
+function closeModal() {
+    document.getElementById('signalementModal').classList.add('hidden');
+}
+
+// Fermer le modal en cliquant sur l'arrière-plan
+document.getElementById('signalementModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
     }
-
-    function hideAutocompleteSuggestions() {
-        document.getElementById('autocomplete-suggestions').classList.add('hidden');
-    }
-
-    function selectSuggestion(text) {
-        document.getElementById('main-search').value = text;
-        hideAutocompleteSuggestions();
-        handleSearch(text);
-    }
-
-    function displayResults(results, query) {
-        hideAllSections();
-
-        if (results.length === 0) {
-            showNoResults();
-            return;
-        }
-
-        const container = document.getElementById('search-results');
-        const countElement = document.getElementById('results-count');
-        const listElement = document.getElementById('results-list');
-
-        countElement.textContent = `${results.length} résultat(s) trouvé(s) pour "${query}"`;
-
-        let html = '';
-        results.forEach(result => {
-            if (isLoggedIn) {
-                html += createDetailedResultCard(result);
-            } else {
-                html += createSimpleResultCard(result);
-            }
-        });
-
-        listElement.innerHTML = html;
-        container.classList.remove('hidden');
-    }
-
-    function createDetailedResultCard(result) {
-        const statusClass = getStatusClass(result.statut);
-        const priorityClass = getPriorityClass(result.priorite);
-
-        return `
-        <div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6 border-l-4 ${priorityClass}">
-            <div class="flex flex-wrap items-start justify-between mb-4">
-                <div class="flex-1 min-w-0">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-1">
-                        ${result.nom_complet}
-                    </h4>
-                    <div class="flex flex-wrap gap-2 text-sm text-gray-600">
-                        <span class="inline-flex items-center">
-                            <i class="fas fa-tag mr-1"></i>
-                            ${result.type_incident}
-                        </span>
-                        <span class="inline-flex items-center">
-                            <i class="fas fa-calendar mr-1"></i>
-                            ${result.date_formatted}
-                        </span>
-                        ${result.localisation ? `
-                            <span class="inline-flex items-center">
-                                <i class="fas fa-map-marker-alt mr-1"></i>
-                                ${result.localisation}
-                            </span>
-                        ` : ''}
-                    </div>
-                </div>
-                <div class="flex flex-col items-end gap-2 ml-4">
-                    <span class="inline-block px-3 py-1 text-sm rounded-full ${statusClass}">
-                        ${getStatusLabel(result.statut)}
-                    </span>
-                    <span class="inline-block px-2 py-1 text-xs rounded-full ${getPriorityBadgeClass(result.priorite)}">
-                        ${getPriorityLabel(result.priorite)}
-                    </span>
-                </div>
-            </div>
-
-            <p class="text-gray-600 mb-4 line-clamp-2">
-                ${result.description_courte}
-            </p>
-
-            <div class="flex flex-wrap gap-2">
-                <button onclick="viewSignalement(${result.id})"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition-colors">
-                    <i class="fas fa-eye mr-1"></i>
-                    Voir détails
-                </button>
-
-                ${result.lieu ? `
-                    <span class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded text-sm">
-                        <i class="fas fa-map-pin mr-1"></i>
-                        ${result.lieu}
-                    </span>
-                ` : ''}
-            </div>
-        </div>
-    `;
-    }
-
-    function createSimpleResultCard(result) {
-        return `
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h4 class="text-lg font-semibold text-gray-900 mb-2">
-                        Signalement trouvé
-                    </h4>
-                    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
-                        <span class="inline-flex items-center">
-                            <i class="fas fa-tag mr-1"></i>
-                            ${result.type_incident}
-                        </span>
-                        <span class="inline-flex items-center">
-                            <i class="fas fa-calendar mr-1"></i>
-                            ${result.date_formatted}
-                        </span>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="text-green-600 text-2xl mb-2">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <p class="text-sm text-gray-600">
-                        <a href="../login.php" class="text-blue-600 hover:underline">
-                            Connectez-vous
-                        </a><br>
-                        pour voir les détails
-                    </p>
-                </div>
-            </div>
-        </div>
-    `;
-    }
-
-    // Fonctions utilitaires pour les classes CSS
-    function getStatusClass(status) {
-        const classes = {
-            'en_attente': 'bg-yellow-100 text-yellow-800',
-            'en_cours': 'bg-blue-100 text-blue-800',
-            'resolu': 'bg-green-100 text-green-800',
-            'ferme': 'bg-gray-100 text-gray-800'
-        };
-        return classes[status] || 'bg-gray-100 text-gray-800';
-    }
-
-    function getStatusLabel(status) {
-        const labels = {
-            'en_attente': 'En attente',
-            'en_cours': 'En cours',
-            'resolu': 'Résolu',
-            'ferme': 'Fermé'
-        };
-        return labels[status] || status;
-    }
-
-    function getPriorityClass(priority) {
-        const classes = {
-            'critique': 'border-red-500',
-            'haute': 'border-orange-500',
-            'normale': 'border-blue-500',
-            'basse': 'border-green-500'
-        };
-        return classes[priority] || 'border-blue-500';
-    }
-
-    function getPriorityBadgeClass(priority) {
-        const classes = {
-            'critique': 'bg-red-100 text-red-800',
-            'haute': 'bg-orange-100 text-orange-800',
-            'normale': 'bg-blue-100 text-blue-800',
-            'basse': 'bg-green-100 text-green-800'
-        };
-        return classes[priority] || 'bg-blue-100 text-blue-800';
-    }
-
-    function getPriorityLabel(priority) {
-        const labels = {
-            'critique': 'Critique',
-            'haute': 'Haute',
-            'normale': 'Normale',
-            'basse': 'Basse'
-        };
-        return labels[priority] || priority;
-    }
-
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    // Gestion des statistiques
-    function loadStats() {
-        hideAllSections();
-        showLoading();
-
-        fetch(AJAX_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'action=get_stats'
-        })
-            .then(response => response.json())
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    displayStats(data.stats);
-                } else {
-                    showError(data.error || 'Erreur lors du chargement des statistiques');
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                showError('Erreur de connexion');
-                console.error('Erreur:', error);
-            });
-    }
-
-    function displayStats(stats) {
-        hideAllSections();
-
-        // Mettre à jour les compteurs principaux
-        document.getElementById('total-count').textContent = stats.total || 0;
-        document.getElementById('recent-count').textContent = stats.recent || 0;
-        document.getElementById('with-names-count').textContent = stats.with_names || 0;
-        document.getElementById('with-title-count').textContent = stats.with_title_only || 0;
-
-        // Statistiques par statut
-        displayStatSection('stats-by-status', stats.by_status, 'statut');
-
-        // Statistiques par priorité
-        displayStatSection('stats-by-priority', stats.by_priority, 'priorite');
-
-        // Types d'incidents
-        displayStatSection('stats-by-type', stats.by_type, 'type_incident');
-
-        // Personnes les plus signalées
-        displayMostReported('stats-most-reported', stats.most_reported);
-
-        document.getElementById('stats-container').classList.remove('hidden');
-    }
-
-    function displayStatSection(containerId, data, field) {
-        const container = document.getElementById(containerId);
-        let html = '';
-
-        if (data && data.length > 0) {
-            data.forEach(item => {
-                const percentage = ((item.count / getTotalFromStats()) * 100).toFixed(1);
-                html += `
-                <div class="flex items-center justify-between py-2">
-                    <span class="text-gray-700">${item[field] || 'Non défini'}</span>
-                    <div class="flex items-center">
-                        <div class="w-24 bg-gray-200 rounded-full h-2 mr-3">
-                            <div class="bg-blue-600 h-2 rounded-full" style="width: ${percentage}%"></div>
-                        </div>
-                        <span class="text-sm font-medium text-gray-900 w-8">${item.count}</span>
-                    </div>
-                </div>
-            `;
-            });
-        } else {
-            html = '<p class="text-gray-500 text-sm">Aucune donnée disponible</p>';
-        }
-
-        container.innerHTML = html;
-    }
-
-    function displayMostReported(containerId, data) {
-        const container = document.getElementById(containerId);
-        let html = '';
-
-        if (data && data.length > 0) {
-            data.forEach((item, index) => {
-                html += `
-                <div class="flex items-center justify-between py-2">
-                    <div class="flex items-center">
-                        <span class="w-6 h-6 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center mr-3">
-                            ${index + 1}
-                        </span>
-                        <span class="text-gray-700">${item.nom_complet}</span>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900">${item.count} signalement(s)</span>
-                </div>
-            `;
-            });
-        } else {
-            html = '<p class="text-gray-500 text-sm">Aucune donnée disponible</p>';
-        }
-
-        container.innerHTML = html;
-    }
-
-    function getTotalFromStats() {
-        return parseInt(document.getElementById('total-count').textContent) || 1;
-    }
-
-    // Filtres avancés (uniquement pour utilisateurs connectés)
-    <?php if (isset($_SESSION['user_id'])): ?>
-    function showAdvancedSearch() {
-        document.getElementById('advanced-filters').classList.remove('hidden');
-        document.getElementById('advanced-filters').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function hideAdvancedSearch() {
-        document.getElementById('advanced-filters').classList.add('hidden');
-    }
-
-    function applyAdvancedFilters() {
-        const nom = document.getElementById('filter-nom').value.trim();
-        const prenom = document.getElementById('filter-prenom').value.trim();
-
-        if (nom || prenom) {
-            showLoading();
-
-            const params = new URLSearchParams();
-            params.append('action', 'search_by_person');
-            if (nom) params.append('nom', nom);
-            if (prenom) params.append('prenom', prenom);
-            params.append('limit', '50');
-
-            fetch(AJAX_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: params.toString()
-            })
-                .then(response => response.json())
-                .then(data => {
-                    hideLoading();
-                    if (data.success) {
-                        currentResults = data.results;
-                        displayResults(data.results, `${prenom} ${nom}`.trim());
-                        hideAdvancedSearch();
-                    } else {
-                        showError(data.error || 'Erreur lors de la recherche avancée');
-                    }
-                })
-                .catch(error => {
-                    hideLoading();
-                    showError('Erreur de connexion');
-                    console.error('Erreur:', error);
-                });
-        } else {
-            alert('Veuillez renseigner au moins un nom ou un prénom');
-        }
-    }
-
-    function clearAdvancedFilters() {
-        document.getElementById('filter-nom').value = '';
-        document.getElementById('filter-prenom').value = '';
-        document.getElementById('filter-statut').value = '';
-        document.getElementById('filter-priorite').value = '';
-        document.getElementById('filter-type').value = '';
-        document.getElementById('filter-context').value = '';
-    }
-
-    // Modal de détails
-    function viewSignalement(id) {
-        showLoading();
-
-        fetch(AJAX_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `action=get_signalement&signalement_id=${id}`
-        })
-            .then(response => response.json())
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    displaySignalementModal(data.signalement);
-                } else {
-                    showError(data.error || 'Erreur lors du chargement du signalement');
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                showError('Erreur de connexion');
-                console.error('Erreur:', error);
-            });
-    }
-
-    function displaySignalementModal(signalement) {
-        const modalContent = document.getElementById('modal-content');
-
-        let html = `
-        <div class="space-y-6">
-            <!-- En-tête -->
-            <div class="bg-gray-50 p-4 rounded-lg">
-                <div class="flex flex-wrap items-start justify-between">
-                    <div>
-                        <h4 class="text-xl font-bold text-gray-900 mb-2">
-                            ${signalement.titre_complet}
-                        </h4>
-                        <div class="flex flex-wrap gap-3 text-sm">
-                            <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                                ID: #${signalement.id}
-                            </span>
-                            <span class="inline-flex items-center px-2 py-1 ${getStatusClass(signalement.statut)} rounded">
-                                ${getStatusLabel(signalement.statut)}
-                            </span>
-                            <span class="inline-flex items-center px-2 py-1 ${getPriorityBadgeClass(signalement.priorite)} rounded">
-                                ${getPriorityLabel(signalement.priorite)}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="text-right text-sm text-gray-600">
-                        <div>Signalé le ${signalement.date_signalement_formatted}</div>
-                        ${signalement.date_traitement_formatted ? `<div>Traité le ${signalement.date_traitement_formatted}</div>` : ''}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Informations principales -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h5 class="font-semibold text-gray-900 mb-3">Informations générales</h5>
-                    <div class="space-y-2 text-sm">
-                        <div><strong>Type d'incident:</strong> ${signalement.type_incident}</div>
-                        <div><strong>Contexte:</strong> ${signalement.incident_context}</div>
-                        ${signalement.plateforme ? `<div><strong>Plateforme:</strong> ${signalement.plateforme}</div>` : ''}
-                        ${signalement.localisation ? `<div><strong>Localisation:</strong> ${signalement.localisation}</div>` : ''}
-                        ${signalement.lieu ? `<div><strong>Lieu:</strong> ${signalement.lieu}</div>` : ''}
-                    </div>
-                </div>
-
-                <div>
-                    <h5 class="font-semibold text-gray-900 mb-3">Auteur</h5>
-                    <div class="space-y-2 text-sm">
-                        <div><strong>Signalé par:</strong> ${signalement.auteur_complet}</div>
-                        ${signalement.auteur_organization ? `<div><strong>Organisation:</strong> ${signalement.auteur_organization}</div>` : ''}
-                        ${signalement.email_contact ? `<div><strong>Contact:</strong> ${signalement.email_contact}</div>` : ''}
-                        <div><strong>Anonyme:</strong> ${signalement.anonyme ? 'Oui' : 'Non'}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Description -->
-            <div>
-                <h5 class="font-semibold text-gray-900 mb-3">Description</h5>
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <p class="text-gray-700 whitespace-pre-wrap">${signalement.description}</p>
-                </div>
-            </div>
-
-            <!-- Images et preuves -->
-            ${signalement.images_array.length > 0 || signalement.preuves_array.length > 0 ? `
-                <div>
-                    <h5 class="font-semibold text-gray-900 mb-3">Fichiers joints</h5>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        ${signalement.images_array.map(image => `
-                            <div class="border rounded-lg p-2">
-                                <img src="${image}" alt="Image" class="w-full h-20 object-cover rounded mb-2">
-                                <p class="text-xs text-gray-600">Image</p>
-                            </div>
-                        `).join('')}
-                        ${signalement.preuves_array.map(preuve => `
-                            <div class="border rounded-lg p-2">
-                                <div class="w-full h-20 bg-gray-100 rounded mb-2 flex items-center justify-center">
-                                    <i class="fas fa-file text-gray-400 text-2xl"></i>
-                                </div>
-                                <p class="text-xs text-gray-600">Document</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            ` : ''}
-
-            <!-- Traitement -->
-            ${signalement.traite_par_username || signalement.commentaire_traitement ? `
-                <div>
-                    <h5 class="font-semibold text-gray-900 mb-3">Traitement</h5>
-                    <div class="bg-blue-50 p-4 rounded-lg">
-                        ${signalement.traite_par_username ? `<div class="mb-2"><strong>Traité par:</strong> ${signalement.traite_par_username}</div>` : ''}
-                        ${signalement.commentaire_traitement ? `
-                            <div>
-                                <strong>Commentaire:</strong>
-                                <p class="mt-1 text-gray-700">${signalement.commentaire_traitement}</p>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            ` : ''}
-        </div>
-    `;
-
-        modalContent.innerHTML = html;
-        document.getElementById('signalement-modal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-        document.getElementById('signalement-modal').classList.add('hidden');
-    }
-    <?php endif; ?>
-
-    // Signalements récents
-    function loadRecentReports() {
-        // Simuler une recherche pour les signalements récents
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 7);
-
-        showLoading();
-
-        // Pour cette demo, on fait une recherche générale et on filtre côté client
-        fetch(AJAX_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'action=quick_search&query=&limit=50'
-        })
-            .then(response => response.json())
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    // Filtrer les résultats récents (dernière semaine)
-                    const recentResults = data.suggestions.filter(result => {
-                        const resultDate = new Date(result.date_signalement);
-                        return resultDate >= yesterday;
-                    });
-
-                    currentResults = recentResults;
-                    displayResults(recentResults, 'Signalements récents (7 derniers jours)');
-                } else {
-                    showError(data.error || 'Erreur lors du chargement des signalements récents');
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                showError('Erreur de connexion');
-                console.error('Erreur:', error);
-            });
-    }
-
-    // Fonctions de gestion de l'affichage
-    function hideAllSections() {
-        document.getElementById('welcome-message').classList.add('hidden');
-        document.getElementById('search-results').classList.add('hidden');
-        document.getElementById('stats-container').classList.add('hidden');
-        document.getElementById('no-results').classList.add('hidden');
-        document.getElementById('loading-spinner').classList.add('hidden');
-    }
-
-    function showWelcomeMessage() {
-        hideAllSections();
-        document.getElementById('welcome-message').classList.remove('hidden');
-    }
-
-    function showLoading() {
-        hideAllSections();
-        document.getElementById('loading-spinner').classList.remove('hidden');
-    }
-
-    function hideLoading() {
-        document.getElementById('loading-spinner').classList.add('hidden');
-    }
-
-    function showNoResults() {
-        hideAllSections();
-        document.getElementById('no-results').classList.remove('hidden');
-    }
-
-    function showError(message) {
-        alert('Erreur: ' + message);
-    }
-
-    // Fonctions utilitaires
-    function clearSearch() {
-        document.getElementById('main-search').value = '';
-        currentQuery = '';
-        currentResults = [];
-        hideAutocompleteSuggestions();
-        showWelcomeMessage();
-    }
-
-    function clearResults() {
-        clearSearch();
-    }
-
-    function exportResults() {
-        if (currentResults.length === 0) {
-            alert('Aucun résultat à exporter');
-            return;
-        }
-
-        // Créer un CSV simple
-        let csv = 'ID,Nom,Type incident,Statut,Priorité,Date,Localisation\n';
-        currentResults.forEach(result => {
-            csv += `${result.id},"${result.nom_complet}","${result.type_incident}","${getStatusLabel(result.statut)}","${getPriorityLabel(result.priorite)}","${result.date_formatted}","${result.localisation || ''}"\n`;
-        });
-
-        // Télécharger le fichier
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `signalements_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-    }
-
-    // Gestion navigation clavier autocomplétion
-    function handleAutocompleteNavigation(e) {
-        const suggestions = document.getElementById('autocomplete-suggestions');
-        if (suggestions.classList.contains('hidden')) return;
-
-        const items = suggestions.querySelectorAll('.autocomplete-item');
-        let activeIndex = -1;
-
-        // Trouver l'élément actif
-        items.forEach((item, index) => {
-            if (item.classList.contains('active')) {
-                activeIndex = index;
-            }
-        });
-
-        switch (e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                activeIndex = Math.min(activeIndex + 1, items.length - 1);
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                activeIndex = Math.max(activeIndex - 1, -1);
-                break;
-            case 'Enter':
-                e.preventDefault();
-                if (activeIndex >= 0) {
-                    items[activeIndex].click();
-                }
-                return;
-            case 'Escape':
-                hideAutocompleteSuggestions();
-                return;
-        }
-
-        // Mettre à jour les classes actives
-        items.forEach((item, index) => {
-            if (index === activeIndex) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
-    }
+});
+
+// Animation des cartes au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.animate-fade-in');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
 </script>
-<?php include_once('../Inc/Components/footer.php'); ?>
-<?php include_once('../Inc/Components/footers.php'); ?>
+
+<style>
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    --webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    --webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.animate-fade-in {
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+</style>
+
+<?php include '../Inc/Components/footer.php'; ?>
+<?php include '../Inc/Components/footers.php'; ?>
 <?php include('../Inc/Traitement/create_log.php'); ?>

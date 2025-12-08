@@ -1,16 +1,15 @@
 @charset "UTF-8";
 :root {
-  --primary-color: #000091;
-  --secondary-color: #6a6af4;
-  --accent-color: #e1000f;
-  --text-color: #1e1e1e;
-  --light-color: #f5f5fe;
-  --dark-color: #212529;
-  --gray-color: #eaebef;
-  --border-color: #e7e7e7;
-  --marianne-blue: #000091;
-  --marianne-red: #e1000f;
-  --marianne-white: #ffffff;
+  --primary-color: #2563eb;
+  --secondary-color: #4f46e5;
+  --accent-color: #f59e0b;
+  --text-color: #1e293b;
+  --light-color: #f8fafc;
+  --dark-color: #0f172a;
+  --gray-color: #e2e8f0;
+  --border-color: #cbd5e1;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
 }
 
 /* ... existing code ... */
@@ -63,7 +62,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #000091, #6a6af4, #e1000f);
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
   border-radius: 24px 24px 0 0;
 }
 
@@ -500,11 +499,7 @@ input[type="radio"]:checked + .enhanced-radio-option::before {
   }
 }
 
-.marianne-band {
-  height: 8px;
-  background: linear-gradient(to right, #000091 33.33%, #ffffff 33.33%, #ffffff 66.66%, #e1000f 66.66%);
-  width: 100%;
-}
+/* Marianne band removed */
 
 /* Styles pour la navbar */
 .navbar {

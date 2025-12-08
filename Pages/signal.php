@@ -162,7 +162,7 @@ try {
             <!-- Main Form avec design amélioré -->
             <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
                 <!-- Marianne Decorative Bar -->
-                <div class="h-3 bg-gradient-to-r from-blue-900 via-white to-red-600"></div>
+                <!-- Marianne Decorative Bar Removed -->
                 
                 <form method="POST" action="signal.php" class="p-10 space-y-8">
                     <!-- NOUVEAU: Section Informations personnelles -->

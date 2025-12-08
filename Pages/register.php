@@ -12,13 +12,12 @@ include_once('../Inc/Components/nav.php');
     <div class="absolute inset-0">
         <div class="absolute top-1/4 left-1/4 w-2 h-2 bg-white/20 rounded-full animate-float"></div>
         <div class="absolute top-1/3 right-1/3 w-1 h-1 bg-blue-300/30 rounded-full animate-float-delayed"></div>
-        <div class="absolute bottom-1/4 left-1/3 w-3 h-3 bg-red-300/20 rounded-full animate-float-slow"></div>
+        <div class="absolute bottom-1/4 left-1/3 w-3 h-3 bg-purple-300/20 rounded-full animate-float-slow"></div>
         <div class="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-blue-400/25 rounded-full animate-float"></div>
         <div class="absolute bottom-1/3 right-1/2 w-2.5 h-2.5 bg-white/15 rounded-full animate-float-delayed"></div>
     </div>
 
-    <!-- Overlay tricolore subtil -->
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-white/5 to-red-600/10"></div>
+    <!-- Overlay tricolore subtil Removed -->
 
     <!-- Contenu principal -->
     <div class="relative z-10 flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -40,8 +39,8 @@ include_once('../Inc/Components/nav.php');
                 <p class="text-blue-100 text-lg font-medium">Créer votre compte sécurisé</p>
                 <div class="mt-4 flex justify-center space-x-2">
                     <div class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                    <div class="w-2 h-2 bg-white rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
-                    <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+                    <div class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
                 </div>
             </div>
 

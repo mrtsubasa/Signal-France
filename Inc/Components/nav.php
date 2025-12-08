@@ -86,7 +86,7 @@ try {
         }
 
         $avatarFile = $latestAvatar ? $avatarDir . $latestAvatar : null;
-        $defaultAvatar = $rootPath . "Assets/Images/SignaleFrance.png";
+        $defaultAvatar = $rootPath . "Assets/Images/Econscience.png";
         $avatarname = $username . "'s Avatar";
     }
 
@@ -102,8 +102,7 @@ $isInSubfolder = (strpos($currentPath, '/Src/') !== false || strpos($currentPath
 $basePath = $isInSubfolder ? '../' : './';
 ?>
 
-<!-- Bande Marianne -->
-<div class="w-full h-1 bg-gradient-to-r from-blue-600 via-white to-red-600"></div>
+<!-- Bande Marianne Removed -->
 
 <!-- Navigation principale -->
 <nav class="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-200">
@@ -112,7 +111,7 @@ $basePath = $isInSubfolder ? '../' : './';
             <!-- Logo et titre -->
             <!-- Logo et titre -->
             <div class="flex items-center space-x-3 px-4">
-                <img src="<?php echo $basePath; ?>Assets/Images/SignaleFrance.png" alt="E Conscience Logo"
+                <img src="<?php echo $basePath; ?>Assets/Images/Econscience.png" alt="E Conscience Logo"
                     class="h-10 w-10 object-contain">
                 <div class="block">
                     <h1 class="text-lg sm:text-xl font-bold text-blue-600">E Conscience</h1>

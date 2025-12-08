@@ -1,0 +1,12 @@
+
+# Disable PHP execution
+<FilesMatch "\.(php|php5|phtml|phar|pl|py|jsp|asp|htm|html|shtml|sh|cgi)$">
+    Require all denied
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# Prevent script execution if uploaded
+php_flag engine off
+AddHandler cgi-script .php .php5 .phtml .pl .py .jsp .asp .htm .html .shtml .sh .cgi
+Options -ExecCGI

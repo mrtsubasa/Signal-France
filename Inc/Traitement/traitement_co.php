@@ -9,15 +9,32 @@ if (isset($_POST['email'], $_POST['password'])) {
 
     try {
         $db = connect_db();
-        
+
+        // --- Rate Limiting ---
+        require_once '../Constants/LoginThrottler.php';
+        $throttler = new LoginThrottler($db);
+        $ip = $_SERVER['REMOTE_ADDR'];
+
+        if (!$throttler->checkRateLimit($ip)) {
+            $wait = ceil($throttler->getRemainingTime($ip) / 60);
+            $_SESSION['notification'] = [
+                'message' => "Trop de tentatives. Veuillez réessayer dans $wait minutes.",
+                'type' => 'error'
+            ];
+            header('Location: ../../Pages/login.php');
+            exit;
+        }
+        // ---------------------
+
         // Requête optimisée avec index sur email
         $req = $db->prepare("SELECT id, email, username, password, role, avatar, token, last_activity, is_active FROM users WHERE email = :email LIMIT 1");
         $req->execute(['email' => $email]);
         $user = $req->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password'])) {
+            $throttler->resetAttempts($ip);
             session_regenerate_id(true);
-            
+
             // Variables de session
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_email'] = $user['email'];
@@ -26,7 +43,7 @@ if (isset($_POST['email'], $_POST['password'])) {
             $_SESSION['user_avatar'] = $user['avatar'];
             $_SESSION['user_last_activity'] = time(); // Utiliser timestamp pour timeout
             $_SESSION['user_active'] = $user['is_active'];
-            
+
             // Gestion des cookies seulement si "Se souvenir de moi" est coché
             if (isset($_POST['remember_me'])) {
                 $connectResult = connect($user['username']);
@@ -34,11 +51,11 @@ if (isset($_POST['email'], $_POST['password'])) {
                     error_log("Erreur lors de la création du token: " . $connectResult['message']);
                 }
             }
-            
+
             // Mise à jour de la dernière activité
             $updateStmt = $db->prepare("UPDATE users SET last_activity = datetime('now'), is_active=1 WHERE id = :id");
             $updateStmt->execute(['id' => $user['id']]);
-            
+
             // Redirection selon le rôle
             if (in_array($user['role'], ['admin', 'moderator'])) {
                 header('Location: ../../Pages/admin.php');
@@ -47,6 +64,7 @@ if (isset($_POST['email'], $_POST['password'])) {
             }
             exit;
         } else {
+            $throttler->incrementAttempts($ip);
             $_SESSION['notification'] = [
                 'message' => 'Email ou mot de passe incorrect.',
                 'type' => 'error'
@@ -54,7 +72,7 @@ if (isset($_POST['email'], $_POST['password'])) {
             header('Location: ../../Pages/login.php');
             exit;
         }
-        
+
     } catch (PDOException $e) {
         error_log("Erreur de connexion: " . $e->getMessage());
         $_SESSION['notification'] = [

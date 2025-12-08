@@ -23,8 +23,7 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
         <div class="absolute bottom-1/3 right-1/2 w-2.5 h-2.5 bg-white/15 rounded-full animate-float-delayed"></div>
     </div>
 
-    <!-- Overlay tricolore subtil -->
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-white/5 to-red-600/10"></div>
+    <!-- Overlay tricolore subtil Removed -->
 
     <!-- Contenu principal -->
     <div class="relative z-10 flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -46,8 +45,8 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
                 <p class="text-blue-100 text-lg font-medium">Plateforme Officielle de Signalement</p>
                 <div class="mt-4 flex justify-center space-x-2">
                     <div class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                    <div class="w-2 h-2 bg-white rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
-                    <div class="w-2 h-2 bg-red-600 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+                    <div class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
                 </div>
             </div>
 
@@ -155,8 +154,8 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
                         </div>
                         <div
                             class="flex items-center justify-center space-x-2 p-2 rounded-lg bg-white/10 backdrop-blur-sm">
-                            <i class="fas fa-flag text-red-400"></i>
-                            <span>Service public</span>
+                            <i class="fas fa-shield-alt text-blue-400"></i>
+                            <span>Données chiffrées</span>
                         </div>
                     </div>
                 </div>

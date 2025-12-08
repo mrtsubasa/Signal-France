@@ -253,13 +253,17 @@ try {
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                         <?php
                         $adminCount = count(array_filter($publicUsers, function ($u) {
-                            return $u['role'] === 'admin'; }));
+                            return $u['role'] === 'admin';
+                        }));
                         $modCount = count(array_filter($publicUsers, function ($u) {
-                            return $u['role'] === 'moderator'; }));
+                            return $u['role'] === 'moderator';
+                        }));
                         $userCount = count(array_filter($publicUsers, function ($u) {
-                            return $u['role'] === 'user'; }));
+                            return $u['role'] === 'user';
+                        }));
                         $verifiedCount = count(array_filter($publicUsers, function ($u) {
-                            return $u['role'] === 'verified'; }));
+                            return $u['role'] === 'verified';
+                        }));
 
                         $stats = [
                             ['count' => $adminCount, 'label' => 'Admins', 'icon' => 'crown', 'color' => 'red'],
@@ -278,9 +282,11 @@ try {
                                 </div>
                                 <div
                                     class="text-4xl font-bold text-white mb-2 font-mono group-hover:text-<?= $stat['color'] ?>-300 transition-colors">
-                                    <?= $stat['count'] ?></div>
+                                    <?= $stat['count'] ?>
+                                </div>
                                 <div class="text-slate-400 font-medium group-hover:text-slate-300 transition-colors">
-                                    <?= $stat['label'] ?></div>
+                                    <?= $stat['label'] ?>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -309,8 +315,7 @@ try {
                     class="w-24 h-24 mx-auto mb-6 glassmorphism-premium rounded-full flex items-center justify-center morphing-bg">
                     <i class="fas fa-user-plus text-3xl text-blue-400"></i>
                 </div>
-                <h2
-                    class="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-200 via-white to-red-200 bg-clip-text text-transparent">
+                <h2 class="text-5xl font-bold bg-gradient-to-r from-black via-zinc-200 to-black bg-clip-text text-transparent mb-4">
                     Rejoins la communauté
                 </h2>
                 <p class="text-xl mb-8 text-slate-300 leading-relaxed max-w-2xl mx-auto">

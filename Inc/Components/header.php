@@ -2,6 +2,17 @@
 <html lang="fr">
 
 <head>
+    <!-- Security Headers -->
+    <?php
+    if (!headers_sent()) {
+        header("X-Frame-Options: SAMEORIGIN");
+        header("X-Content-Type-Options: nosniff");
+        header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
+        header("X-XSS-Protection: 1; mode=block");
+        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'self';");
+        header("Referrer-Policy: strict-origin-when-cross-origin");
+    }
+    ?>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="index, follow">
@@ -16,11 +27,13 @@
             theme: {
                 extend: {
                     colors: {
-                        'marianne-blue': '#005B91',
-                        'marianne-red': '#E1000F',
-                        'blue-light': '#3B82F6',
-                        'france-blue': '#000091',
-                        'france-red': '#e1000f'
+                        'brand-primary': '#2563eb', // Blue 600
+                        'brand-secondary': '#4f46e5', // Indigo 600
+                        'brand-dark': '#0f172a', // Slate 900
+                        'brand-light': '#f8fafc', // Slate 50
+                        'success': '#10b981',
+                        'warning': '#f59e0b',
+                        'danger': '#ef4444'
                     },
                     animation: {
                         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
