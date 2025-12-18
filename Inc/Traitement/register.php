@@ -2,12 +2,22 @@
 session_start();
 include("../Constants/db.php");
 
+include("../Constants/functions.php");
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $_SESSION['notification'] = [
+            'message' => 'Session invalide (CSRF). Veuillez réactualiser.',
+            'type' => 'error'
+        ];
+        header('Location: ../../Pages/register.php');
+        exit;
+    }
     // Récupération et nettoyage des données
     $username = trim(htmlspecialchars($_POST['username']));
     $email = trim(htmlspecialchars($_POST['email']));
-    $password = trim(htmlspecialchars($_POST['password']));
-    $confirm_password = trim(htmlspecialchars($_POST['confirm_password']));
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
 
     // Validation des champs
     if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {

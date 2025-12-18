@@ -1,10 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-include_once('../Inc/Components/header.php');
-include_once('../Inc/Components/nav.php');
-include_once('../Inc/Constants/db.php');
+require_once '../Inc/Components/header.php';
+require_once '../Inc/Components/nav.php';
 
 // Initialize form variables with proper defaults
 $titre = '';
@@ -48,6 +44,9 @@ try {
     
     // Handle form submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+            throw new Exception('Session invalide (CSRF). Veuillez réactualiser la page.');
+        }
         try {
             // Validate and sanitize form inputs with proper null coalescing
             $titre = htmlspecialchars(trim($_POST['titre'] ?? ''), ENT_QUOTES, 'UTF-8');
@@ -165,6 +164,7 @@ try {
                 <!-- Marianne Decorative Bar Removed -->
                 
                 <form method="POST" action="signal.php" class="p-10 space-y-8">
+                    <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                     <!-- NOUVEAU: Section Informations personnelles -->
                     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
                         <h3 class="text-lg font-semibold text-gray-800 mb-6 flex items-center">
@@ -227,11 +227,11 @@ try {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Prénom de la personne à signaler -->
         <div class="space-y-3">
-            <label for="prenom" class="block text-sm font-semibold text-gray-700">
+            <label for="signal_prenom" class="block text-sm font-semibold text-gray-700">
                 <i class="fas fa-user text-red-600 mr-2"></i>Prénom de la personne *
             </label>
             <input type="text" 
-                   id="prenom" 
+                   id="signal_prenom" 
                    name="prenom" 
                    value="<?= htmlspecialchars($prenom, ENT_QUOTES, 'UTF-8') ?>" 
                    class="w-full px-4 py-3 bg-white border-2 border-red-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 hover:border-red-400 hover:shadow-md focus:shadow-lg text-gray-700" 
@@ -242,11 +242,11 @@ try {
         
         <!-- Nom de la personne à signaler -->
         <div class="space-y-3">
-            <label for="nom" class="block text-sm font-semibold text-gray-700">
+            <label for="signal_nom" class="block text-sm font-semibold text-gray-700">
                 <i class="fas fa-user text-red-600 mr-2"></i>Nom de la personne *
             </label>
             <input type="text" 
-                   id="nom" 
+                   id="signal_nom" 
                    name="nom" 
                    value="<?= htmlspecialchars($nom, ENT_QUOTES, 'UTF-8') ?>" 
                    class="w-full px-4 py-3 bg-white border-2 border-red-200 rounded-xl focus:border-red-600 focus:ring-4 focus:ring-red-600/20 transition-all duration-300 hover:border-red-400 hover:shadow-md focus:shadow-lg text-gray-700" 
@@ -829,6 +829,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include_once('../Inc/Components/footer.php'); ?>
-<?php include_once('../Inc/Components/footers.php'); ?>
+<?php include_once('../Inc/Components/main_footer.php'); ?>
+
 <?php include('../Inc/Traitement/create_log.php'); ?>

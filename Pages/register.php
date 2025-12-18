@@ -61,6 +61,7 @@ include_once('../Inc/Components/nav.php');
 
                 <div class="px-8 py-8">
                     <form class="space-y-6" method="POST" action="../Inc/Traitement/register.php">
+                        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                         <div class="space-y-1">
                             <label for="username" class="block text-sm font-medium text-white/90 mb-2">
                                 <i class="fas fa-user mr-2 text-blue-300"></i>Nom d'utilisateur
@@ -292,5 +293,5 @@ include_once('../Inc/Components/nav.php');
     });
 </script>
 
-<?php include_once('../Inc/Components/footer.php'); ?>
+<?php include_once('../Inc/Components/main_footer.php'); ?>
 <?php include_once('../Inc/Components/footers.php'); ?>

@@ -1,15 +1,15 @@
 <?php
-session_start();
-require_once '../Inc/Constants/db.php';
 require_once '../Inc/Components/header.php';
 require_once '../Inc/Components/nav.php';
 
-
-// Vérifier si l'utilisateur est connecté et est admin
-if (!$user || ($role !== 'admin' && $role !== 'moderator')) {
+// Access control using globals from nav.php
+if (!$user || !in_array($role, ['admin', 'moderator'])) {
     header('Location: login.php');
     exit;
 }
+
+// Générer un token CSRF pour les actions AJAX
+$csrf_token = generate_csrf_token();
 
 // Initialiser toutes les variables avec des valeurs par défaut
 $totalUsers = 0;
@@ -31,13 +31,18 @@ try {
     $conn = connect_db();
 
     // Statistiques utilisateurs
-    $totalUsers = $conn->query("SELECT COUNT(*) as count FROM users")->fetch()['count'];
-    $adminUsers = $conn->query("SELECT COUNT(*) as count FROM users WHERE role = 'admin'")->fetch()['count'];
-    $activeUsers = $conn->query("SELECT COUNT(*) as count FROM users WHERE last_activity > datetime('now', '-30 days')")->fetch()['count'];
+    $totalUsers = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    $adminUsers = $conn->prepare("SELECT COUNT(*) FROM users WHERE role = ?");
+    $adminUsers->execute(['admin']);
+    $adminUsers = $adminUsers->fetchColumn();
+    $activeUsers = $conn->prepare("SELECT COUNT(*) FROM users WHERE last_activity > ?");
+    $activeUsers->execute([date('Y-m-d H:i:s', strtotime('-30 days'))]);
+    $activeUsers = $activeUsers->fetchColumn();
 
     // Vérifier si la colonne email_verified existe
     try {
-        $verifiedUsers = $conn->query("SELECT COUNT(*) as count FROM users WHERE is_verified = 1")->fetch()['count'];
+        $verifiedUsersCount = $conn->query("SELECT COUNT(*) FROM users WHERE is_verified = 1")->fetchColumn();
+        $verifiedUsers = $verifiedUsersCount;
     } catch (Exception $e) {
         // Si la colonne n'existe pas, on considère tous les utilisateurs comme vérifiés
         $verifiedUsers = $totalUsers;
@@ -164,7 +169,8 @@ try {
                                     Panel d'Administration
                                 </h1>
                                 <p class="text-blue-100 text-lg lg:text-xl">Bienvenue
-                                    <?php echo htmlspecialchars($username); ?>, gérez votre plateforme E Conscience</p>
+                                    <?php echo htmlspecialchars($username); ?>, gérez votre plateforme E Conscience
+                                </p>
                             </div>
                             <div class="mt-6 lg:mt-0">
                                 <div class="bg-white bg-opacity-15 backdrop-blur-sm rounded-2xl p-6">
@@ -1347,6 +1353,7 @@ try {
 
     <script>
         // Variables globales
+        const csrf_token = '<?php echo $csrf_token; ?>';
         let currentSection = 'users';
 
         function initializeTables() {
@@ -1358,7 +1365,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: 'action=initialize_tables'
+                    body: `action=initialize_tables&csrf_token=${csrf_token}`
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -1568,7 +1575,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=approve_adhesion&id=${id}`
+                    body: `action=approve_adhesion&id=${id}&csrf_token=${csrf_token}`
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -1595,7 +1602,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=reject_adhesion&id=${id}&reason=${encodeURIComponent(reason)}`
+                    body: `action=reject_adhesion&id=${id}&reason=${encodeURIComponent(reason)}&csrf_token=${csrf_token}`
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -1636,7 +1643,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: 'action=get_database_info'
+                    body: `action=get_database_info&csrf_token=${csrf_token}`
                 });
 
                 const data = await response.json();
@@ -1662,7 +1669,7 @@ try {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `action=get_signalement_details&id=${id}`
+                body: `action=get_signalement_details&id=${id}&csrf_token=${csrf_token}`
             })
                 .then(response => response.json())
                 .then(data => {
@@ -1773,7 +1780,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=delete_signalement_file&signalement_id=${signalementId}&file_name=${fileName}`
+                    body: `action=delete_signalement_file&signalement_id=${signalementId}&file_name=${fileName}&csrf_token=${csrf_token}`
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -1813,6 +1820,7 @@ try {
 
                     const formData = new FormData(this);
                     formData.append('action', 'update_signalement');
+                    formData.append('csrf_token', csrf_token);
 
                     fetch('admin_ajax.php', {
                         method: 'POST',
@@ -1893,7 +1901,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=get_table_details&table=${tableName}`
+                    body: `action=get_table_details&table=${tableName}&csrf_token=${csrf_token}`
                 });
 
                 const data = await response.json();
@@ -1986,7 +1994,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: 'action=backup_database'
+                    body: `action=backup_database&csrf_token=${csrf_token}`
                 });
 
                 if (response.ok) {
@@ -2046,7 +2054,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=execute_sql&query=${encodeURIComponent(query)}`
+                    body: `action=execute_sql&query=${encodeURIComponent(query)}&csrf_token=${csrf_token}`
                 });
 
                 const data = await response.json();
@@ -2130,7 +2138,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=export_table&table=${tableName}`
+                    body: `action=export_table&table=${tableName}&csrf_token=${csrf_token}`
                 });
 
                 if (response.ok) {
@@ -2158,7 +2166,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: 'action=get_logs'
+                    body: `action=get_logs&csrf_token=${csrf_token}`
                 });
 
                 const data = await response.json();
@@ -2327,7 +2335,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: 'action=clear_logs'
+                    body: `action=clear_logs&csrf_token=${csrf_token}`
                 });
 
                 const data = await response.json();
@@ -2359,7 +2367,7 @@ try {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: 'action=get_users'
+                body: `action=get_users&csrf_token=${csrf_token}`
             })
                 .then(response => response.json())
                 .then(data => {
@@ -2474,7 +2482,7 @@ try {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `action=get_signalements&filter=${filter}`
+                body: `action=get_signalements&filter=${filter}&csrf_token=${csrf_token}`
             })
                 .then(response => response.json())
                 .then(data => {
@@ -2568,7 +2576,7 @@ try {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: 'action=get_contacts'
+                body: `action=get_contacts&csrf_token=${csrf_token}`
             })
                 .then(response => response.json())
                 .then(data => {
@@ -2639,7 +2647,7 @@ try {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `action=get_signalement_details&id=${id}`
+                body: `action=get_signalement_details&id=${id}&csrf_token=${csrf_token}`
             })
                 .then(response => response.json())
                 .then(data => {
@@ -2905,7 +2913,7 @@ try {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `action=get_contact&id=${id}`
+                body: `action=get_contact&id=${id}&csrf_token=${csrf_token}`
             })
                 .then(response => response.json())
                 .then(data => {
@@ -2980,7 +2988,7 @@ try {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `action=update_signalement_status&id=${id}&status=${status}`
+                body: `action=update_signalement_status&id=${id}&status=${status}&csrf_token=${csrf_token}`
             })
                 .then(response => response.json())
                 .then(data => {
@@ -3005,7 +3013,7 @@ try {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `action=mark_contact_read&id=${id}`
+                body: `action=mark_contact_read&id=${id}&csrf_token=${csrf_token}`
             })
                 .then(response => response.json())
                 .then(data => {
@@ -3031,7 +3039,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=delete_signalement&id=${id}`
+                    body: `action=delete_signalement&id=${id}&csrf_token=${csrf_token}`
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -3057,7 +3065,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=delete_contact&id=${id}`
+                    body: `action=delete_contact&id=${id}&csrf_token=${csrf_token}`
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -3165,6 +3173,7 @@ try {
             event.preventDefault();
             const formData = new FormData(event.target);
             formData.append('action', 'create_user');
+            formData.append('csrf_token', csrf_token);
 
             fetch('admin_ajax.php', {
                 method: 'POST',
@@ -3197,7 +3206,7 @@ try {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `action=get_user&id=${userId}`
+                body: `action=get_user&id=${userId}&csrf_token=${csrf_token}`
             })
                 .then(response => response.json())
                 .then(data => {
@@ -3275,6 +3284,7 @@ try {
             const formData = new FormData(event.target);
             formData.append('action', 'update_user');
             formData.append('user_id', userId);
+            formData.append('csrf_token', csrf_token);
 
             // Gérer la checkbox is_verified
             if (!formData.has('is_verified')) {
@@ -3311,7 +3321,7 @@ try {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=delete_user&user_id=${userId}`
+                    body: `action=delete_user&user_id=${userId}&csrf_token=${csrf_token}`
                 })
                     .then(response => response.json())
                     .then(data => {

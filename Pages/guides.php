@@ -1,9 +1,9 @@
 <?php
-session_start();
-require_once '../Inc/Constants/db.php';
+require_once '../Inc/Components/header.php';
+require_once '../Inc/Components/nav.php';
 
 // Vérifier si l'utilisateur est connecté
-if (!isset($_SESSION['user_id'])) {
+if (!$user) {
     header('Location: login.php');
     exit();
 }
@@ -677,7 +677,6 @@ if (!isset($_SESSION['user_id'])) {
             });
         });
     </script>
-    <?php include '../Inc/Components/footer.php'; ?>
-    <?php include '../Inc/Components/footers.php'; ?>
-
-    <?php include('../Inc/Traitement/create_log.php'); ?>
+    <?php require_once '../Inc/Components/footers.php'; ?>
+    <?php require_once '../Inc/Components/footer.php'; ?>
+    <?php require_once '../Inc/Traitement/create_log.php'; ?>

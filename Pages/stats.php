@@ -1,8 +1,6 @@
 <?php
-session_start();
-require_once '../Inc/Constants/db.php';
-
-
+require_once '../Inc/Components/header.php';
+require_once '../Inc/Components/nav.php';
 
 $pdo = connect_db();
 
@@ -47,14 +45,11 @@ $localisations = $stmt->fetchAll();
 
 // Utilisateurs les plus actifs (pour admin/modérateur)
 $top_users = [];
-if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'moderator'])) {
+if ($user && in_array($user['role'], ['admin', 'moderator'])) {
     $stmt = $pdo->query("SELECT u.nom, u.prenom, COUNT(s.id) as count FROM users u LEFT JOIN signalements s ON u.id = s.user_id GROUP BY u.id ORDER BY count DESC LIMIT 5");
     $top_users = $stmt->fetchAll();
 }
 ?>
-
-<?php include("../Inc/Components/header.php") ?>
-<?php include("../Inc/Components/nav.php") ?>
 
 <style>
     /* Styles personnalisés pour une interface moderne et douce */
@@ -511,8 +506,6 @@ if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'moderator
             });
         });
     </script>
-</body>
-
-<?php include("../Inc/Components/footer.php") ?>
-<?php include("../Inc/Components/footers.php") ?>
-<?php include('../Inc/Traitement/create_log.php'); ?>
+    <?php require_once '../Inc/Components/footers.php'; ?>
+    <?php require_once '../Inc/Components/footer.php'; ?>
+    <?php require_once '../Inc/Traitement/create_log.php'; ?>

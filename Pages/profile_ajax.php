@@ -75,7 +75,7 @@ if ($_POST['action'] === 'update_profile') {
             $userId = $_SESSION['user_id'];
 
             // Validations de sécurité
-            $valid = checkFile($file, ['image/jpeg', 'image/png'], ['jpg', 'jpeg', 'png'], 2 * 1024 * 1024);
+            $valid = checkFile($file, ['image/jpeg', 'image/png', 'image/gif'], ['jpg', 'jpeg', 'png', 'gif'], 2 * 1024 * 1024);
             if ($valid !== true)
                 throw new Exception("Avatar: " . $valid);
 
@@ -105,7 +105,7 @@ if ($_POST['action'] === 'update_profile') {
             $userId = $_SESSION['user_id'];
 
             // Validations de sécurité
-            $valid = checkFile($file, ['image/jpeg', 'image/png'], ['jpg', 'jpeg', 'png'], 10 * 1024 * 1024);
+            $valid = checkFile($file, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], ['jpg', 'jpeg', 'png', 'gif', "webp"], 10 * 1024 * 1024);
             if ($valid !== true)
                 throw new Exception("Bannière: " . $valid);
 

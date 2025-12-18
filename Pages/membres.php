@@ -1,6 +1,4 @@
 <?php
-session_start();
-require_once '../Inc/Constants/db.php';
 require_once '../Inc/Components/header.php';
 require_once '../Inc/Components/nav.php';
 
@@ -22,39 +20,8 @@ try {
     $stmt->execute();
     $publicUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fonction pour obtenir le badge de rôle
-    function getRoleBadge($role)
-    {
-        switch ($role) {
-            case 'admin':
-                return '<div class="role-badge admin"><i class="fas fa-crown"></i><span>Admin</span></div>';
-            case 'moderator':
-                return '<div class="role-badge moderator"><i class="fas fa-shield-alt"></i><span>Modo</span></div>';
-            case 'user':
-                return '<div class="role-badge user"><i class="fas fa-user"></i><span>User</span></div>';
-            case 'verified':
-                return '<div class="role-badge verified"><i class="fas fa-check-circle"></i><span>Vérifié</span></div>';
-            default:
-                return '<div class="role-badge member"><i class="fas fa-user"></i><span>Membre</span></div>';
-        }
-    }
+    // Fonctions getRoleBadge() et timeAgo() centralisées dans functions.php
 
-    // Fonction pour formater la date
-    function timeAgo($datetime)
-    {
-        $time = time() - strtotime($datetime);
-        if ($time < 60)
-            return 'maintenant';
-        if ($time < 3600)
-            return floor($time / 60) . 'm';
-        if ($time < 86400)
-            return floor($time / 3600) . 'h';
-        if ($time < 2592000)
-            return floor($time / 86400) . 'j';
-        if ($time < 31536000)
-            return floor($time / 2592000) . ' mois';
-        return floor($time / 31536000) . ' ans';
-    }
 
 } catch (Exception $e) {
     error_log("Erreur dans membres.php: " . $e->getMessage());
@@ -315,7 +282,8 @@ try {
                     class="w-24 h-24 mx-auto mb-6 glassmorphism-premium rounded-full flex items-center justify-center morphing-bg">
                     <i class="fas fa-user-plus text-3xl text-blue-400"></i>
                 </div>
-                <h2 class="text-5xl font-bold bg-gradient-to-r from-black via-zinc-200 to-black bg-clip-text text-transparent mb-4">
+                <h2
+                    class="text-5xl font-bold bg-gradient-to-r from-black via-zinc-200 to-black bg-clip-text text-transparent mb-4">
                     Rejoins la communauté
                 </h2>
                 <p class="text-xl mb-8 text-slate-300 leading-relaxed max-w-2xl mx-auto">

@@ -1,122 +1,40 @@
 <?php
-session_start();
-require_once '../Inc/Constants/db.php';
 require_once '../Inc/Components/header.php';
 require_once '../Inc/Components/nav.php';
 
-try {
-    $conn = connect_db();
-    if (!$conn) {
-        throw new Exception('Impossible de se connecter à la base de données');
-    }
-
-    if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
-        $conn = connect_db();
-        $req = $conn->prepare("SELECT * FROM users WHERE id = ?");
-        $req->execute([$_SESSION['user_id']]);
-        $dataUser = $req->fetch(PDO::FETCH_ASSOC);
-        
-        if ($dataUser) {
-            $user = $dataUser;
-            $id = $dataUser['id'];
-            $username = $dataUser['username'];
-            $email = $dataUser['email'];
-            $role = $dataUser['role'];
-            $banner = $dataUser['banner'];
-            $avatar = $dataUser['avatar'];
-            $organization = $dataUser['organization'] ?? '';
-            $accreditation = $dataUser['accreditation'] ?? '';
-            $phone = $dataUser['phone'] ?? '';
-            $address = $dataUser['address'] ?? '';
-            $city = $dataUser['city'] ?? '';
-            $bio = $dataUser['bio'] ?? '';
-            $created_at = $dataUser['created_at'];
-            $last_activity = $dataUser['last_activity'];
-            $github = $dataUser['github']?? '';
-            $linkedin = $dataUser['linkedin']?? '';
-            $website = $dataUser['website']?? '';
-            $active = $dataUser['is_active'] ?? 1;
-            $verified = $dataUser['is_verified']??0;
-            $is_public = $dataUser['is_public'] ?? 0;
-            $blacklisted = $dataUser['is_blacklisted']??0;
-        }
-    } else if (isset($_COOKIE['user_token']) && !empty($_COOKIE['user_token'])) {
-        $cookieToken = $_COOKIE['user_token'];
-        if (strlen($cookieToken) >= 32) {
-            $conn = connect_db();
-            $hashedToken = hash('sha256', $cookieToken);
-            $req = $conn->prepare("SELECT * FROM users WHERE token = ? AND (token_expiry IS NULL OR token_expiry > datetime('now'))");
-            $req->execute([$hashedToken]);
-            $dataUser = $req->fetch(PDO::FETCH_ASSOC);
-            
-            if ($dataUser) {
-                // Token valide, restaurer la session
-                session_start();
-                $_SESSION['user_id'] = $dataUser['id'];
-                $_SESSION['user_email'] = $dataUser['email'];
-                $_SESSION['user_username'] = $dataUser['username'];
-                $_SESSION['user_role'] = $dataUser['role'];
-                $_SESSION['user_avatar'] = $dataUser['avatar'];
-                $_SESSION['user_active'] = $dataUser['is_active'];
-                $user = $dataUser;
-                $id = $dataUser['id'];
-                $username = $dataUser['username'];
-                $email = $dataUser['email'];
-                $role = $dataUser['role'];
-                $avatar = $dataUser['avatar'];
-                $banner = $dataUser['banner'];
-                $organization = $dataUser['organization'] ?? '';
-                $accreditation = $dataUser['accreditation'] ?? '';
-                $phone = $dataUser['phone'] ?? '';
-                $address = $dataUser['address'] ?? '';
-                $city = $dataUser['city'] ?? '';
-                $bio = $dataUser['bio'] ?? '';
-                $created_at = $dataUser['created_at'];
-                $last_activity = $dataUser['last_activity'];
-                $github = $dataUser['github']?? '';
-                $linkedin = $dataUser['linkedin']?? '';
-                $website = $dataUser['website']?? '';
-                $active = $dataUser['is_active']?? 1;
-                $verified = $dataUser['is_verified']??0;
-                $blacklisted = $dataUser['is_blacklisted']??0;
-                $is_public = $dataUser['is_public'] ?? 0;
-                $token = $cookieToken;
-            } else {
-                setcookie('user_token', '', time() - 3600, '/');
-                setcookie('user_pseudo', '', time() - 3600, '/');
-                header('Location: login.php');
-                exit;
-            }
-        }
-    } else {
-        header('Location: login.php');
-        exit;
-    }
- 
-} catch (Exception $e) {
-    $_SESSION['error'] = $e->getMessage();
-    header('Location: ../index.php');
+// Access control using globals from nav.php
+if (!$user) {
+    header('Location: login.php');
     exit;
 }
 
-// Fonction pour obtenir le badge de rôle
-function getRoleBadge($role) {
-    $badges = [
-        'admin' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fas fa-crown mr-1"></i>Administrateur</span>',
-        'moderator' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"><i class="fas fa-shield-alt mr-1"></i>Modérateur</span>',
-        'developer' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"><i class="fas fa-code mr-1"></i>Développeur</span>',
-        'opj' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"><i class="fas fa-badge mr-1"></i>OPJ</span>',
-        'avocat' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><i class="fas fa-balance-scale mr-1"></i>Avocat</span>',
-        'journaliste' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-newspaper mr-1"></i>Journaliste</span>',
-        'magistrat' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"><i class="fas fa-gavel mr-1"></i>Magistrat</span>',
-        'psychologue' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800"><i class="fas fa-brain mr-1"></i>Psychologue</span>',
-        'association' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800"><i class="fas fa-hands-helping mr-1"></i>Association</span>',
-        'rgpd' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"><i class="fas fa-user-shield mr-1"></i>RGPD</span>',
-        'user' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"><i class="fas fa-user mr-1"></i>Utilisateur</span>'
-    ];
-    return $badges[$role] ?? $badges['user'];
-}
+// Extract fields from $user (fetched in nav.php via SELECT *)
+$id = $user['id'];
+$username = $user['username'];
+$email = $user['email'];
+$role = $user['role'];
+$banner = $user['banner'] ?? null;
+$avatar = $user['avatar'] ?? null;
+$organization = $user['organization'] ?? '';
+$accreditation = $user['accreditation'] ?? '';
+$phone = $user['phone'] ?? '';
+$address = $user['address'] ?? '';
+$city = $user['city'] ?? '';
+$bio = $user['bio'] ?? '';
+$created_at = $user['created_at'] ?? '';
+$last_activity = $user['last_activity'] ?? '';
+$github = $user['github'] ?? '';
+$linkedin = $user['linkedin'] ?? '';
+$website = $user['website'] ?? '';
+$active = $user['is_active'] ?? 1;
+$verified = $user['is_verified'] ?? 0;
+$is_public = $user['is_public'] ?? 0;
+$blacklisted = $user['is_blacklisted'] ?? 0;
 ?>
+<?php
+// Utilisation des fonctions centralisées dans functions.php (inclus via nav.php)
+?>
+
 
 
 <style>
@@ -317,7 +235,7 @@ function getRoleBadge($role) {
                                     
                                     <!-- Badge de rôle avec design amélioré -->
                                     <div class="mb-4">
-                                        <?= getRoleBadge($user['access_level'] ?? 'basic') ?>
+                                        <?= getRoleBadge($role) ?>
                                     </div>
                                 </div>
                             </div>
@@ -653,6 +571,7 @@ function getRoleBadge($role) {
                                 </div>
                             </div>
                             <p class="text-sm text-gray-600 mt-2 font-medium">Avatar actuel</p>
+                            <p class="text-xs text-gray-500 mt-2">GIF supporté pour les avatars animés</p>
                         </div>
                         
                         <!-- Zone de upload stylisée -->
@@ -664,7 +583,7 @@ function getRoleBadge($role) {
                                     </div>
                                     <p class="text-sm text-gray-700 text-center font-medium">
                                         <span class="text-blue-600">Choisir un nouvel avatar</span><br>
-                                        <span class="text-xs text-gray-500">PNG, JPG ou JPEG (MAX. 10MB)</span>
+                                        <span class="text-xs text-gray-500">PNG, JPG, JPEG ou GIF (MAX. 10MB)</span>
                                     </p>
                                 </div>
                                 <input id="avatarFile" type="file" class="hidden" accept="image/*" onchange="previewAvatar(this)">
@@ -722,7 +641,7 @@ function getRoleBadge($role) {
                                     </div>
                                     <p class="text-sm text-gray-700 text-center font-medium">
                                         <span class="text-purple-600">Choisir une nouvelle bannière</span><br>
-                                        <span class="text-xs text-gray-500">PNG, JPG ou JPEG (MAX. 2MB)</span>
+                                        <span class="text-xs text-gray-500">PNG, JPG, JPEG ou GIF (MAX. 2MB)</span>
                                     </p>
                                 </div>
                                 <input id="bannerFile" type="file" class="hidden" accept="image/*" onchange="previewBanner(this)">
@@ -1419,4 +1338,4 @@ document.getElementById('editProfileModal').addEventListener('click', function(e
 
 <?php require_once '../Inc/Components/footers.php'; ?>
 <?php require_once '../Inc/Components/footer.php'; ?>
-<?php include('../Inc/Traitement/create_log.php'); ?>
+<?php require_once '../Inc/Traitement/create_log.php'; ?>

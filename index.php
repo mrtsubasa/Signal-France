@@ -1,25 +1,7 @@
 <?php
-session_start();
+// Session and user retrieval are now handled by Inc/Components/nav.php
 require_once 'Inc/Components/header.php';
 require_once 'Inc/Components/nav.php';
-require_once 'Inc/Constants/db.php';
-require_once 'Inc/Constants/CookieManager.php';
-
-$user = null;
-if (isset($_SESSION['username'])) {
-    $pdo = connect_db();
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
-    $stmt->execute([$_SESSION['username']]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-} elseif (isset($_COOKIE['remember_token'])) {
-    $pdo = connect_db();
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE remember_token = ?");
-    $stmt->execute([$_COOKIE['remember_token']]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($user) {
-        $_SESSION['username'] = $user['username'];
-    }
-}
 ?>
 
 <style>
@@ -542,6 +524,5 @@ if (isset($_SESSION['username'])) {
 
 
 </script>
-<?php require_once 'Inc/Components/footers.php'; ?>
-<?php require_once 'Inc/Components/footer.php'; ?>
+<?php require_once 'Inc/Components/main_footer.php'; ?>
 <?php require_once 'Inc/Traitement/create_log.php'; ?>

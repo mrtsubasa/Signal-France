@@ -67,13 +67,14 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
 
                 <div class="px-8 py-8">
                     <form class="space-y-6" method="POST" action="../Inc/Traitement/traitement_co.php">
+                        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                         <div class="space-y-1">
-                            <label for="email" class="block text-sm font-medium text-white/90 mb-2">
-                                <i class="fas fa-envelope mr-2 text-blue-300"></i>Adresse email professionnelle
+                            <label for="identifier" class="block text-sm font-medium text-white/90 mb-2">
+                                <i class="fas fa-user-circle mr-2 text-blue-300"></i>Email ou Nom d'utilisateur
                             </label>
                             <div class="relative group">
-                                <input type="email" id="email" name="email" required
-                                    placeholder="votre.email@entreprise.com"
+                                <input type="text" id="identifier" name="identifier" required
+                                    placeholder="Email ou Nom d'utilisateur"
                                     class="w-full px-4 py-4 bg-white/10 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-300 backdrop-blur-sm group-hover:bg-white/15">
                                 <div
                                     class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600/20 to-blue-700/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
@@ -372,6 +373,5 @@ if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
     }
 </script>
 
-<?php include_once('../Inc/Components/footer.php'); ?>
-<?php include_once('../Inc/Components/footers.php'); ?>
+<?php include_once('../Inc/Components/main_footer.php'); ?>
 <?php include('../Inc/Traitement/create_log.php'); ?>

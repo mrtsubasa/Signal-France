@@ -3,9 +3,20 @@ session_start();
 include("../Constants/db.php");
 include("../Constants/CookieManager.php");
 
-if (isset($_POST['email'], $_POST['password'])) {
-    $email = trim(htmlspecialchars($_POST['email']));
-    $password = trim(htmlspecialchars($_POST['password']));
+include("../Constants/functions.php");
+
+if (isset($_POST['identifier'], $_POST['password'])) {
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $_SESSION['notification'] = [
+            'message' => 'Session invalide (CSRF). Veuillez réactualiser.',
+            'type' => 'error'
+        ];
+        header('Location: ../../Pages/login.php');
+        exit;
+    }
+
+    $identifier = trim(htmlspecialchars($_POST['identifier']));
+    $password = $_POST['password']; // Ne PAS utiliser htmlspecialchars ici
 
     try {
         $db = connect_db();
@@ -26,9 +37,9 @@ if (isset($_POST['email'], $_POST['password'])) {
         }
         // ---------------------
 
-        // Requête optimisée avec index sur email
-        $req = $db->prepare("SELECT id, email, username, password, role, avatar, token, last_activity, is_active FROM users WHERE email = :email LIMIT 1");
-        $req->execute(['email' => $email]);
+        // Verification de l'utilisateur par email OU username
+        $req = $db->prepare("SELECT id, email, username, password, role, avatar, token, last_activity, is_active FROM users WHERE email = :id OR username = :id LIMIT 1");
+        $req->execute(['id' => $identifier]);
         $user = $req->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password'])) {
